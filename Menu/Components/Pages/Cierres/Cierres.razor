@@ -292,23 +292,34 @@
                                     {
                                         <MudTr>
                                             <td colspan="5">
-                                                @foreach (var item in context.Items)
-                                                {
-                                                    <div class="cierre-detail-row">
-                                                        <span>@item.Fecha.ToString("dd/MM/yyyy") - @item.TipoServicio - @item.Importe.ToString("C", _culture)</span>
-                                                        <MudCheckBox T="bool"
-                                                                     Label="Enviar a revision"
-                                                                     Value="@item.ExcluirDeProveedor"
-                                                                     ValueChanged="@((bool value) => CambiarExcepcionPlanilla(item, value))"
-                                                                     Disabled="_borradorProveedor.YaConfirmado"
-                                                                     Color="Color.Warning" />
-                                                        <MudTextField @bind-Value="item.MotivoExclusion"
-                                                                      Variant="Variant.Outlined"
-                                                                      Margin="Margin.Dense"
-                                                                      Disabled="@(!item.ExcluirDeProveedor || _borradorProveedor.YaConfirmado)"
-                                                                      Placeholder="Motivo" />
-                                                    </div>
-                                                }
+                                                <div class="cierre-detail-table">
+                                                    @foreach (var item in context.Items)
+                                                    {
+                                                        <div class="cierre-detail-compact">
+                                                            <span>@item.Fecha.ToString("dd/MM")</span>
+                                                            <span>@item.TipoServicio</span>
+                                                            <span class="text-end">@item.Importe.ToString("C", _culture)</span>
+                                                            <MudCheckBox T="bool"
+                                                                         Dense="true"
+                                                                         Value="@item.ExcluirDeProveedor"
+                                                                         ValueChanged="@((bool value) => CambiarExcepcionPlanilla(item, value))"
+                                                                         Disabled="_borradorProveedor.YaConfirmado"
+                                                                         Color="Color.Warning" />
+                                                            <MudText Typo="Typo.caption">Revision</MudText>
+                                                            @if (item.ExcluirDeProveedor)
+                                                            {
+                                                                <MudTextField @bind-Value="item.MotivoExclusion"
+                                                                              Variant="Variant.Outlined"
+                                                                              Margin="Margin.Dense"
+                                                                              Placeholder="Motivo" />
+                                                            }
+                                                            else
+                                                            {
+                                                                <span class="cierre-detail-muted">Incluido</span>
+                                                            }
+                                                        </div>
+                                                    }
+                                                </div>
                                             </td>
                                         </MudTr>
                                     }
@@ -349,23 +360,34 @@
                                 {
                                     <MudTr>
                                         <td colspan="6">
-                                            @foreach (var item in context.Items)
-                                            {
-                                                <div class="cierre-detail-row">
-                                                    <span>@item.Fecha.ToString("dd/MM/yyyy") - @item.TipoServicio - @item.Importe.ToString("C", _culture)</span>
-                                                    <MudCheckBox T="bool"
-                                                                 Label="No enviar al proveedor"
-                                                                 Value="@item.ExcluirDeProveedor"
-                                                                 ValueChanged="@((bool value) => CambiarExcepcionPlanilla(item, value))"
-                                                                 Disabled="_borradorProveedor.YaConfirmado"
-                                                                 Color="Color.Warning" />
-                                                    <MudTextField @bind-Value="item.MotivoExclusion"
-                                                                  Variant="Variant.Outlined"
-                                                                  Margin="Margin.Dense"
-                                                                  Disabled="@(!item.ExcluirDeProveedor || _borradorProveedor.YaConfirmado)"
-                                                                  Placeholder="Motivo" />
-                                                </div>
-                                            }
+                                            <div class="cierre-detail-table">
+                                                @foreach (var item in context.Items)
+                                                {
+                                                    <div class="cierre-detail-compact">
+                                                        <span>@item.Fecha.ToString("dd/MM")</span>
+                                                        <span>@item.TipoServicio</span>
+                                                        <span class="text-end">@item.Importe.ToString("C", _culture)</span>
+                                                        <MudCheckBox T="bool"
+                                                                     Dense="true"
+                                                                     Value="@item.ExcluirDeProveedor"
+                                                                     ValueChanged="@((bool value) => CambiarExcepcionPlanilla(item, value))"
+                                                                     Disabled="_borradorProveedor.YaConfirmado"
+                                                                     Color="Color.Warning" />
+                                                        <MudText Typo="Typo.caption">No enviar</MudText>
+                                                        @if (item.ExcluirDeProveedor)
+                                                        {
+                                                            <MudTextField @bind-Value="item.MotivoExclusion"
+                                                                          Variant="Variant.Outlined"
+                                                                          Margin="Margin.Dense"
+                                                                          Placeholder="Motivo" />
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="cierre-detail-muted">Incluido</span>
+                                                        }
+                                                    </div>
+                                                }
+                                            </div>
                                         </td>
                                     </MudTr>
                                 }
