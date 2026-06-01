@@ -20,6 +20,7 @@ public partial class Cierres : ComponentBase
     private string? _observacionConfirmacion;
     private bool _cargando;
     private bool _cargandoBorrador;
+    private bool _guardandoBorrador;
     private bool _confirmandoProveedor;
 
     protected override async Task OnInitializedAsync()
@@ -88,6 +89,10 @@ public partial class Cierres : ComponentBase
 
             if (!_borradorProveedor.Items.Any())
                 Snackbar.Add("No hay menus de activo o planilla para liquidar con proveedor.", Severity.Info);
+            else if (_borradorProveedor.YaConfirmado)
+                Snackbar.Add("Se recupero una liquidacion ya confirmada para este rango.", Severity.Info);
+            else
+                Snackbar.Add("Borrador generado/recuperado y guardado.", Severity.Success);
         }
         catch (Exception ex)
         {
@@ -97,6 +102,51 @@ public partial class Cierres : ComponentBase
         finally
         {
             _cargandoBorrador = false;
+        }
+    }
+
+    private async Task GuardarBorradorProveedorAsync()
+    {
+        if (_borradorProveedor is null)
+        {
+            Snackbar.Add("Primero genere el borrador de liquidacion.", Severity.Warning);
+            return;
+        }
+
+        if (!AuthState.EstaAutenticado || AuthState.UsuarioActual is null)
+        {
+            Snackbar.Add("Debe iniciar sesion para guardar el borrador.", Severity.Warning);
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        if (!ValidarMotivosExcepciones())
+            return;
+
+        try
+        {
+            _guardandoBorrador = true;
+
+            var input = CrearInputProveedor();
+            var result = await CierreService.GuardarBorradorProveedorAsync(input);
+
+            if (result.Success)
+            {
+                Snackbar.Add(result.Message, Severity.Success);
+                _borradorProveedor = await CierreService.GenerarBorradorProveedorAsync(_filtro);
+            }
+            else
+            {
+                Snackbar.Add(result.Message, Severity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error al guardar borrador: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _guardandoBorrador = false;
         }
     }
 
@@ -126,30 +176,14 @@ public partial class Cierres : ComponentBase
             return;
         }
 
-        var excepcionSinMotivo = _borradorProveedor.Items.Any(x =>
-            x.ExcluirDeProveedor &&
-            string.IsNullOrWhiteSpace(x.MotivoExclusion));
-
-        if (excepcionSinMotivo)
-        {
-            Snackbar.Add("Ingrese motivo para cada excepcion de planilla.", Severity.Warning);
+        if (!ValidarMotivosExcepciones())
             return;
-        }
 
         try
         {
             _confirmandoProveedor = true;
 
-            var input = new ConfirmarCierreProveedorDto
-            {
-                FechaDesde = _borradorProveedor.FechaDesde,
-                FechaHasta = _borradorProveedor.FechaHasta,
-                Items = _borradorProveedor.Items,
-                Observacion = _observacionConfirmacion,
-                UsuarioConfirmacionId = AuthState.UsuarioActual.Id,
-                UsuarioConfirmacionNombre = AuthState.UsuarioActual.NombreCompleto
-            };
-
+            var input = CrearInputProveedor();
             var result = await CierreService.ConfirmarLiquidacionProveedorAsync(input);
 
             if (result.Success)
@@ -170,5 +204,34 @@ public partial class Cierres : ComponentBase
         {
             _confirmandoProveedor = false;
         }
+    }
+
+    private bool ValidarMotivosExcepciones()
+    {
+        if (_borradorProveedor is null)
+            return false;
+
+        var excepcionSinMotivo = _borradorProveedor.Items.Any(x =>
+            x.ExcluirDeProveedor &&
+            string.IsNullOrWhiteSpace(x.MotivoExclusion));
+
+        if (!excepcionSinMotivo)
+            return true;
+
+        Snackbar.Add("Ingrese motivo para cada excepcion de planilla.", Severity.Warning);
+        return false;
+    }
+
+    private ConfirmarCierreProveedorDto CrearInputProveedor()
+    {
+        return new ConfirmarCierreProveedorDto
+        {
+            FechaDesde = _borradorProveedor!.FechaDesde,
+            FechaHasta = _borradorProveedor.FechaHasta,
+            Items = _borradorProveedor.Items,
+            Observacion = _observacionConfirmacion,
+            UsuarioConfirmacionId = AuthState.UsuarioActual?.Id ?? 0,
+            UsuarioConfirmacionNombre = AuthState.UsuarioActual?.NombreCompleto ?? string.Empty
+        };
     }
 }

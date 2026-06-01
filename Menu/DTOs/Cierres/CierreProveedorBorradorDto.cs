@@ -8,7 +8,7 @@ public class CierreProveedorBorradorDto
 
     public bool YaConfirmado { get; set; }
 
-    public int? CierreConfirmadoId { get; set; }
+    public int? CierreProveedorId { get; set; }
 
     public List<CierreProveedorItemDto> Items { get; set; } = new();
 

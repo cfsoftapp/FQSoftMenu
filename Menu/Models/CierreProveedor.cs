@@ -10,7 +10,7 @@ public class CierreProveedor
 
     public DateTime FechaHasta { get; set; }
 
-    public EstadoCierreProveedor Estado { get; set; } = EstadoCierreProveedor.Confirmado;
+    public EstadoCierreProveedor Estado { get; set; } = EstadoCierreProveedor.Borrador;
 
     public int TotalMenusActivos { get; set; }
 

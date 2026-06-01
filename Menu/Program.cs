@@ -48,4 +48,15 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+app.MapGet("/cierres/proveedor/{id:int}/excel", async (int id, Menu.Services.Cierres.ICierreService cierreService) =>
+{
+    var bytes = await cierreService.GenerarExcelProveedorAsync(id);
+    var fileName = $"liquidacion-proveedor-{id}.xlsx";
+
+    return Results.File(
+        bytes,
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        fileName);
+});
+
 app.Run();

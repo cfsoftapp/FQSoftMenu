@@ -154,7 +154,26 @@
                               Variant="Variant.Outlined"
                               Lines="2" />
 
-                <MudStack Row="true" Justify="Justify.FlexEnd">
+                <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Save"
+                               Disabled="@(_guardandoBorrador || _borradorProveedor.YaConfirmado)"
+                               OnClick="GuardarBorradorProveedorAsync">
+                        Guardar cambios
+                    </MudButton>
+
+                    @if (_borradorProveedor.CierreProveedorId.HasValue)
+                    {
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Success"
+                                   StartIcon="@Icons.Material.Filled.Download"
+                                   Href="@($"/cierres/proveedor/{_borradorProveedor.CierreProveedorId.Value}/excel")"
+                                   Target="_blank">
+                            Descargar Excel
+                        </MudButton>
+                    }
+
                     <MudButton Variant="Variant.Filled"
                                Color="Color.Success"
                                StartIcon="@Icons.Material.Filled.CheckCircle"

@@ -11,5 +11,9 @@ public interface ICierreService
 
     Task<CierreProveedorBorradorDto> GenerarBorradorProveedorAsync(CierreFiltroDto filtro);
 
+    Task<ResultadoOperacionDto> GuardarBorradorProveedorAsync(ConfirmarCierreProveedorDto input);
+
     Task<ResultadoOperacionDto> ConfirmarLiquidacionProveedorAsync(ConfirmarCierreProveedorDto input);
+
+    Task<byte[]> GenerarExcelProveedorAsync(int cierreProveedorId);
 }
