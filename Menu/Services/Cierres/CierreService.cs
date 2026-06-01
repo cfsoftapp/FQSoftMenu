@@ -154,6 +154,27 @@ public class CierreService : ICierreService
         return resultado;
     }
 
+    public async Task<List<CierreProveedorListadoDto>> ObtenerCierresProveedorAsync()
+    {
+        return await _context.CierresProveedor
+            .AsNoTracking()
+            .OrderByDescending(x => x.FechaDesde)
+            .ThenByDescending(x => x.Id)
+            .Select(x => new CierreProveedorListadoDto
+            {
+                Id = x.Id,
+                FechaDesde = x.FechaDesde,
+                FechaHasta = x.FechaHasta,
+                Estado = x.Estado,
+                TotalMenus = x.TotalMenusActivos + x.TotalMenusPlanilla,
+                TotalLiquidarProveedor = x.TotalLiquidarProveedor,
+                TotalExcluidoRevision = x.TotalExcluidoRevision,
+                FechaRegistro = x.FechaConfirmacion,
+                UsuarioRegistroNombre = x.UsuarioConfirmacionNombre
+            })
+            .ToListAsync();
+    }
+
     public async Task<CierreProveedorBorradorDto> GenerarBorradorProveedorAsync(CierreFiltroDto filtro)
     {
         var desde = (filtro.FechaDesde ?? DateTime.Today).Date;
@@ -360,13 +381,8 @@ public class CierreService : ICierreService
 
         foreach (var item in input.Items.Where(x => x.ExcluirDeProveedor))
         {
-            var consumo = consumos.First(x => x.Id == item.ConsumoMenuId);
-
-            if (consumo.TipoPagoMenu != TipoPagoMenu.DescuentoPlanilla)
-                return ResultadoOperacionDto.Fail("Solo los consumos con descuento planilla pueden excluirse de la liquidacion.");
-
             if (string.IsNullOrWhiteSpace(item.MotivoExclusion))
-                return ResultadoOperacionDto.Fail("Debe ingresar motivo para cada excepcion de planilla.");
+                return ResultadoOperacionDto.Fail("Debe ingresar motivo para cada excepcion.");
         }
 
         return ResultadoOperacionDto.Ok("OK");

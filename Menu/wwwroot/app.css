@@ -171,3 +171,53 @@ h1:focus {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+.cierre-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1400;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 32px 16px;
+    overflow-y: auto;
+}
+
+.cierre-modal {
+    width: min(980px, 100%);
+    max-height: calc(100vh - 64px);
+    overflow-y: auto;
+}
+
+.cierre-summary-card {
+    border: 1px solid #e0e0e0;
+}
+
+.cierre-total-card {
+    background: #f1f8f2;
+    border-color: #c8e6c9;
+}
+
+.cierre-review-section {
+    border: 1px solid #e0e0e0;
+}
+
+.cierre-detail-row {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) minmax(180px, auto) minmax(240px, 320px);
+    gap: 12px;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #eeeeee;
+}
+
+.cierre-detail-row:last-child {
+    border-bottom: 0;
+}
+
+@media (max-width: 760px) {
+    .cierre-detail-row {
+        grid-template-columns: 1fr;
+    }
+}

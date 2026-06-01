@@ -1,192 +1,425 @@
 @page "/cierres"
 
-@using Menu.Components.Pages.Cierres.Components
 @using Menu.Components.Shared
 @using Menu.DTOs.Cierres
 @using Menu.Enums
 @using Menu.Security
-@using Menu.Services.Cierres
 @using Menu.Services
+@using Menu.Services.Cierres
 
 @inject AuthStateService AuthState
 @inject NavigationManager Navigation
 
 <RequirePermission Permisos="new[] { Permisos.CierresVer }">
 
-<PageTitle>Cierres</PageTitle>
+<PageTitle>Cierres al proveedor</PageTitle>
 
 <MudStack Spacing="3">
-    <MudStack Spacing="1">
-        <MudText Typo="Typo.h4">Cierres</MudText>
-        <MudText Typo="Typo.body1" Color="Color.Secondary">
-            Consolidado operativo y financiero por rango de fechas.
-        </MudText>
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.RequestQuote" Color="Color.Primary" />
+            <MudText Typo="Typo.h4">Cierres al proveedor</MudText>
+        </MudStack>
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="AbrirNuevoCierre">
+            Nuevo cierre
+        </MudButton>
     </MudStack>
 
-    <CierreFiltros Filtro="_filtro"
-                   Cargando="_cargando"
-                   OnBuscar="BuscarAsync" />
+    <MudGrid Spacing="3">
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-4 h-100" Elevation="1">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudIcon Icon="@Icons.Material.Filled.Description" Color="Color.Primary" Size="Size.Large" />
+                    <div>
+                        <MudText Typo="Typo.h5">@TotalCierresProveedor</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Total cierres</MudText>
+                    </div>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
 
-    @if (_cargando)
-    {
-        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
-    }
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-4 h-100" Elevation="1">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudIcon Icon="@Icons.Material.Filled.Send" Color="Color.Info" Size="Size.Large" />
+                    <div>
+                        <MudText Typo="Typo.h5">@TotalPendientesConfirmar</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Pendientes de confirmar</MudText>
+                    </div>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
 
-    <CierreResumen Resumen="_resumen" />
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-4 h-100" Elevation="1">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" />
+                    <div>
+                        <MudText Typo="Typo.h5">@TotalMontoConfirmado.ToString("C", _culture)</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Monto confirmado</MudText>
+                    </div>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
 
-    <MudPaper Class="pa-4 rounded-lg" Elevation="1">
+    <MudPaper Class="pa-4" Elevation="1">
         <MudStack Spacing="3">
             <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                <div>
-                    <MudText Typo="Typo.h6">Liquidacion con proveedor</MudText>
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">
-                        Incluye menus de personal activo y menus a descuento planilla. Las excepciones de planilla quedan para revision/concesionario.
-                    </MudText>
-                </div>
+                <MudText Typo="Typo.h6">Historial</MudText>
 
-                <MudButton Variant="Variant.Filled"
+                <MudButton Variant="Variant.Outlined"
                            Color="Color.Primary"
-                           StartIcon="@Icons.Material.Filled.Description"
-                           Disabled="_cargandoBorrador"
-                           OnClick="GenerarBorradorProveedorAsync">
-                    Generar borrador
+                           StartIcon="@Icons.Material.Filled.Refresh"
+                           Disabled="_cargando"
+                           OnClick="CargarPantallaAsync">
+                    Actualizar
                 </MudButton>
             </MudStack>
 
-            @if (_borradorProveedor is not null)
-            {
-                @if (_borradorProveedor.YaConfirmado)
-                {
-                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
-                        Ya existe una liquidacion confirmada para este rango. No se puede confirmar otro cierre igual.
-                    </MudAlert>
-                }
+            <MudTable Items="_historialProveedor"
+                      Dense="true"
+                      Hover="true"
+                      Breakpoint="Breakpoint.Sm"
+                      Loading="_cargando">
+                <HeaderContent>
+                    <MudTh>Periodo</MudTh>
+                    <MudTh>Estado</MudTh>
+                    <MudTh Style="text-align:center">Menus</MudTh>
+                    <MudTh Style="text-align:right">Monto</MudTh>
+                    <MudTh>Generado</MudTh>
+                    <MudTh Style="text-align:right">Acciones</MudTh>
+                </HeaderContent>
 
-                <MudGrid Spacing="3">
-                    <MudItem xs="12" md="3">
-                        <MudPaper Class="pa-3 h-100" Elevation="0">
-                            <MudText Typo="Typo.body2" Color="Color.Secondary">Personal activo</MudText>
-                            <MudText Typo="Typo.h6">@_borradorProveedor.TotalPersonalActivo.ToString("C", _culture)</MudText>
-                            <MudText Typo="Typo.caption">@_borradorProveedor.TotalMenusActivos menu(s)</MudText>
-                        </MudPaper>
+                <RowTemplate>
+                    <MudTd DataLabel="Periodo">
+                        <MudText Typo="Typo.body2" Class="fw-bold">
+                            @context.FechaDesde.ToString("dd/MM/yyyy") al @context.FechaHasta.ToString("dd/MM/yyyy")
+                        </MudText>
+                    </MudTd>
+
+                    <MudTd DataLabel="Estado">
+                        <MudChip T="string"
+                                 Size="Size.Small"
+                                 Color="@GetEstadoColor(context.Estado)"
+                                 Variant="Variant.Filled">
+                            @context.Estado
+                        </MudChip>
+                    </MudTd>
+
+                    <MudTd DataLabel="Menus" Style="text-align:center">@context.TotalMenus</MudTd>
+                    <MudTd DataLabel="Monto" Style="text-align:right">
+                        <MudText Typo="Typo.body2" Class="fw-bold">
+                            @context.TotalLiquidarProveedor.ToString("C", _culture)
+                        </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Generado">@context.FechaRegistro.ToString("dd/MM/yyyy HH:mm")</MudTd>
+                    <MudTd DataLabel="Acciones" Style="text-align:right">
+                        <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                       Color="Color.Primary"
+                                       Size="Size.Small"
+                                       aria-label="Ver cierre"
+                                       OnClick="@(() => AbrirCierreProveedorAsync(context))" />
+
+                        @if (context.Estado == EstadoCierreProveedor.Borrador)
+                        {
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                           Color="Color.Warning"
+                                           Size="Size.Small"
+                                           aria-label="Editar borrador"
+                                           OnClick="@(() => AbrirCierreProveedorAsync(context))" />
+                        }
+
+                        <MudIconButton Icon="@Icons.Material.Filled.Download"
+                                       Color="Color.Success"
+                                       Size="Size.Small"
+                                       Href="@($"/cierres/proveedor/{context.Id}/excel")"
+                                       Target="_blank"
+                                       aria-label="Descargar Excel" />
+                    </MudTd>
+                </RowTemplate>
+
+                <NoRecordsContent>
+                    <MudText Class="pa-4 text-center" Color="Color.Warning">
+                        No hay cierres generados todavia.
+                    </MudText>
+                </NoRecordsContent>
+            </MudTable>
+        </MudStack>
+    </MudPaper>
+</MudStack>
+
+@if (_mostrarNuevoCierre)
+{
+    <div class="cierre-modal-backdrop">
+        <MudPaper Class="cierre-modal pa-4" Elevation="8">
+            <MudStack Spacing="3">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.RequestQuote" Color="Color.Primary" />
+                        <MudText Typo="Typo.h6">Nuevo cierre al proveedor</MudText>
+                    </MudStack>
+
+                    <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                   Size="Size.Small"
+                                   OnClick="CerrarNuevoCierre"
+                                   aria-label="Cerrar" />
+                </MudStack>
+
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6">
+                        <MudDatePicker Label="Desde"
+                                       @bind-Date="_filtro.FechaDesde"
+                                       DateFormat="dd/MM/yyyy"
+                                       Variant="Variant.Outlined"
+                                       Margin="Margin.Dense" />
                     </MudItem>
 
-                    <MudItem xs="12" md="3">
-                        <MudPaper Class="pa-3 h-100" Elevation="0">
-                            <MudText Typo="Typo.body2" Color="Color.Secondary">Planilla a proveedor</MudText>
-                            <MudText Typo="Typo.h6">@_borradorProveedor.TotalPlanilla.ToString("C", _culture)</MudText>
-                            <MudText Typo="Typo.caption">@_borradorProveedor.TotalMenusPlanilla menu(s)</MudText>
-                        </MudPaper>
+                    <MudItem xs="12" sm="6">
+                        <MudDatePicker Label="Hasta"
+                                       @bind-Date="_filtro.FechaHasta"
+                                       DateFormat="dd/MM/yyyy"
+                                       Variant="Variant.Outlined"
+                                       Margin="Margin.Dense" />
                     </MudItem>
 
-                    <MudItem xs="12" md="3">
-                        <MudPaper Class="pa-3 h-100" Elevation="0">
-                            <MudText Typo="Typo.body2" Color="Color.Secondary">Revision/concesionario</MudText>
-                            <MudText Typo="Typo.h6">@_borradorProveedor.TotalExcluidoRevision.ToString("C", _culture)</MudText>
-                            <MudText Typo="Typo.caption">@_borradorProveedor.TotalMenusPlanillaExcluidos excepcion(es)</MudText>
-                        </MudPaper>
-                    </MudItem>
-
-                    <MudItem xs="12" md="3">
-                        <MudPaper Class="pa-3 h-100" Elevation="0">
-                            <MudText Typo="Typo.body2" Color="Color.Secondary">Total a liquidar</MudText>
-                            <MudText Typo="Typo.h6">@_borradorProveedor.TotalLiquidarProveedor.ToString("C", _culture)</MudText>
-                            <MudText Typo="Typo.caption">Proveedor</MudText>
-                        </MudPaper>
+                    <MudItem xs="12">
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.Calculate"
+                                   Disabled="_cargandoBorrador"
+                                   OnClick="GenerarBorradorProveedorAsync">
+                            Calcular
+                        </MudButton>
                     </MudItem>
                 </MudGrid>
 
-                <MudTable Items="_borradorProveedor.Items"
-                          Dense="true"
-                          Hover="true"
-                          Bordered="true"
-                          Breakpoint="Breakpoint.Sm">
-                    <HeaderContent>
-                        <MudTh>Fecha</MudTh>
-                        <MudTh>DNI</MudTh>
-                        <MudTh>Trabajador</MudTh>
-                        <MudTh>Servicio</MudTh>
-                        <MudTh>Origen</MudTh>
-                        <MudTh Style="text-align:right">Importe</MudTh>
-                        <MudTh>Excepcion</MudTh>
-                        <MudTh>Motivo</MudTh>
-                    </HeaderContent>
-
-                    <RowTemplate>
-                        <MudTd DataLabel="Fecha">@context.Fecha.ToString("dd/MM/yyyy")</MudTd>
-                        <MudTd DataLabel="DNI">@context.Dni</MudTd>
-                        <MudTd DataLabel="Trabajador">@context.EmpleadoNombre</MudTd>
-                        <MudTd DataLabel="Servicio">@context.TipoServicio</MudTd>
-                        <MudTd DataLabel="Origen">
-                            <MudChip T="string"
-                                     Size="Size.Small"
-                                     Color="@(context.TipoPagoMenu == TipoPagoMenu.Empresa ? Color.Success : Color.Warning)"
-                                     Variant="Variant.Outlined">
-                                @(context.TipoPagoMenu == TipoPagoMenu.Empresa ? "Activo" : "Planilla")
-                            </MudChip>
-                        </MudTd>
-                        <MudTd DataLabel="Importe" Style="text-align:right">@context.Importe.ToString("C", _culture)</MudTd>
-                        <MudTd DataLabel="Excepcion">
-                            <MudCheckBox T="bool"
-                                         Value="@context.ExcluirDeProveedor"
-                                         ValueChanged="@((bool value) => CambiarExcepcionPlanilla(context, value))"
-                                         Disabled="@(!context.EsPlanilla || _borradorProveedor.YaConfirmado)"
-                                         Color="Color.Warning" />
-                        </MudTd>
-                        <MudTd DataLabel="Motivo">
-                            <MudTextField @bind-Value="context.MotivoExclusion"
-                                          Variant="Variant.Outlined"
-                                          Margin="Margin.Dense"
-                                          Disabled="@(!context.ExcluirDeProveedor || _borradorProveedor.YaConfirmado)"
-                                          Placeholder="Pagara directo / revisar" />
-                        </MudTd>
-                    </RowTemplate>
-
-                    <NoRecordsContent>
-                        <MudText Class="pa-4" Color="Color.Secondary">
-                            No hay menus para liquidar con proveedor en el rango seleccionado.
-                        </MudText>
-                    </NoRecordsContent>
-                </MudTable>
-
-                <MudTextField @bind-Value="_observacionConfirmacion"
-                              Label="Observacion de confirmacion"
-                              Variant="Variant.Outlined"
-                              Lines="2" />
-
-                <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
-                    <MudButton Variant="Variant.Outlined"
-                               Color="Color.Primary"
-                               StartIcon="@Icons.Material.Filled.Save"
-                               Disabled="@(_guardandoBorrador || _borradorProveedor.YaConfirmado)"
-                               OnClick="GuardarBorradorProveedorAsync">
-                        Guardar cambios
-                    </MudButton>
-
-                    @if (_borradorProveedor.CierreProveedorId.HasValue)
+                @if (_borradorProveedor is not null)
+                {
+                    @if (_borradorProveedor.YaConfirmado)
                     {
-                        <MudButton Variant="Variant.Outlined"
-                                   Color="Color.Success"
-                                   StartIcon="@Icons.Material.Filled.Download"
-                                   Href="@($"/cierres/proveedor/{_borradorProveedor.CierreProveedorId.Value}/excel")"
-                                   Target="_blank">
-                            Descargar Excel
-                        </MudButton>
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                            Este cierre ya esta confirmado. Puedes revisarlo y descargar el Excel, pero no modificarlo.
+                        </MudAlert>
                     }
 
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Success"
-                               StartIcon="@Icons.Material.Filled.CheckCircle"
-                               Disabled="@(_confirmandoProveedor || _borradorProveedor.YaConfirmado || !_borradorProveedor.Items.Any())"
-                               OnClick="ConfirmarLiquidacionProveedorAsync">
-                        Confirmar cierre aprobado
-                    </MudButton>
-                </MudStack>
-            }
-        </MudStack>
-    </MudPaper>
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudPaper Class="pa-3 h-100 cierre-summary-card" Elevation="0">
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Activos incluidos</MudText>
+                                <MudText Typo="Typo.h6">@_borradorProveedor.TotalPersonalActivo.ToString("C", _culture)</MudText>
+                                <MudText Typo="Typo.caption">@_borradorProveedor.TotalMenusActivos menu(s)</MudText>
+                            </MudPaper>
+                        </MudItem>
 
-    <CierreListado Cierres="_cierres" Cargando="_cargando" />
-</MudStack>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudPaper Class="pa-3 h-100 cierre-summary-card" Elevation="0">
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Planilla incluida</MudText>
+                                <MudText Typo="Typo.h6">@_borradorProveedor.TotalPlanilla.ToString("C", _culture)</MudText>
+                                <MudText Typo="Typo.caption">@_borradorProveedor.TotalMenusPlanilla menu(s)</MudText>
+                            </MudPaper>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudPaper Class="pa-3 h-100 cierre-summary-card" Elevation="0">
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Revision</MudText>
+                                <MudText Typo="Typo.h6">@_borradorProveedor.TotalExcluidoRevision.ToString("C", _culture)</MudText>
+                                <MudText Typo="Typo.caption">@_borradorProveedor.TotalMenusPlanillaExcluidos excepcion(es)</MudText>
+                            </MudPaper>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudPaper Class="pa-3 h-100 cierre-summary-card cierre-total-card" Elevation="0">
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Total proveedor</MudText>
+                                <MudText Typo="Typo.h6">@_borradorProveedor.TotalLiquidarProveedor.ToString("C", _culture)</MudText>
+                                <MudText Typo="Typo.caption">A liquidar</MudText>
+                            </MudPaper>
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudTextField @bind-Value="_buscarEmpleadoCierre"
+                                  Label="Buscar empleado"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
+                                  Immediate="true"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" />
+
+                    <MudPaper Class="pa-3 cierre-review-section" Elevation="0">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                            <div>
+                                <MudText Typo="Typo.subtitle1" Class="fw-bold">Menus empresa (activos)</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                    Se incluyen automaticamente. Revisalos solo si pudo faltar suspender a alguien.
+                                </MudText>
+                            </div>
+
+                            <MudButton Variant="Variant.Text"
+                                       Color="Color.Primary"
+                                       StartIcon="@(_mostrarActivos ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                                       OnClick="@(() => _mostrarActivos = !_mostrarActivos)">
+                                @(_mostrarActivos ? "Ocultar" : "Revisar activos")
+                            </MudButton>
+                        </MudStack>
+
+                        @if (_mostrarActivos)
+                        {
+                            <MudTable Items="GruposActivos" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm" Class="mt-2">
+                                <HeaderContent>
+                                    <MudTh></MudTh>
+                                    <MudTh>Empleado</MudTh>
+                                    <MudTh Style="text-align:center">Menus</MudTh>
+                                    <MudTh Style="text-align:right">Proveedor</MudTh>
+                                    <MudTh Style="text-align:right">Revision</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd>
+                                        <MudIconButton Icon="@GetExpandIcon(context.EmpleadoId)"
+                                                       Size="Size.Small"
+                                                       OnClick="@(() => ToggleEmpleado(context.EmpleadoId))" />
+                                    </MudTd>
+                                    <MudTd DataLabel="Empleado">@context.Dni - @context.EmpleadoNombre</MudTd>
+                                    <MudTd DataLabel="Menus" Style="text-align:center">@context.CantidadMenus</MudTd>
+                                    <MudTd DataLabel="Proveedor" Style="text-align:right">@context.TotalProveedor.ToString("C", _culture)</MudTd>
+                                    <MudTd DataLabel="Revision" Style="text-align:right">@context.TotalRevision.ToString("C", _culture)</MudTd>
+                                </RowTemplate>
+                                <ChildRowContent>
+                                    @if (_empleadoExpandidoId == context.EmpleadoId)
+                                    {
+                                        <MudTr>
+                                            <td colspan="5">
+                                                @foreach (var item in context.Items)
+                                                {
+                                                    <div class="cierre-detail-row">
+                                                        <span>@item.Fecha.ToString("dd/MM/yyyy") - @item.TipoServicio - @item.Importe.ToString("C", _culture)</span>
+                                                        <MudCheckBox T="bool"
+                                                                     Label="Enviar a revision"
+                                                                     Value="@item.ExcluirDeProveedor"
+                                                                     ValueChanged="@((bool value) => CambiarExcepcionPlanilla(item, value))"
+                                                                     Disabled="_borradorProveedor.YaConfirmado"
+                                                                     Color="Color.Warning" />
+                                                        <MudTextField @bind-Value="item.MotivoExclusion"
+                                                                      Variant="Variant.Outlined"
+                                                                      Margin="Margin.Dense"
+                                                                      Disabled="@(!item.ExcluirDeProveedor || _borradorProveedor.YaConfirmado)"
+                                                                      Placeholder="Motivo" />
+                                                    </div>
+                                                }
+                                            </td>
+                                        </MudTr>
+                                    }
+                                </ChildRowContent>
+                            </MudTable>
+                        }
+                    </MudPaper>
+
+                    <MudPaper Class="pa-3 cierre-review-section" Elevation="0">
+                        <MudText Typo="Typo.subtitle1" Class="fw-bold">Menus descuento planilla (suspendidos)</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Revisa por empleado. Lo incluido pasa al proveedor y se recupera via planilla.
+                        </MudText>
+
+                        <MudTable Items="GruposPlanilla" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm" Class="mt-2">
+                            <HeaderContent>
+                                <MudTh></MudTh>
+                                <MudTh>Empleado</MudTh>
+                                <MudTh Style="text-align:center">Menus</MudTh>
+                                <MudTh Style="text-align:center">Excepciones</MudTh>
+                                <MudTh Style="text-align:right">Proveedor</MudTh>
+                                <MudTh Style="text-align:right">Revision</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>
+                                    <MudIconButton Icon="@GetExpandIcon(context.EmpleadoId)"
+                                                   Size="Size.Small"
+                                                   OnClick="@(() => ToggleEmpleado(context.EmpleadoId))" />
+                                </MudTd>
+                                <MudTd DataLabel="Empleado">@context.Dni - @context.EmpleadoNombre</MudTd>
+                                <MudTd DataLabel="Menus" Style="text-align:center">@context.CantidadMenus</MudTd>
+                                <MudTd DataLabel="Excepciones" Style="text-align:center">@context.CantidadExcepciones</MudTd>
+                                <MudTd DataLabel="Proveedor" Style="text-align:right">@context.TotalProveedor.ToString("C", _culture)</MudTd>
+                                <MudTd DataLabel="Revision" Style="text-align:right">@context.TotalRevision.ToString("C", _culture)</MudTd>
+                            </RowTemplate>
+                            <ChildRowContent>
+                                @if (_empleadoExpandidoId == context.EmpleadoId)
+                                {
+                                    <MudTr>
+                                        <td colspan="6">
+                                            @foreach (var item in context.Items)
+                                            {
+                                                <div class="cierre-detail-row">
+                                                    <span>@item.Fecha.ToString("dd/MM/yyyy") - @item.TipoServicio - @item.Importe.ToString("C", _culture)</span>
+                                                    <MudCheckBox T="bool"
+                                                                 Label="No enviar al proveedor"
+                                                                 Value="@item.ExcluirDeProveedor"
+                                                                 ValueChanged="@((bool value) => CambiarExcepcionPlanilla(item, value))"
+                                                                 Disabled="_borradorProveedor.YaConfirmado"
+                                                                 Color="Color.Warning" />
+                                                    <MudTextField @bind-Value="item.MotivoExclusion"
+                                                                  Variant="Variant.Outlined"
+                                                                  Margin="Margin.Dense"
+                                                                  Disabled="@(!item.ExcluirDeProveedor || _borradorProveedor.YaConfirmado)"
+                                                                  Placeholder="Motivo" />
+                                                </div>
+                                            }
+                                        </td>
+                                    </MudTr>
+                                }
+                            </ChildRowContent>
+                            <NoRecordsContent>
+                                <MudText Class="pa-3" Color="Color.Secondary">No hay menus a planilla en este periodo.</MudText>
+                            </NoRecordsContent>
+                        </MudTable>
+                    </MudPaper>
+
+                    <MudTextField @bind-Value="_observacionConfirmacion"
+                                  Label="Notas"
+                                  Variant="Variant.Outlined"
+                                  Lines="2"
+                                  Placeholder="Ej: cierre semana 22 al 28 de mayo" />
+
+                    <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+                        <MudButton Variant="Variant.Text"
+                                   Color="Color.Default"
+                                   OnClick="CerrarNuevoCierre">
+                            Cerrar
+                        </MudButton>
+
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.Save"
+                                   Disabled="@(_guardandoBorrador || _borradorProveedor.YaConfirmado)"
+                                   OnClick="GuardarYActualizarAsync">
+                            Guardar borrador
+                        </MudButton>
+
+                        @if (_borradorProveedor.CierreProveedorId.HasValue)
+                        {
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Success"
+                                       StartIcon="@Icons.Material.Filled.Download"
+                                       Href="@($"/cierres/proveedor/{_borradorProveedor.CierreProveedorId.Value}/excel")"
+                                       Target="_blank">
+                                Excel
+                            </MudButton>
+                        }
+
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Success"
+                                   StartIcon="@Icons.Material.Filled.CheckCircle"
+                                   Disabled="@(_confirmandoProveedor || _borradorProveedor.YaConfirmado || !_borradorProveedor.Items.Any())"
+                                   OnClick="ConfirmarYActualizarAsync">
+                            Confirmar
+                        </MudButton>
+                    </MudStack>
+                }
+            </MudStack>
+        </MudPaper>
+    </div>
+}
 
 </RequirePermission>
