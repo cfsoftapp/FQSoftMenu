@@ -1,0 +1,53 @@
+﻿@using System.Globalization
+
+<MudPaper Class="pa-3 registro-totales-panel" Elevation="0" Outlined="true">
+    <MudGrid Spacing="2">
+
+        <MudItem xs="12" sm="6" md="2">
+            <MudPaper Class="registro-total-card" Elevation="0" Outlined="true">
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Paga empresa</MudText>
+                <MudText Typo="Typo.h6">@PagaEmpresa.ToString("C2", Culture)</MudText>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="2">
+            <MudPaper Class="registro-total-card" Elevation="0" Outlined="true">
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Descuento planilla</MudText>
+                <MudText Typo="Typo.h6">@DescuentoPlanilla.ToString("C2", Culture)</MudText>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="2">
+            <MudPaper Class="registro-total-card" Elevation="0" Outlined="true">
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Cobra trabajador</MudText>
+                <MudText Typo="Typo.h6">@CobraTrabajador.ToString("C2", Culture)</MudText>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="2">
+            <MudPaper Class="registro-total-card" Elevation="0" Outlined="true">
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Pagado</MudText>
+                <MudText Typo="Typo.h6">@Pagado.ToString("C2", Culture)</MudText>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="2">
+            <MudPaper Class="registro-total-card" Elevation="0" Outlined="true">
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Pendiente crédito</MudText>
+                <MudText Typo="Typo.h6">@PendienteCredito.ToString("C2", Culture)</MudText>
+            </MudPaper>
+        </MudItem>
+
+    </MudGrid>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired]
+    public CultureInfo Culture { get; set; } = new("es-PE");
+
+    [Parameter] public decimal PagaEmpresa { get; set; }
+    [Parameter] public decimal DescuentoPlanilla { get; set; }
+    [Parameter] public decimal CobraTrabajador { get; set; }
+    [Parameter] public decimal Pagado { get; set; }
+    [Parameter] public decimal PendienteCredito { get; set; }
+}

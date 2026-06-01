@@ -1,0 +1,454 @@
+﻿@page "/usuarios"
+
+@using Menu.Enums
+@using Menu.Models
+@using Menu.Services
+
+@inject UsuarioService UsuarioService
+@inject AuthStateService AuthState
+@inject ISnackbar Snackbar
+
+<RequirePermission Permisos="new[] { Permisos.UsuariosVer }">
+<PageTitle>Usuarios</PageTitle>
+
+    <MudStack Spacing="3">
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+            <div>
+                <MudText Typo="Typo.h4">Usuarios</MudText>
+                <MudText Typo="Typo.body1" Color="Color.Secondary">
+                    Administración de usuarios, roles y accesos al sistema.
+                </MudText>
+            </div>
+
+            @if (AuthState.TienePermiso(Permisos.UsuariosCrear))
+            {
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.PersonAdd"
+                           OnClick="NuevoUsuario">
+                    Nuevo usuario
+                </MudButton>
+            }
+        </MudStack>
+
+        <MudPaper Class="pa-3" Elevation="1">
+            <MudGrid Spacing="2">
+                <MudItem xs="12" md="5">
+                    <MudTextField @bind-Value="_search"
+                                  Label="Buscar usuario o nombre"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Immediate="true" />
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+
+        <MudPaper Class="pa-0" Elevation="1">
+            <MudTable Items="FilteredUsuarios"
+                      Hover="true"
+                      Dense="true"
+                      Breakpoint="Breakpoint.Sm"
+                      Loading="_loading">
+
+                <HeaderContent>
+                    <MudTh>Usuario</MudTh>
+                    <MudTh>Nombre completo</MudTh>
+                    <MudTh>Rol</MudTh>
+                    <MudTh>Activo</MudTh>
+                    <MudTh>Fecha creación</MudTh>
+                    <MudTh Style="text-align:right">Acciones</MudTh>
+                </HeaderContent>
+
+                <RowTemplate>
+                    <MudTd DataLabel="Usuario">@context.NombreUsuario</MudTd>
+
+                    <MudTd DataLabel="Nombre completo">@context.NombreCompleto</MudTd>
+
+                    <MudTd DataLabel="Rol">
+                            <MudChip T="string"
+                                     Size="Size.Small"
+                                     Color="Color.Primary"
+                                     Variant="Variant.Outlined">
+                                @context.RolSistema.Nombre
+                            </MudChip>
+                    </MudTd>
+
+                    <MudTd DataLabel="Activo">
+                        <MudChip T="string"
+                                 Size="Size.Small"
+                                 Color="@(context.Activo ? Color.Success : Color.Error)"
+                                 Variant="Variant.Outlined">
+                            @(context.Activo ? "Sí" : "No")
+                        </MudChip>
+                    </MudTd>
+
+                    <MudTd DataLabel="Fecha creación">
+                        @context.FechaCreacion.ToString("dd/MM/yyyy")
+                    </MudTd>
+
+                    <MudTd DataLabel="Acciones" Style="text-align:right">
+                        @if (AuthState.TienePermiso(Permisos.UsuariosEditar))
+                        {
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           OnClick="@(() => EditarUsuario(context))" />
+
+                            <MudIconButton Icon="@Icons.Material.Filled.Key"
+                                           Color="Color.Warning"
+                                           Size="Size.Small"
+                                           OnClick="@(() => MostrarCambioClave(context))" />
+
+                            <MudIconButton Icon="@(context.Activo ? Icons.Material.Filled.Block : Icons.Material.Filled.CheckCircle)"
+                                           Color="@(context.Activo ? Color.Error : Color.Success)"
+                                           Size="Size.Small"
+                                           Disabled="@(AuthState.UsuarioActual?.Id == context.Id)"
+                                           OnClick="@(() => CambiarActivo(context.Id))" />
+                        }
+                    </MudTd>
+                </RowTemplate>
+
+                <NoRecordsContent>
+                    <MudText Class="pa-4" Color="Color.Secondary">
+                        No se encontraron usuarios.
+                    </MudText>
+                </NoRecordsContent>
+
+                <PagerContent>
+                    <MudTablePager PageSizeOptions="new int[] { 5, 10, 20, 50 }" />
+                </PagerContent>
+
+            </MudTable>
+        </MudPaper>
+
+        @if (_showForm)
+        {
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudText Typo="Typo.h6">
+                    @(_editingId == 0 ? "Nuevo usuario" : "Editar usuario")
+                </MudText>
+
+                <MudForm @ref="_form">
+                    <MudGrid Spacing="3" Class="mt-2">
+
+                        <MudItem xs="12" md="3">
+                            <MudTextField @bind-Value="_model.NombreUsuario"
+                                          Label="Usuario"
+                                          Variant="Variant.Outlined"
+                                          Required="true"
+                                          Immediate="true"
+                                          Disabled="@(_editingId != 0)" />
+                        </MudItem>
+
+                        <MudItem xs="12" md="4">
+                            <MudTextField @bind-Value="_model.NombreCompleto"
+                                          Label="Nombre completo"
+                                          Variant="Variant.Outlined"
+                                          Required="true"
+                                          Immediate="true" />
+                        </MudItem>
+
+                        <MudItem xs="12" md="3">
+                                <MudSelect T="int"
+                                           @bind-Value="_model.RolSistemaId"
+                                           Label="Rol"
+                                           Variant="Variant.Outlined">
+                                    @foreach (var rol in _roles)
+                                    {
+                                        <MudSelectItem T="int" Value="@rol.Id">
+                                            @rol.Nombre
+                                        </MudSelectItem>
+                                    }
+                                </MudSelect>
+                        </MudItem>
+
+                        @if (_editingId == 0)
+                        {
+                            <MudItem xs="12" md="2">
+                                <MudTextField @bind-Value="_claveNueva"
+                                              Label="Clave"
+                                              Variant="Variant.Outlined"
+                                              InputType="InputType.Password"
+                                              Required="true"
+                                              Immediate="true" />
+                            </MudItem>
+                        }
+
+                        <MudItem xs="12">
+                            <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+                                <MudButton Variant="Variant.Text"
+                                           Color="Color.Default"
+                                           OnClick="Cancelar">
+                                    Cancelar
+                                </MudButton>
+
+                                <MudButton Variant="Variant.Filled"
+                                           Color="Color.Primary"
+                                           StartIcon="@Icons.Material.Filled.Save"
+                                           OnClick="Guardar">
+                                    Guardar
+                                </MudButton>
+                            </MudStack>
+                        </MudItem>
+
+                    </MudGrid>
+                </MudForm>
+            </MudPaper>
+        }
+
+        @if (_showClavePanel)
+        {
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudStack Spacing="3">
+
+                    <MudText Typo="Typo.h6">Cambiar clave</MudText>
+
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                        Usuario: <b>@_usuarioClaveNombre</b>
+                    </MudAlert>
+
+                    <MudGrid Spacing="3">
+                        <MudItem xs="12" md="4">
+                            <MudTextField @bind-Value="_claveCambio"
+                                          Label="Nueva clave"
+                                          Variant="Variant.Outlined"
+                                          InputType="InputType.Password"
+                                          Immediate="true" />
+                        </MudItem>
+
+                        <MudItem xs="12" md="4">
+                            <MudTextField @bind-Value="_claveCambioConfirmacion"
+                                          Label="Confirmar clave"
+                                          Variant="Variant.Outlined"
+                                          InputType="InputType.Password"
+                                          Immediate="true" />
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+                        <MudButton Variant="Variant.Text"
+                                   Color="Color.Default"
+                                   OnClick="CancelarCambioClave">
+                            Cancelar
+                        </MudButton>
+
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Warning"
+                                   StartIcon="@Icons.Material.Filled.Key"
+                                   OnClick="GuardarCambioClave">
+                            Cambiar clave
+                        </MudButton>
+                    </MudStack>
+
+                </MudStack>
+            </MudPaper>
+        }
+
+    </MudStack>
+
+</RequirePermission>
+
+@code {
+    private List<UsuarioSistema> _usuarios = new();
+    private UsuarioSistema _model = new();
+    private List<RolSistema> _roles = new();
+    private MudForm? _form;
+
+    private bool _loading = true;
+    private bool _showForm;
+    private int _editingId;
+    private string _search = string.Empty;
+
+    private string _claveNueva = string.Empty;
+
+    private bool _showClavePanel;
+    private int _usuarioClaveId;
+    private string _usuarioClaveNombre = string.Empty;
+    private string _claveCambio = string.Empty;
+    private string _claveCambioConfirmacion = string.Empty;
+
+    private IEnumerable<UsuarioSistema> FilteredUsuarios
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(_search))
+                return _usuarios;
+
+            var term = _search.Trim().ToLower();
+
+            return _usuarios.Where(x =>
+                x.NombreUsuario.ToLower().Contains(term) ||
+                x.NombreCompleto.ToLower().Contains(term));
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsuarios();
+    }
+
+    private async Task LoadUsuarios()
+    {
+        _loading = true;
+        _usuarios = await UsuarioService.GetAllAsync();
+        _roles = await UsuarioService.GetRolesActivosAsync();
+        _loading = false;
+    }
+
+    private void NuevoUsuario()
+    {
+        _editingId = 0;
+        _model = new UsuarioSistema
+        {
+            RolSistemaId = _roles.FirstOrDefault(x => x.Codigo == "ENCARGADO_COMEDOR")?.Id
+               ?? _roles.FirstOrDefault()?.Id
+               ?? 0,
+            Activo = true,
+            FechaCreacion = DateTime.Now
+        };
+
+        _claveNueva = string.Empty;
+        _showForm = true;
+        _showClavePanel = false;
+    }
+
+    private void EditarUsuario(UsuarioSistema usuario)
+    {
+        _editingId = usuario.Id;
+
+        _model = new UsuarioSistema
+        {
+            Id = usuario.Id,
+            NombreUsuario = usuario.NombreUsuario,
+            NombreCompleto = usuario.NombreCompleto,
+            RolSistemaId = usuario.RolSistemaId,
+            Activo = usuario.Activo,
+            FechaCreacion = usuario.FechaCreacion
+        };
+
+        _showForm = true;
+        _showClavePanel = false;
+    }
+
+    private async Task Guardar()
+    {
+        if (_form is not null)
+        {
+            await _form.ValidateAsync();
+
+            if (!_form.IsValid)
+                return;
+        }
+
+        (bool Success, string Message) result;
+
+        if (_editingId == 0)
+        {
+            result = await UsuarioService.CrearUsuarioAsync(
+                 _model.NombreUsuario,
+                 _model.NombreCompleto,
+                 _claveNueva,
+                 _model.RolSistemaId);
+        }
+        else
+        {
+            result = await UsuarioService.ActualizarUsuarioAsync(_model);
+        }
+
+        if (result.Success)
+        {
+            Snackbar.Add(result.Message, Severity.Success);
+            _showForm = false;
+            await LoadUsuarios();
+        }
+        else
+        {
+            Snackbar.Add(result.Message, Severity.Warning);
+        }
+    }
+
+    private async Task CambiarActivo(int id)
+    {
+        if (AuthState.UsuarioActual?.Id == id)
+        {
+            Snackbar.Add("No puedes desactivar tu propio usuario.", Severity.Warning);
+            return;
+        }
+
+        var result = await UsuarioService.ToggleActivoAsync(id);
+
+        if (result.Success)
+        {
+            Snackbar.Add(result.Message, Severity.Success);
+            await LoadUsuarios();
+        }
+        else
+        {
+            Snackbar.Add(result.Message, Severity.Warning);
+        }
+    }
+
+    private void MostrarCambioClave(UsuarioSistema usuario)
+    {
+        _usuarioClaveId = usuario.Id;
+        _usuarioClaveNombre = $"{usuario.NombreCompleto} ({usuario.NombreUsuario})";
+        _claveCambio = string.Empty;
+        _claveCambioConfirmacion = string.Empty;
+        _showClavePanel = true;
+        _showForm = false;
+    }
+
+    private async Task GuardarCambioClave()
+    {
+        if (string.IsNullOrWhiteSpace(_claveCambio))
+        {
+            Snackbar.Add("Ingrese la nueva clave.", Severity.Warning);
+            return;
+        }
+
+        if (_claveCambio.Length < 6)
+        {
+            Snackbar.Add("La clave debe tener al menos 6 caracteres.", Severity.Warning);
+            return;
+        }
+
+        if (_claveCambio != _claveCambioConfirmacion)
+        {
+            Snackbar.Add("La confirmación de clave no coincide.", Severity.Warning);
+            return;
+        }
+
+        var result = await UsuarioService.CambiarClaveAsync(_usuarioClaveId, _claveCambio);
+
+        if (result.Success)
+        {
+            Snackbar.Add(result.Message, Severity.Success);
+            _showClavePanel = false;
+        }
+        else
+        {
+            Snackbar.Add(result.Message, Severity.Warning);
+        }
+    }
+
+    private void Cancelar()
+    {
+        _showForm = false;
+        _model = new UsuarioSistema();
+        _editingId = 0;
+        _claveNueva = string.Empty;
+    }
+
+    private void CancelarCambioClave()
+    {
+        _showClavePanel = false;
+        _usuarioClaveId = 0;
+        _usuarioClaveNombre = string.Empty;
+        _claveCambio = string.Empty;
+        _claveCambioConfirmacion = string.Empty;
+    }
+   
+}

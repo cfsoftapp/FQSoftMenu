@@ -1,0 +1,57 @@
+﻿@using Menu.DTOs.Reportes
+
+<ReporteCardResumen Titulo="Resumen de cobros directos"
+                    Subtitulo="Pagos del trabajador y créditos ya cancelados."
+                    Icono="@Icons.Material.Filled.Payments"
+                    ColorIcono="Color.Info">
+
+    <MudGrid Spacing="2">
+
+        <MudItem xs="6" md="3">
+            <MudPaper Class="pa-2 rounded-lg" Elevation="0" Outlined="true">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Efectivo</MudText>
+                <MudText Typo="Typo.subtitle2">@Resumen.CobradoEfectivo.ToString("C")</MudText>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="6" md="3">
+            <MudPaper Class="pa-2 rounded-lg" Elevation="0" Outlined="true">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Yape</MudText>
+                <MudText Typo="Typo.subtitle2">@Resumen.CobradoYape.ToString("C")</MudText>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="6" md="3">
+            <MudPaper Class="pa-2 rounded-lg" Elevation="0" Outlined="true">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Plin</MudText>
+                <MudText Typo="Typo.subtitle2">@Resumen.CobradoPlin.ToString("C")</MudText>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="6" md="3">
+            <MudPaper Class="pa-2 rounded-lg" Elevation="0" Outlined="true">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Crédito pagado</MudText>
+                <MudText Typo="Typo.subtitle2">@Resumen.CreditoPagado.ToString("C")</MudText>
+            </MudPaper>
+        </MudItem>
+
+    </MudGrid>
+
+    <MudDivider Class="my-2" />
+
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Total cobrado directo
+        </MudText>
+
+        <MudText Typo="Typo.h6" Color="Color.Info">
+            @Resumen.TotalCobradoDirecto.ToString("C")
+        </MudText>
+    </MudStack>
+
+</ReporteCardResumen>
+
+@code {
+    [Parameter, EditorRequired]
+    public ReporteResumenDto Resumen { get; set; } = new();
+}

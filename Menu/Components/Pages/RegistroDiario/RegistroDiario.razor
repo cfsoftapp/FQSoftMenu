@@ -1,0 +1,466 @@
+﻿@page "/registro-diario"
+
+@using Menu.Components.Shared
+@using Menu.Enums
+@using Menu.Models
+@using Menu.Services
+@using Menu.DTOs
+
+
+@inject AuthStateService AuthState
+@inject NavigationManager Navigation
+
+@inject RegistroDiarioService RegistroDiarioService
+@inject ConfiguracionMenuService ConfiguracionMenuService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<RequirePermission Permisos="new[] { Permisos.RegistroDiarioVer }">
+
+<PageTitle>Registro diario</PageTitle>
+
+<MudStack Spacing="3">
+
+    <div>
+        <MudText Typo="Typo.h4">Registro diario</MudText>
+        <MudText Typo="Typo.body1" Color="Color.Secondary">
+                Registro de menú principal, menús extra y productos adicionales del trabajador.
+        </MudText>
+    </div>
+
+  
+        <MudGrid Spacing="3">
+
+            <MudItem xs="12" md="4">
+                <RegistroBuscadorTrabajador Dni="@_dni"
+                                            DniChanged="@(value => _dni = value)"
+                                            Empleado="_empleado"
+                                            OnBuscar="BuscarEmpleado"
+                                            OnKeyDown="OnDniKeyDown">
+
+                    <RegistroConsumosDelDia Consumos="_consumosDelDia"
+                                            OnAnular="AnularConsumoDia" />
+                    @* <RegistroConsumosDelDia Consumos="@_consumosDelDia" /> *@
+
+                </RegistroBuscadorTrabajador>
+            </MudItem>
+
+            <MudItem xs="12" md="8">
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudStack Spacing="3">
+
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                            <div>
+                                <MudText Typo="Typo.h6">Consumo del día</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                    Fecha: @_fecha.ToString("dd/MM/yyyy")
+                                </MudText>
+
+                                <MudSelect T="TipoServicioMenu"
+                                           @bind-Value="_tipoServicio"
+                                           Label="Tipo de servicio"
+                                           Variant="Variant.Outlined">
+                                    <MudSelectItem Value="TipoServicioMenu.Almuerzo">Almuerzo</MudSelectItem>
+                                    <MudSelectItem Value="TipoServicioMenu.Cena">Cena</MudSelectItem>
+                                </MudSelect>
+                            </div>
+
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Default"
+                                       StartIcon="@Icons.Material.Filled.Refresh"
+                                       OnClick="Limpiar">
+                                Nuevo
+                            </MudButton>
+                        </MudStack>
+
+                        @if (_empleado is null)
+                        {
+                            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                                Ingresa el DNI del trabajador para iniciar el registro.
+                            </MudAlert>
+                        }
+                        else
+                        {
+                            <RegistroMenuPrincipal Empleado="_empleado"
+                                                   RegistraMenu="_registraMenu"
+                                                   RegistraMenuChanged="@(value => _registraMenu = value)"
+                                                   TipoPagoMenuSuspendido="_tipoPagoMenuSuspendido"
+                                                   TipoPagoMenuSuspendidoChanged="@(value => _tipoPagoMenuSuspendido = value)"
+                                                   FormaPagoDirectoMenu="_formaPagoDirectoMenu"
+                                                   FormaPagoDirectoMenuChanged="@(value => _formaPagoDirectoMenu = value)"
+                                                   TipoPagoTexto="@TipoPagoMenuTexto"
+                                                   PrecioTexto="@PrecioMenuTexto" />
+
+                            <RegistroMenusExtra Items="_menusExtra"
+                                                OnAgregar="AgregarMenuExtra"
+                                                OnQuitar="QuitarMenuExtra" />
+
+                            <RegistroProductosAdicionales Items="_productosAdicionales"
+                                                          OnAgregar="AgregarProducto"
+                                                          OnQuitar="QuitarProducto" />
+
+                            <RegistroTotales Culture="_culture"
+                                             PagaEmpresa="TotalPagaEmpresa"
+                                             DescuentoPlanilla="TotalDescuentoPlanilla"
+                                             CobraTrabajador="TotalCobraTrabajador"
+                                             Pagado="TotalPagadoMomento"
+                                             PendienteCredito="TotalPendienteCredito" />
+
+                            <MudStack Row="true" Justify="Justify.FlexEnd">
+                                <MudButton Variant="Variant.Filled"
+                                           Color="Color.Primary"
+                                           StartIcon="@Icons.Material.Filled.Save"
+                                           OnClick="Guardar"
+                                           Disabled="@(_saving || !AuthState.TienePermiso(Permisos.RegistroDiarioRegistrar))">
+                                    Guardar registro
+                                </MudButton>
+                            </MudStack>
+                        }
+
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+        </MudGrid>
+</MudStack>
+
+</RequirePermission>
+
+@code {
+    private readonly System.Globalization.CultureInfo _culture = new("es-PE");
+    private TipoServicioMenu _tipoServicio = TipoServicioMenu.Almuerzo;
+    private TipoPagoMenu _tipoPagoMenuSuspendido = TipoPagoMenu.DescuentoPlanilla;
+    private FormaPago _formaPagoDirectoMenu = FormaPago.Efectivo;
+
+    private string _dni = string.Empty;
+    private DateTime _fecha = DateTime.Today;
+    private Empleado? _empleado;
+    private bool _registraMenu = true;
+    private bool _saving;
+
+    private decimal _precioMenu = 0m;
+
+    private List<ConsumoAdicionalInputDto> _menusExtra = new();
+    private List<ConsumoAdicionalInputDto> _productosAdicionales = new();
+    private List<ConsumoDiaDto> _consumosDelDia = new();
+   
+    private string TipoPagoMenuTexto
+    {
+        get
+        {
+            if (!_registraMenu || _empleado is null)
+                return "No aplica";
+
+            if (_empleado.Estado == EstadoEmpleado.Activo)
+                return "Empresa";
+
+            return _tipoPagoMenuSuspendido switch
+            {
+                TipoPagoMenu.DescuentoPlanilla => "Descuento planilla",
+                TipoPagoMenu.PagoDirecto => $"Pago directo - {_formaPagoDirectoMenu}",
+                TipoPagoMenu.CreditoComedor => "Crédito comedor",
+                _ => "No aplica"
+            };
+        }
+    }
+
+    private string PrecioMenuTexto => _registraMenu
+        ? _precioMenu.ToString("C2", _culture)
+        : "S/ 0.00";
+
+    private IEnumerable<ConsumoAdicionalInputDto> TodosLosAdicionales =>
+    _menusExtra.Concat(_productosAdicionales);
+
+    private decimal TotalMenuTrabajador => _registraMenu ? _precioMenu : 0m;
+
+    private bool MenuEmpresa =>
+        _empleado is not null &&
+        _empleado.Estado == EstadoEmpleado.Activo &&
+        _registraMenu;
+
+    private bool MenuDescuentoPlanilla =>
+        _empleado is not null &&
+        _empleado.Estado == EstadoEmpleado.Suspendido &&
+        _registraMenu &&
+        _tipoPagoMenuSuspendido == TipoPagoMenu.DescuentoPlanilla;
+
+    private bool MenuPagoDirecto =>
+        _empleado is not null &&
+        _empleado.Estado == EstadoEmpleado.Suspendido &&
+        _registraMenu &&
+        _tipoPagoMenuSuspendido == TipoPagoMenu.PagoDirecto;
+
+    private bool MenuCreditoComedor =>
+        _empleado is not null &&
+        _empleado.Estado == EstadoEmpleado.Suspendido &&
+        _registraMenu &&
+        _tipoPagoMenuSuspendido == TipoPagoMenu.CreditoComedor;
+
+    private decimal TotalPagaEmpresa =>
+        MenuEmpresa ? _precioMenu : 0m;
+
+    private decimal TotalDescuentoPlanilla =>
+        MenuDescuentoPlanilla ? _precioMenu : 0m;
+
+    private decimal TotalAdicionales =>
+        TodosLosAdicionales.Sum(x => x.Precio);
+
+    private decimal TotalCobraTrabajador =>
+        TotalAdicionales +
+        (MenuDescuentoPlanilla || MenuPagoDirecto || MenuCreditoComedor ? _precioMenu : 0m);
+
+    private decimal TotalPagadoMomento =>
+        TodosLosAdicionales
+            .Where(x => x.FormaCobro != FormaCobroAdicional.CreditoComedor)
+            .Sum(x => x.Precio)
+        + (MenuPagoDirecto ? _precioMenu : 0m);
+
+    private decimal TotalPendienteCredito =>
+        TodosLosAdicionales
+            .Where(x => x.FormaCobro == FormaCobroAdicional.CreditoComedor)
+            .Sum(x => x.Precio)
+        + (MenuCreditoComedor ? _precioMenu : 0m);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarPrecioMenu();
+    }
+
+    private async Task CargarPrecioMenu()
+    {
+        var config = await ConfiguracionMenuService.GetActualAsync();
+        _precioMenu = config.PrecioMenu;
+    }
+
+    private async Task BuscarEmpleado()
+    {
+        if (string.IsNullOrWhiteSpace(_dni))
+        {
+            Snackbar.Add("Ingrese un DNI.", Severity.Warning);
+            return;
+        }
+
+        _empleado = await RegistroDiarioService.BuscarEmpleadoPorDniAsync(_dni);
+
+        if (_empleado is null)
+        {
+            _consumosDelDia.Clear();
+            Snackbar.Add("No se encontró un empleado activo con ese DNI.", Severity.Warning);
+            return;
+        }
+
+        _registraMenu = false;
+
+        _consumosDelDia = await RegistroDiarioService
+            .GetConsumosDelDiaPorEmpleadoAsync(_empleado.Id, DateTime.Today);
+
+        Snackbar.Add($"Trabajador encontrado: {_empleado.NombreCompleto}", Severity.Success);
+    }
+
+    private async Task OnDniKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter")
+            await BuscarEmpleado();
+    }
+
+    private void AgregarMenuExtra()
+    {
+        _menusExtra.Add(new ConsumoAdicionalInputDto
+        {
+            TipoAdicional = TipoAdicional.MenuExtra,
+            Categoria = CategoriaConsumoAdicional.MenuCarta,
+            Descripcion = "Menú extra",
+            Precio = 0m,
+            FormaCobro = FormaCobroAdicional.Efectivo
+        });
+    }
+
+    private void AgregarProducto()
+    {
+        _productosAdicionales.Add(new ConsumoAdicionalInputDto
+        {
+            TipoAdicional = TipoAdicional.Producto,
+            Categoria = CategoriaConsumoAdicional.Bebida,
+            Descripcion = string.Empty,
+            Precio = 0m,
+            FormaCobro = FormaCobroAdicional.Efectivo
+        });
+    }
+
+    private void QuitarMenuExtra(ConsumoAdicionalInputDto item)
+    {
+        _menusExtra.Remove(item);
+    }
+
+    private void QuitarProducto(ConsumoAdicionalInputDto item)
+    {
+        _productosAdicionales.Remove(item);
+    }
+
+    private async Task Guardar()
+    {
+        if (_empleado is null)
+        {
+            Snackbar.Add("Primero busque un trabajador.", Severity.Warning);
+            return;
+        }
+
+        if (!_registraMenu && !TodosLosAdicionales.Any())
+        {
+            Snackbar.Add("Debe registrar menú o al menos un adicional.", Severity.Warning);
+            return;
+        }
+
+        foreach (var adicional in TodosLosAdicionales)
+        {
+            if (string.IsNullOrWhiteSpace(adicional.Descripcion))
+            {
+                Snackbar.Add("Todos los adicionales deben tener descripción.", Severity.Warning);
+                return;
+            }
+
+            if (adicional.Precio <= 0)
+            {
+                Snackbar.Add("Todos los adicionales deben tener precio mayor a cero.", Severity.Warning);
+                return;
+            }
+        }
+
+        _saving = true;
+
+        if (!AuthState.EstaAutenticado || AuthState.UsuarioActual is null)
+        {
+            Snackbar.Add("Debe iniciar sesión para registrar consumos.", Severity.Warning);
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        var input = new RegistroDiarioInputDto
+        {
+            EmpleadoId = _empleado.Id,
+            Fecha = _fecha,
+            TipoServicio = _tipoServicio,
+            RegistraMenu = _registraMenu,
+            TipoPagoMenuSuspendido = _empleado.Estado == EstadoEmpleado.Suspendido
+                ? _tipoPagoMenuSuspendido
+                : null,
+            FormaPagoDirectoMenu = _empleado.Estado == EstadoEmpleado.Suspendido &&
+                           _tipoPagoMenuSuspendido == TipoPagoMenu.PagoDirecto
+                ? _formaPagoDirectoMenu
+                : null,
+            Adicionales = TodosLosAdicionales.ToList(),
+            UsuarioRegistroId = AuthState.UsuarioActual.Id,
+            UsuarioRegistroNombre = AuthState.UsuarioActual.NombreCompleto
+        };
+
+        var result = await RegistroDiarioService.RegistrarAsync(input);
+
+        if (result.Success)
+        {
+            Snackbar.Add(result.Message, Severity.Success);
+            Limpiar();
+        }
+        else
+        {
+            Snackbar.Add(result.Message, Severity.Warning);
+        }
+
+        _saving = false;
+    }
+
+    private void Limpiar()
+    {
+        _dni = string.Empty;
+        _empleado = null;
+        _registraMenu = false;
+        _menusExtra = new List<ConsumoAdicionalInputDto>();
+        _productosAdicionales = new List<ConsumoAdicionalInputDto>();
+        _consumosDelDia = new List<ConsumoDiaDto>();
+        _saving = false;
+    }
+
+
+
+    private async Task AnularConsumoDia(ConsumoDiaDto item)
+    {
+        if (!AuthState.EstaAutenticado || AuthState.UsuarioActual is null)
+        {
+            Snackbar.Add("Debe iniciar sesión para anular consumos.", Severity.Warning);
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        var parameters = new DialogParameters
+        {
+            ["Consumo"] = item
+        };
+
+        var options = new DialogOptions
+        {
+            CloseButton = true,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        var dialog = await DialogService.ShowAsync<RegistroAnularConsumoDialog>(
+            "Anular consumo",
+            parameters,
+            options);
+
+        var result = await dialog.Result;
+
+        if (result is null || result.Canceled)
+            return;
+
+        if (result.Data is not RegistroAnularConsumoDialog.AnulacionConsumoDialogResult data)
+        {
+            Snackbar.Add("No se pudo obtener el motivo de anulación.", Severity.Warning);
+            return;
+        }
+
+        var motivoTexto = ObtenerTextoMotivoAnulacion(data.Motivo);
+
+        if (!string.IsNullOrWhiteSpace(data.Observacion))
+        {
+            motivoTexto = $"{motivoTexto}: {data.Observacion.Trim()}";
+        }
+
+        var response = await RegistroDiarioService.AnularConsumoDiaAsync(
+            item.Origen,
+            item.Id,
+            AuthState.UsuarioActual.Id,
+            AuthState.UsuarioActual.NombreCompleto,
+            motivoTexto);
+
+        if (response.Success)
+        {
+            Snackbar.Add(response.Message, Severity.Success);
+
+            if (_empleado is not null)
+            {
+                _consumosDelDia = await RegistroDiarioService
+                    .GetConsumosDelDiaPorEmpleadoAsync(_empleado.Id, DateTime.Today);
+            }
+        }
+        else
+        {
+            Snackbar.Add(response.Message, Severity.Warning);
+        }
+    }
+
+    private static string ObtenerTextoMotivoAnulacion(MotivoAnulacionConsumo motivo)
+    {
+        return motivo switch
+        {
+            MotivoAnulacionConsumo.ErrorRegistro => "Error de registro",
+            MotivoAnulacionConsumo.TrabajadorEquivocado => "Trabajador equivocado",
+            MotivoAnulacionConsumo.TipoServicioEquivocado => "Tipo de servicio equivocado",
+            MotivoAnulacionConsumo.FormaPagoEquivocada => "Forma de pago equivocada",
+            MotivoAnulacionConsumo.ProductoEquivocado => "Producto equivocado",
+            MotivoAnulacionConsumo.Duplicado => "Registro duplicado",
+            MotivoAnulacionConsumo.NoConsumio => "El trabajador no consumió",
+            MotivoAnulacionConsumo.Otro => "Otro",
+            _ => "Motivo no especificado"
+        };
+    }
+}

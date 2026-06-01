@@ -1,0 +1,56 @@
+﻿@using Menu.DTOs.Reportes
+
+<MudPaper Class="pa-3 rounded-lg" Elevation="1">
+
+    <MudStack Spacing="3">
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.FilterAlt" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">Filtros</MudText>
+        </MudStack>
+
+        <MudGrid Spacing="3">
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudDatePicker Label="Fecha desde"
+                               @bind-Date="Filtro.FechaDesde"
+                               DateFormat="dd/MM/yyyy"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudDatePicker Label="Fecha hasta"
+                               @bind-Date="Filtro.FechaHasta"
+                               DateFormat="dd/MM/yyyy"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="2" Class="d-flex align-center">
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           FullWidth="true"
+                           Disabled="Cargando"
+                           StartIcon="@Icons.Material.Filled.Search"
+                           OnClick="OnBuscar">
+                    Consultar
+                </MudButton>
+            </MudItem>
+
+        </MudGrid>
+
+    </MudStack>
+
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired]
+    public ReporteFiltroDto Filtro { get; set; } = new();
+
+    [Parameter]
+    public bool Cargando { get; set; }
+
+    [Parameter]
+    public EventCallback OnBuscar { get; set; }
+}

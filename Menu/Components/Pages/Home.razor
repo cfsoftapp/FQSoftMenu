@@ -1,0 +1,160 @@
+﻿@page "/"
+
+@using Menu.Components.Shared
+@using Menu.DTOs.Reportes
+@using Menu.Services
+@using Menu.Services.Reportes
+@using Menu.Security
+
+@inject AuthStateService AuthState
+@inject IReporteService ReporteService
+
+
+<RequirePermission Permisos="new[] { Permisos.DashboardVer }">
+
+<PageTitle>FQSoft Menú</PageTitle>
+
+
+<MudStack Spacing="3">
+
+    <MudPaper Class="pa-4" Elevation="0">
+        <MudText Typo="Typo.h4" Class="fw-bold">
+            Dashboard
+        </MudText>
+
+        <MudText Typo="Typo.body1" Color="Color.Secondary">
+            Resumen diario del comedor y control de consumos del personal.
+        </MudText>
+    </MudPaper>
+
+    <MudPaper Class="pa-3 mb-3" Elevation="1">
+        <MudGrid Spacing="2">
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudDatePicker @bind-Date="_fechaDashboard"
+                               Label="Fecha"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               DateFormat="dd/MM/yyyy"
+                               Class="w-100" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="2" Class="d-flex align-center">
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Search"
+                           OnClick="CargarDashboard"
+                           Size="Size.Medium"
+                           FullWidth="true"
+                           Class="dashboard-filter-button">
+                    Consultar
+                </MudButton>
+            </MudItem>
+
+        </MudGrid>
+    </MudPaper>
+
+    <MudGrid Spacing="3">
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Class="pa-4 rounded-lg" Elevation="2">
+                <MudStack Spacing="1">
+                    <MudIcon Icon="@Icons.Material.Filled.RestaurantMenu" Color="Color.Primary" />
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Menús del día</MudText>
+                    <MudText Typo="Typo.h4">@TotalMenusDia</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Class="pa-4 rounded-lg" Elevation="2">
+                <MudStack Spacing="1">
+                    <MudIcon Icon="@Icons.Material.Filled.Business" Color="Color.Success" />
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Pago empresa</MudText>
+                        <MudText Typo="Typo.h4">@((_resumen?.TotalEmpresa ?? 0).ToString("C2", _culture))</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Class="pa-4 rounded-lg" Elevation="2">
+                <MudStack Spacing="1">
+                    <MudIcon Icon="@Icons.Material.Filled.Badge" Color="Color.Warning" />
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Descuento planilla</MudText>
+                        <MudText Typo="Typo.h4">@((_resumen?.TotalPlanilla ?? 0).ToString("C2", _culture))</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Class="pa-4 rounded-lg" Elevation="2">
+                <MudStack Spacing="1">
+                    <MudIcon Icon="@Icons.Material.Filled.Payments" Color="Color.Error" />
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Pendiente de cobro</MudText>
+                        <MudText Typo="Typo.h4">@((_resumen?.TotalPendienteCredito ?? 0).ToString("C2", _culture))</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudPaper Class="pa-4 rounded-lg" Elevation="1">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+            <div>
+                <MudText Typo="Typo.h6">Registro rápido</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Ingresa el DNI del trabajador para registrar menú o consumos adicionales.
+                </MudText>
+            </div>
+
+                @if (AuthState.TienePermiso(Permisos.RegistroDiarioVer))
+                {
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               Href="/registro-diario"
+                               StartIcon="@Icons.Material.Filled.PointOfSale">
+                        Ir a registro
+                    </MudButton>
+                }
+        </MudStack>
+    </MudPaper>
+
+</MudStack>
+
+</RequirePermission>
+
+@code {
+    private readonly System.Globalization.CultureInfo _culture = new("es-PE");
+    private DateTime? _fechaDashboard = DateTime.Today;
+
+    private ReporteResumenDto? _resumen;
+    private bool _loading;
+
+    private int TotalMenusDia => _resumen?.TotalMenus ?? 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDashboard();
+    }
+
+    private async Task CargarDashboard()
+    {
+        if (_fechaDashboard is null || _loading)
+            return;
+
+        try
+        {
+            _loading = true;
+
+            var filtro = new ReporteFiltroDto
+            {
+                FechaDesde = _fechaDashboard.Value,
+                FechaHasta = _fechaDashboard.Value
+            };
+
+            _resumen = await ReporteService.ObtenerResumenAsync(filtro);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

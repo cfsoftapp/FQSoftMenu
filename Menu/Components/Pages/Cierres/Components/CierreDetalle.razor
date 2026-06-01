@@ -1,0 +1,45 @@
+@using Menu.DTOs.Cierres
+
+<MudPaper Class="pa-3 mt-2 mb-2" Elevation="0">
+    <MudTable Items="Detalles.Where(x => x.Cantidad > 0 || x.Importe > 0)"
+              Dense="true"
+              Hover="true"
+              Breakpoint="Breakpoint.Sm">
+        <HeaderContent>
+            <MudTh>Tipo</MudTh>
+            <MudTh>Concepto</MudTh>
+            <MudTh Style="text-align:center">Cantidad</MudTh>
+            <MudTh Style="text-align:right">Importe</MudTh>
+        </HeaderContent>
+
+        <RowTemplate>
+            <MudTd DataLabel="Tipo">@context.Tipo</MudTd>
+            <MudTd DataLabel="Concepto">@context.Concepto</MudTd>
+            <MudTd DataLabel="Cantidad" Style="text-align:center">@MostrarCantidad(context.Cantidad)</MudTd>
+            <MudTd DataLabel="Importe" Style="text-align:right">@MostrarMonto(context.Importe)</MudTd>
+        </RowTemplate>
+
+        <NoRecordsContent>
+            <MudText Class="pa-3" Color="Color.Secondary">
+                No hay detalle para esta fecha.
+            </MudText>
+        </NoRecordsContent>
+    </MudTable>
+</MudPaper>
+
+@code {
+    private readonly System.Globalization.CultureInfo _culture = new("es-PE");
+
+    [Parameter, EditorRequired]
+    public List<CierreDetalleDto> Detalles { get; set; } = new();
+
+    private static string MostrarCantidad(int cantidad)
+    {
+        return cantidad == 0 ? "-" : cantidad.ToString();
+    }
+
+    private string MostrarMonto(decimal monto)
+    {
+        return monto == 0 ? "-" : monto.ToString("C", _culture);
+    }
+}

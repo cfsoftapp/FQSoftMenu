@@ -1,0 +1,50 @@
+﻿@using Menu.DTOs.Reportes
+
+<ReporteCardResumen Titulo="Resumen de crédito pendiente"
+                    Subtitulo="Consumos aún no cobrados."
+                    Icono="@Icons.Material.Filled.PendingActions"
+                    ColorIcono="Color.Error">
+
+    <MudGrid Spacing="2">
+
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-2 rounded-lg" Elevation="0" Outlined="true">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Menú principal</MudText>
+                <MudText Typo="Typo.subtitle2">@Resumen.PendienteMenuPrincipal.ToString("C")</MudText>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-2 rounded-lg" Elevation="0" Outlined="true">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Menú extra</MudText>
+                <MudText Typo="Typo.subtitle2">@Resumen.PendienteMenuExtra.ToString("C")</MudText>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-2 rounded-lg" Elevation="0" Outlined="true">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Producto adicional</MudText>
+                <MudText Typo="Typo.subtitle2">@Resumen.PendienteProducto.ToString("C")</MudText>
+            </MudPaper>
+        </MudItem>
+
+    </MudGrid>
+
+    <MudDivider Class="my-2" />
+
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Total pendiente crédito
+        </MudText>
+
+        <MudText Typo="Typo.h6" Color="Color.Error">
+            @Resumen.TotalPendienteCredito.ToString("C")
+        </MudText>
+    </MudStack>
+
+</ReporteCardResumen>
+
+@code {
+    [Parameter, EditorRequired]
+    public ReporteResumenDto Resumen { get; set; } = new();
+}

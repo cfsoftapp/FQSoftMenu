@@ -1,0 +1,127 @@
+﻿@using Menu.DTOs.RegistroDiario
+@using Menu.Enums
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="3">
+
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
+                Esta acción anulará el consumo seleccionado. El registro quedará guardado para trazabilidad.
+            </MudAlert>
+
+            <MudPaper Class="pa-3" Elevation="0" Outlined="true">
+                <MudText Typo="Typo.subtitle2">@Consumo.Tipo</MudText>
+                <MudText Typo="Typo.body2">@Consumo.Descripcion</MudText>
+
+                <MudText Typo="Typo.body2">
+                    Importe: <b>@Consumo.Importe.ToString("C")</b>
+                </MudText>
+
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    Hora registro: @Consumo.FechaRegistro.ToString("HH:mm")
+                </MudText>
+            </MudPaper>
+
+            <MudSelect T="MotivoAnulacionConsumo?"
+                       @bind-Value="_motivo"
+                       Label="Motivo de anulación"
+                       Variant="Variant.Outlined"
+                       Required="true">
+
+                <MudSelectItem T="MotivoAnulacionConsumo?" Value="@MotivoAnulacionConsumo.ErrorRegistro">
+                    Error de registro
+                </MudSelectItem>
+
+                <MudSelectItem T="MotivoAnulacionConsumo?" Value="@MotivoAnulacionConsumo.TrabajadorEquivocado">
+                    Trabajador equivocado
+                </MudSelectItem>
+
+                <MudSelectItem T="MotivoAnulacionConsumo?" Value="@MotivoAnulacionConsumo.TipoServicioEquivocado">
+                    Tipo de servicio equivocado
+                </MudSelectItem>
+
+                <MudSelectItem T="MotivoAnulacionConsumo?" Value="@MotivoAnulacionConsumo.FormaPagoEquivocada">
+                    Forma de pago equivocada
+                </MudSelectItem>
+
+                <MudSelectItem T="MotivoAnulacionConsumo?" Value="@MotivoAnulacionConsumo.ProductoEquivocado">
+                    Producto equivocado
+                </MudSelectItem>
+
+                <MudSelectItem T="MotivoAnulacionConsumo?" Value="@MotivoAnulacionConsumo.Duplicado">
+                    Registro duplicado
+                </MudSelectItem>
+
+                <MudSelectItem T="MotivoAnulacionConsumo?" Value="@MotivoAnulacionConsumo.NoConsumio">
+                    El trabajador no consumió
+                </MudSelectItem>
+
+                <MudSelectItem T="MotivoAnulacionConsumo?" Value="@MotivoAnulacionConsumo.Otro">
+                    Otro
+                </MudSelectItem>
+
+            </MudSelect>
+
+            <MudTextField @bind-Value="_observacion"
+                          Label="@(_motivo == MotivoAnulacionConsumo.Otro ? "Detalle del motivo" : "Observación opcional")"
+                          Variant="Variant.Outlined"
+                          Lines="2"
+                          MaxLength="150"
+                          Immediate="true" />
+
+        </MudStack>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Text"
+                   Color="Color.Default"
+                   OnClick="Cancelar">
+            Cancelar
+        </MudButton>
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Error"
+                   StartIcon="@Icons.Material.Filled.Cancel"
+                   Disabled="@(!PuedeConfirmar)"
+                   OnClick="Confirmar">
+            Anular consumo
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public ConsumoDiaDto Consumo { get; set; } = new();
+
+    private MotivoAnulacionConsumo? _motivo;
+    private string _observacion = string.Empty;
+
+    private bool PuedeConfirmar =>
+        _motivo.HasValue &&
+        (_motivo != MotivoAnulacionConsumo.Otro || !string.IsNullOrWhiteSpace(_observacion));
+
+    private void Cancelar()
+    {
+        MudDialog.Cancel();
+    }
+
+    private void Confirmar()
+    {
+        var resultado = new AnulacionConsumoDialogResult
+        {
+            Motivo = _motivo!.Value,
+            Observacion = _observacion.Trim()
+        };
+
+        MudDialog.Close(DialogResult.Ok(resultado));
+    }
+
+    public class AnulacionConsumoDialogResult
+    {
+        public MotivoAnulacionConsumo Motivo { get; set; }
+        public string Observacion { get; set; } = string.Empty;
+    }
+}

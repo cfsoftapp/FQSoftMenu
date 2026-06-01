@@ -1,0 +1,117 @@
+﻿@using Menu.Services
+
+@inject AuthStateService AuthState
+@inject NavigationManager Navigation
+@implements IDisposable
+
+@inherits LayoutComponentBase
+
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Color="Color.Primary">
+
+         @if (AuthState.EstaAutenticado)
+        {
+
+        <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                       Color="Color.Inherit"
+                       Edge="Edge.Start"
+                       OnClick="@DrawerToggle" />
+
+        }
+
+        <MudText Typo="Typo.h6" Class="ml-3">
+            FQSoft Menú
+        </MudText>
+
+        <MudSpacer />
+
+        <MudSpacer />
+
+        @if (AuthState.EstaAutenticado)
+        {
+            <MudHidden Breakpoint="Breakpoint.SmAndDown">
+                <MudChip T="string"
+                         Color="Color.Info"
+                         Variant="Variant.Outlined"
+                         Size="Size.Small"
+                         Icon="@Icons.Material.Filled.Person">
+                    @AuthState.UsuarioActual?.NombreCompleto - @AuthState.UsuarioActual?.RolNombre
+                </MudChip>
+            </MudHidden>
+
+            <MudMenu Icon="@Icons.Material.Filled.MoreVert"
+                     Color="Color.Inherit"
+                     Dense="true">
+                <MudMenuItem Icon="@Icons.Material.Filled.Logout"
+                             OnClick="CerrarSesion">
+                    Cerrar sesión
+                </MudMenuItem>
+            </MudMenu>
+        }
+        else
+        {
+            <MudButton Variant="Variant.Text"
+                       Color="Color.Inherit"
+                       StartIcon="@Icons.Material.Filled.Login"
+                       OnClick="@(() => Navigation.NavigateTo("/login"))">
+                Ingresar
+            </MudButton>
+        }
+    </MudAppBar>
+
+     @if (AuthState.EstaAutenticado)
+        {
+
+        <MudDrawer @bind-Open="_drawerOpen"
+                   ClipMode="DrawerClipMode.Always"
+                   Elevation="2"
+                   Variant="DrawerVariant.Responsive"
+                   Breakpoint="Breakpoint.Md">
+
+            <NavMenu />
+
+        </MudDrawer>
+
+        }
+
+    <MudMainContent Class="pt-16 pa-4">
+        <MudContainer MaxWidth="MaxWidth.ExtraLarge">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+
+    protected override void OnInitialized()
+    {
+        AuthState.OnChange += RefreshLayout;
+    }
+
+    private void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    private void CerrarSesion()
+    {
+        AuthState.Logout();
+        Navigation.NavigateTo("/login");
+    }
+
+    private void RefreshLayout()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        AuthState.OnChange -= RefreshLayout;
+    }
+}

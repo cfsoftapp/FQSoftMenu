@@ -1,0 +1,35 @@
+﻿@using Menu.Services
+@inject AuthStateService AuthState
+@inject NavigationManager Navigation
+
+@if (PuedeVer)
+{
+    @ChildContent
+}
+else if (AuthState.EstaAutenticado)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="ma-4">
+        No tienes permisos para acceder a esta página.
+    </MudAlert>
+}
+
+@code {
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    public string[] Permisos { get; set; } = Array.Empty<string>();
+
+    private bool PuedeVer =>
+        AuthState.EstaAutenticado &&
+        AuthState.UsuarioActual is not null &&
+        Permisos.Any(p => AuthState.UsuarioActual.Permisos.Contains(p));
+
+    protected override void OnInitialized()
+    {
+        if (!AuthState.EstaAutenticado)
+        {
+            Navigation.NavigateTo("/login");
+        }
+    }
+}

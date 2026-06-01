@@ -1,0 +1,100 @@
+﻿<MudPaper Class="pa-3" Elevation="0" Outlined="true">
+    <MudStack Spacing="2">
+
+        <MudText Typo="Typo.subtitle1">Menú del trabajador</MudText>
+
+        <MudGrid Spacing="2">
+
+            <MudItem xs="12" md="4">
+                <MudCheckBox T="bool"
+                             Value="@RegistraMenu"
+                             ValueChanged="RegistraMenuChanged"
+                             Label="El trabajador consumió menú principal"
+                             Color="Color.Primary" />
+            </MudItem>
+
+            @if (Empleado is not null &&
+                 Empleado.Estado == EstadoEmpleado.Suspendido &&
+                 RegistraMenu)
+            {
+                <MudItem xs="12" md="4">
+                    <MudSelect T="TipoPagoMenu"
+                               Value="@TipoPagoMenuSuspendido"
+                               ValueChanged="TipoPagoMenuSuspendidoChanged"
+                               Label="Responsable de pago del menú"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense">
+                        <MudSelectItem Value="TipoPagoMenu.DescuentoPlanilla">Descuento planilla</MudSelectItem>
+                        <MudSelectItem Value="TipoPagoMenu.PagoDirecto">Pago directo</MudSelectItem>
+                        <MudSelectItem Value="TipoPagoMenu.CreditoComedor">Crédito comedor</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+
+                @if (TipoPagoMenuSuspendido == TipoPagoMenu.PagoDirecto)
+                {
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="FormaPago"
+                                   Value="@FormaPagoDirectoMenu"
+                                   ValueChanged="FormaPagoDirectoMenuChanged"
+                                   Label="Medio de pago"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense">
+                            <MudSelectItem Value="FormaPago.Efectivo">Efectivo</MudSelectItem>
+                            <MudSelectItem Value="FormaPago.Yape">Yape</MudSelectItem>
+                            <MudSelectItem Value="FormaPago.Plin">Plin</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                }
+            }
+            else
+            {
+                <MudItem xs="12" md="4">
+                    <MudTextField Value="@TipoPagoTexto"
+                                  Label="Pago"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
+                                  Disabled="true" />
+                </MudItem>
+            }
+
+            <MudItem xs="12" md="4">
+                <MudTextField Value="@PrecioTexto"
+                              Label="Precio"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Disabled="true" />
+            </MudItem>
+
+        </MudGrid>
+
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter]
+    public Empleado? Empleado { get; set; }
+
+    [Parameter]
+    public bool RegistraMenu { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> RegistraMenuChanged { get; set; }
+
+    [Parameter]
+    public TipoPagoMenu TipoPagoMenuSuspendido { get; set; }
+
+    [Parameter]
+    public EventCallback<TipoPagoMenu> TipoPagoMenuSuspendidoChanged { get; set; }
+
+    [Parameter]
+    public FormaPago FormaPagoDirectoMenu { get; set; }
+
+    [Parameter]
+    public EventCallback<FormaPago> FormaPagoDirectoMenuChanged { get; set; }
+
+    [Parameter]
+    public string TipoPagoTexto { get; set; } = string.Empty;
+
+    [Parameter]
+    public string PrecioTexto { get; set; } = string.Empty;
+}

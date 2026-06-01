@@ -1,0 +1,173 @@
+@page "/cierres"
+
+@using Menu.Components.Pages.Cierres.Components
+@using Menu.Components.Shared
+@using Menu.DTOs.Cierres
+@using Menu.Enums
+@using Menu.Security
+@using Menu.Services.Cierres
+@using Menu.Services
+
+@inject AuthStateService AuthState
+@inject NavigationManager Navigation
+
+<RequirePermission Permisos="new[] { Permisos.CierresVer }">
+
+<PageTitle>Cierres</PageTitle>
+
+<MudStack Spacing="3">
+    <MudStack Spacing="1">
+        <MudText Typo="Typo.h4">Cierres</MudText>
+        <MudText Typo="Typo.body1" Color="Color.Secondary">
+            Consolidado operativo y financiero por rango de fechas.
+        </MudText>
+    </MudStack>
+
+    <CierreFiltros Filtro="_filtro"
+                   Cargando="_cargando"
+                   OnBuscar="BuscarAsync" />
+
+    @if (_cargando)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+    }
+
+    <CierreResumen Resumen="_resumen" />
+
+    <MudPaper Class="pa-4 rounded-lg" Elevation="1">
+        <MudStack Spacing="3">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                <div>
+                    <MudText Typo="Typo.h6">Liquidacion con proveedor</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Incluye menus de personal activo y menus a descuento planilla. Las excepciones de planilla quedan para revision/concesionario.
+                    </MudText>
+                </div>
+
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Description"
+                           Disabled="_cargandoBorrador"
+                           OnClick="GenerarBorradorProveedorAsync">
+                    Generar borrador
+                </MudButton>
+            </MudStack>
+
+            @if (_borradorProveedor is not null)
+            {
+                @if (_borradorProveedor.YaConfirmado)
+                {
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                        Ya existe una liquidacion confirmada para este rango. No se puede confirmar otro cierre igual.
+                    </MudAlert>
+                }
+
+                <MudGrid Spacing="3">
+                    <MudItem xs="12" md="3">
+                        <MudPaper Class="pa-3 h-100" Elevation="0">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Personal activo</MudText>
+                            <MudText Typo="Typo.h6">@_borradorProveedor.TotalPersonalActivo.ToString("C", _culture)</MudText>
+                            <MudText Typo="Typo.caption">@_borradorProveedor.TotalMenusActivos menu(s)</MudText>
+                        </MudPaper>
+                    </MudItem>
+
+                    <MudItem xs="12" md="3">
+                        <MudPaper Class="pa-3 h-100" Elevation="0">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Planilla a proveedor</MudText>
+                            <MudText Typo="Typo.h6">@_borradorProveedor.TotalPlanilla.ToString("C", _culture)</MudText>
+                            <MudText Typo="Typo.caption">@_borradorProveedor.TotalMenusPlanilla menu(s)</MudText>
+                        </MudPaper>
+                    </MudItem>
+
+                    <MudItem xs="12" md="3">
+                        <MudPaper Class="pa-3 h-100" Elevation="0">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Revision/concesionario</MudText>
+                            <MudText Typo="Typo.h6">@_borradorProveedor.TotalExcluidoRevision.ToString("C", _culture)</MudText>
+                            <MudText Typo="Typo.caption">@_borradorProveedor.TotalMenusPlanillaExcluidos excepcion(es)</MudText>
+                        </MudPaper>
+                    </MudItem>
+
+                    <MudItem xs="12" md="3">
+                        <MudPaper Class="pa-3 h-100" Elevation="0">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Total a liquidar</MudText>
+                            <MudText Typo="Typo.h6">@_borradorProveedor.TotalLiquidarProveedor.ToString("C", _culture)</MudText>
+                            <MudText Typo="Typo.caption">Proveedor</MudText>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+
+                <MudTable Items="_borradorProveedor.Items"
+                          Dense="true"
+                          Hover="true"
+                          Bordered="true"
+                          Breakpoint="Breakpoint.Sm">
+                    <HeaderContent>
+                        <MudTh>Fecha</MudTh>
+                        <MudTh>DNI</MudTh>
+                        <MudTh>Trabajador</MudTh>
+                        <MudTh>Servicio</MudTh>
+                        <MudTh>Origen</MudTh>
+                        <MudTh Style="text-align:right">Importe</MudTh>
+                        <MudTh>Excepcion</MudTh>
+                        <MudTh>Motivo</MudTh>
+                    </HeaderContent>
+
+                    <RowTemplate>
+                        <MudTd DataLabel="Fecha">@context.Fecha.ToString("dd/MM/yyyy")</MudTd>
+                        <MudTd DataLabel="DNI">@context.Dni</MudTd>
+                        <MudTd DataLabel="Trabajador">@context.EmpleadoNombre</MudTd>
+                        <MudTd DataLabel="Servicio">@context.TipoServicio</MudTd>
+                        <MudTd DataLabel="Origen">
+                            <MudChip T="string"
+                                     Size="Size.Small"
+                                     Color="@(context.TipoPagoMenu == TipoPagoMenu.Empresa ? Color.Success : Color.Warning)"
+                                     Variant="Variant.Outlined">
+                                @(context.TipoPagoMenu == TipoPagoMenu.Empresa ? "Activo" : "Planilla")
+                            </MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="Importe" Style="text-align:right">@context.Importe.ToString("C", _culture)</MudTd>
+                        <MudTd DataLabel="Excepcion">
+                            <MudCheckBox T="bool"
+                                         Value="@context.ExcluirDeProveedor"
+                                         ValueChanged="@((bool value) => CambiarExcepcionPlanilla(context, value))"
+                                         Disabled="@(!context.EsPlanilla || _borradorProveedor.YaConfirmado)"
+                                         Color="Color.Warning" />
+                        </MudTd>
+                        <MudTd DataLabel="Motivo">
+                            <MudTextField @bind-Value="context.MotivoExclusion"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          Disabled="@(!context.ExcluirDeProveedor || _borradorProveedor.YaConfirmado)"
+                                          Placeholder="Pagara directo / revisar" />
+                        </MudTd>
+                    </RowTemplate>
+
+                    <NoRecordsContent>
+                        <MudText Class="pa-4" Color="Color.Secondary">
+                            No hay menus para liquidar con proveedor en el rango seleccionado.
+                        </MudText>
+                    </NoRecordsContent>
+                </MudTable>
+
+                <MudTextField @bind-Value="_observacionConfirmacion"
+                              Label="Observacion de confirmacion"
+                              Variant="Variant.Outlined"
+                              Lines="2" />
+
+                <MudStack Row="true" Justify="Justify.FlexEnd">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Success"
+                               StartIcon="@Icons.Material.Filled.CheckCircle"
+                               Disabled="@(_confirmandoProveedor || _borradorProveedor.YaConfirmado || !_borradorProveedor.Items.Any())"
+                               OnClick="ConfirmarLiquidacionProveedorAsync">
+                        Confirmar cierre aprobado
+                    </MudButton>
+                </MudStack>
+            }
+        </MudStack>
+    </MudPaper>
+
+    <CierreListado Cierres="_cierres" Cargando="_cargando" />
+</MudStack>
+
+</RequirePermission>

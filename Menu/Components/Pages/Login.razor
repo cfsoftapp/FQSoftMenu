@@ -1,0 +1,130 @@
+﻿@page "/login"
+
+@using Menu.DTOs
+@using Menu.Services
+
+@inject UsuarioService UsuarioService
+@inject AuthStateService AuthState
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitle>Login</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-8">
+
+    <MudPaper Class="pa-6" Elevation="3">
+
+        <MudStack Spacing="4">
+
+            <div class="text-center">
+                <MudIcon Icon="@Icons.Material.Filled.RestaurantMenu"
+                         Color="Color.Primary"
+                         Size="Size.Large" />
+
+                <MudText Typo="Typo.h4" Class="mt-2">
+                    FQSoft Menú
+                </MudText>
+
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Inicia sesión para registrar consumos del comedor.
+                </MudText>
+            </div>
+
+            <MudForm @ref="_form">
+                <MudTextField @bind-Value="_input.NombreUsuario"
+                              Label="Usuario"
+                              Variant="Variant.Outlined"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Person"
+                              Required="true"
+                              Immediate="true" />
+
+                <MudTextField @bind-Value="_input.Clave"
+                              Label="Clave"
+                              Variant="Variant.Outlined"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Lock"
+                              InputType="InputType.Password"
+                              Required="true"
+                              Immediate="true"
+                              Class="mt-3"
+                              OnKeyDown="OnKeyDown" />
+            </MudForm>
+
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Login"
+                       OnClick="Ingresar"
+                       Disabled="_loading"
+                       FullWidth="true">
+                @if (_loading)
+                {
+                    <MudProgressCircular Size="Size.Small"
+                                         Indeterminate="true"
+                                         Class="mr-2" />
+                    <span>Ingresando...</span>
+                }
+                else
+                {
+                    <span>Ingresar</span>
+                }
+            </MudButton>
+
+        </MudStack>
+
+    </MudPaper>
+
+</MudContainer>
+
+@code {
+    private MudForm? _form;
+    private LoginInputDto _input = new();
+    private bool _loading;
+
+    private async Task OnKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter" && !_loading)
+            await Ingresar();
+    }
+
+    private async Task Ingresar()
+    {
+        if (_loading)
+            return;
+
+        try
+        {
+            if (_form is not null)
+            {
+                await _form.ValidateAsync();
+
+                if (!_form.IsValid)
+                    return;
+            }
+
+            _loading = true;
+
+            var usuario = await UsuarioService.LoginAsync(_input);
+
+            if (usuario is null)
+            {
+                Snackbar.Add("Usuario o clave incorrectos.", Severity.Warning);
+                return;
+            }
+
+            AuthState.SetUsuario(usuario);
+
+            Snackbar.Add($"Bienvenido, {usuario.NombreCompleto}.", Severity.Success);
+
+            Navigation.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error al iniciar sesión: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

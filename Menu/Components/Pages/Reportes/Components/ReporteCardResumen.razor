@@ -1,0 +1,50 @@
+﻿<MudPaper Class="pa-3 rounded-lg h-100 reporte-card-resumen" Elevation="1">
+
+    <MudStack Row="true"
+              AlignItems="AlignItems.Center"
+              Spacing="2"
+              Class="mb-2">
+
+        <MudAvatar Size="Size.Small"
+                   Color="@ColorIcono"
+                   Variant="Variant.Filled">
+            <MudIcon Icon="@Icono" Size="Size.Small" />
+        </MudAvatar>
+
+        <div>
+            <MudText Typo="Typo.subtitle1" Class="fw-bold">
+                @Titulo
+            </MudText>
+
+            @if (!string.IsNullOrWhiteSpace(Subtitulo))
+            {
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    @Subtitulo
+                </MudText>
+            }
+        </div>
+
+    </MudStack>
+
+    <MudDivider Class="my-2" />
+
+    @ChildContent
+
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Titulo { get; set; } = string.Empty;
+
+    [Parameter]
+    public string? Subtitulo { get; set; }
+
+    [Parameter, EditorRequired]
+    public string Icono { get; set; } = string.Empty;
+
+    [Parameter]
+    public Color ColorIcono { get; set; } = Color.Primary;
+
+    [Parameter, EditorRequired]
+    public RenderFragment ChildContent { get; set; } = default!;
+}

@@ -1,0 +1,245 @@
+﻿@using Menu.DTOs.Reportes
+
+<MudPaper Class="pa-3 rounded-lg" Elevation="1">
+
+    <MudStack Row="true"
+              AlignItems="AlignItems.Center"
+              Justify="Justify.SpaceBetween"
+              Class="mb-2">
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.Groups" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">Detalle por empleado</MudText>
+        </MudStack>
+
+        <MudChip T="string"
+                 Color="Color.Primary"
+                 Variant="Variant.Outlined"
+                 Size="Size.Small">
+            @EmpleadosFiltrados.Count() trabajador(es)
+        </MudChip>
+
+    </MudStack>
+
+    <MudTextField @bind-Value="_buscarEmpleado"
+                  Label="Buscar por DNI o nombre..."
+                  Variant="Variant.Outlined"
+                  Margin="Margin.Dense"
+                  Immediate="true"
+                  Adornment="Adornment.Start"
+                  AdornmentIcon="@Icons.Material.Filled.Search"
+                  Class="mt-2 mb-3" />
+
+    <MudTable Items="EmpleadosFiltrados"
+              Hover="true"
+              Dense="true"
+              Bordered="true"
+              Striped="true"
+              Breakpoint="Breakpoint.Sm">
+
+        <HeaderContent>
+            <MudTh></MudTh>
+            <MudTh>DNI</MudTh>
+            <MudTh>Trabajador</MudTh>
+            <MudTh>Tipo trabajador</MudTh>
+            <MudTh>Estado</MudTh>
+            <MudTh Style="text-align:center">Alm.</MudTh>
+            <MudTh Style="text-align:center">Cena</MudTh>
+            <MudTh Style="text-align:right">Empresa</MudTh>
+            <MudTh Style="text-align:right">Planilla</MudTh>
+            <MudTh Style="text-align:right">Cobrado</MudTh>
+            <MudTh Style="text-align:right">Extras</MudTh>
+            <MudTh Style="text-align:right">Pendiente</MudTh>
+            <MudTh Style="text-align:right">Total</MudTh>
+        </HeaderContent>
+
+        <RowTemplate Context="empleado">
+            <MudTd>
+                <MudIconButton Icon="@GetExpandIcon(empleado)"
+                               Size="Size.Small"
+                               OnClick="@(() => ToggleEmpleado(empleado.TrabajadorId))" />
+            </MudTd>
+
+            <MudTd DataLabel="DNI">@empleado.Dni</MudTd>
+
+            <MudTd DataLabel="Trabajador">
+                <MudText Typo="Typo.body2" Class="fw-bold">
+                    @empleado.Trabajador
+                </MudText>
+            </MudTd>
+
+            <MudTd DataLabel="Tipo trabajador">
+                <MudChip T="string"
+                         Size="Size.Small"
+                         Color="Color.Info"
+                         Variant="Variant.Outlined">
+                    @empleado.Categoria
+                </MudChip>
+            </MudTd>
+
+            <MudTd DataLabel="Estado">
+                <MudChip T="string"
+                         Size="Size.Small"
+                         Color="@GetEstadoColor(empleado.Estado)"
+                         Variant="Variant.Filled">
+                    @empleado.Estado
+                </MudChip>
+            </MudTd>
+
+            <MudTd DataLabel="Almuerzos" Style="text-align:center">
+                @MostrarCantidad(empleado.TotalAlmuerzos)
+            </MudTd>
+
+            <MudTd DataLabel="Cenas" Style="text-align:center">
+                @MostrarCantidad(empleado.TotalCenas)
+            </MudTd>
+
+            <MudTd DataLabel="Empresa" Style="text-align:right">
+                @MostrarMonto(empleado.TotalEmpresa)
+            </MudTd>
+
+            <MudTd DataLabel="Planilla" Style="text-align:right">
+                @MostrarMonto(empleado.TotalPlanilla)
+            </MudTd>
+
+            <MudTd DataLabel="Cobrado" Style="text-align:right">
+                <MudText Color="@(empleado.TotalCobrado > 0 ? Color.Success : Color.Default)"
+                         Typo="Typo.body2">
+                    @MostrarMonto(empleado.TotalCobrado)
+                </MudText>
+            </MudTd>
+
+            <MudTd DataLabel="Extras" Style="text-align:right">
+                @MostrarMonto(empleado.TotalExtrasProductos)
+            </MudTd>
+
+            <MudTd DataLabel="Pendiente" Style="text-align:right">
+                <MudText Color="@(empleado.TotalPendiente > 0 ? Color.Error : Color.Default)"
+                         Typo="Typo.body2">
+                    @MostrarMonto(empleado.TotalPendiente)
+                </MudText>
+            </MudTd>
+
+            <MudTd DataLabel="Total" Style="text-align:right">
+                <MudText Typo="Typo.body2" Class="fw-bold">
+                    @MostrarMonto(empleado.TotalGeneral)
+                </MudText>
+            </MudTd>
+        </RowTemplate>
+
+        <ChildRowContent Context="empleado">
+            @if (_empleadoExpandidoId == empleado.TrabajadorId)
+            {
+                <MudTr>
+                    <td colspan="13">
+                        <ReporteDetalleFechas Detalles="empleado.Detalles" />
+                    </td>
+                </MudTr>
+            }
+        </ChildRowContent>
+
+        <FooterContent>
+            <MudTd></MudTd>
+            <MudTd><b>TOTALES</b></MudTd>
+            <MudTd></MudTd>
+            <MudTd></MudTd>
+            <MudTd></MudTd>
+
+            <MudTd Style="text-align:center">
+                <b>@EmpleadosFiltrados.Sum(x => x.TotalAlmuerzos)</b>
+            </MudTd>
+
+            <MudTd Style="text-align:center">
+                <b>@EmpleadosFiltrados.Sum(x => x.TotalCenas)</b>
+            </MudTd>
+
+            <MudTd Style="text-align:right">
+                <b>@MostrarMonto(EmpleadosFiltrados.Sum(x => x.TotalEmpresa))</b>
+            </MudTd>
+
+            <MudTd Style="text-align:right">
+                <b>@MostrarMonto(EmpleadosFiltrados.Sum(x => x.TotalPlanilla))</b>
+            </MudTd>
+
+            <MudTd Style="text-align:right">
+                <MudText Color="Color.Success" Typo="Typo.body2">
+                    <b>@MostrarMonto(EmpleadosFiltrados.Sum(x => x.TotalCobrado))</b>
+                </MudText>
+            </MudTd>
+
+            <MudTd Style="text-align:right">
+                <b>@MostrarMonto(EmpleadosFiltrados.Sum(x => x.TotalExtrasProductos))</b>
+            </MudTd>
+
+            <MudTd Style="text-align:right">
+                <MudText Color="Color.Error" Typo="Typo.body2">
+                    <b>@MostrarMonto(EmpleadosFiltrados.Sum(x => x.TotalPendiente))</b>
+                </MudText>
+            </MudTd>
+
+            <MudTd Style="text-align:right">
+                <b>@MostrarMonto(EmpleadosFiltrados.Sum(x => x.TotalGeneral))</b>
+            </MudTd>
+        </FooterContent>
+
+    </MudTable>
+
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired]
+    public List<ReporteEmpleadoDto> Empleados { get; set; } = new();
+
+    private string _buscarEmpleado = string.Empty;
+    private int? _empleadoExpandidoId;
+
+    private IEnumerable<ReporteEmpleadoDto> EmpleadosFiltrados
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(_buscarEmpleado))
+                return Empleados;
+
+            var texto = _buscarEmpleado.Trim().ToLower();
+
+            return Empleados.Where(x =>
+                x.Dni.ToLower().Contains(texto) ||
+                x.Trabajador.ToLower().Contains(texto));
+        }
+    }
+
+    private void ToggleEmpleado(int trabajadorId)
+    {
+        _empleadoExpandidoId = _empleadoExpandidoId == trabajadorId
+            ? null
+            : trabajadorId;
+    }
+
+    private string GetExpandIcon(ReporteEmpleadoDto empleado)
+    {
+        return _empleadoExpandidoId == empleado.TrabajadorId
+            ? Icons.Material.Filled.KeyboardArrowUp
+            : Icons.Material.Filled.KeyboardArrowDown;
+    }
+
+    private static string MostrarMonto(decimal monto)
+    {
+        return monto == 0
+            ? "—"
+            : monto.ToString("C");
+    }
+
+    private static string MostrarCantidad(int cantidad)
+    {
+        return cantidad == 0
+            ? "—"
+            : cantidad.ToString();
+    }
+
+    private static Color GetEstadoColor(string estado)
+    {
+        return estado.Equals("Activo", StringComparison.OrdinalIgnoreCase)
+            ? Color.Success
+            : Color.Warning;
+    }
+}

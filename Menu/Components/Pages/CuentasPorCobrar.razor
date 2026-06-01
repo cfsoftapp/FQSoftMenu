@@ -1,0 +1,467 @@
+﻿@page "/cuentas-por-cobrar"
+
+@using Menu.Components.Shared
+@using Menu.DTOs
+@using Menu.Enums
+@using Menu.Services
+
+@inject AuthStateService AuthState
+@inject NavigationManager Navigation
+
+@inject CuentaPorCobrarService CuentaPorCobrarService
+@inject ISnackbar Snackbar
+
+<RequirePermission Permisos="new[] { Permisos.CuentasCobrarVer }">
+
+<PageTitle>Cuentas por cobrar</PageTitle>
+
+<MudStack Spacing="3">
+
+    <div>
+        <MudText Typo="Typo.h4">Cuentas por cobrar</MudText>
+        <MudText Typo="Typo.body1" Color="Color.Secondary">
+                Control de consumos pendientes por crédito comedor.
+        </MudText>
+    </div>
+
+    <MudPaper Class="pa-4" Elevation="1">
+        <MudGrid Spacing="3">
+
+            <MudItem xs="12" md="3">
+                <MudDatePicker @bind-Date="_fechaInicio"
+                               Label="Fecha inicio"
+                               Variant="Variant.Outlined"
+                               DateFormat="dd/MM/yyyy" />
+            </MudItem>
+
+            <MudItem xs="12" md="3">
+                <MudDatePicker @bind-Date="_fechaFin"
+                               Label="Fecha fin"
+                               Variant="Variant.Outlined"
+                               DateFormat="dd/MM/yyyy" />
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudTextField @bind-Value="_search"
+                              Label="Buscar trabajador / DNI"
+                              Variant="Variant.Outlined"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              Immediate="true" />
+            </MudItem>
+
+            <MudItem xs="12" md="2">
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Search"
+                           OnClick="Buscar"
+                           FullWidth="true">
+                    Buscar
+                </MudButton>
+            </MudItem>
+
+        </MudGrid>
+    </MudPaper>
+
+    <MudGrid Spacing="3">
+
+        <MudItem xs="12" md="3">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudStack Spacing="1">
+                    <MudIcon Icon="@Icons.Material.Filled.CreditCard" Color="Color.Warning" />
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Total pendiente</MudText>
+                    <MudText Typo="Typo.h5">@TotalPendiente.ToString("C2", _culture)</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" md="3">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudStack Spacing="1">
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" />
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Seleccionado</MudText>
+                    <MudText Typo="Typo.h5">@TotalSeleccionado.ToString("C2", _culture)</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" md="3">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudStack Spacing="1">
+                    <MudIcon Icon="@Icons.Material.Filled.People" Color="Color.Info" />
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Trabajadores</MudText>
+                    <MudText Typo="Typo.h5">@TotalTrabajadores</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" md="3">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudStack Spacing="1">
+                    <MudIcon Icon="@Icons.Material.Filled.ReceiptLong" Color="Color.Primary" />
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Pendientes</MudText>
+                    <MudText Typo="Typo.h5">@FilteredPendientes.Count()</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+    </MudGrid>
+
+    <MudPaper Class="pa-4" Elevation="1">
+        <MudStack Spacing="3">
+
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                <div>
+                    <MudText Typo="Typo.h6">Pendientes encontrados</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Selecciona consumos de un mismo trabajador para registrar el pago.
+                    </MudText>
+                </div>
+
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Success"
+                           StartIcon="@Icons.Material.Filled.Payments"
+                               Disabled="@(!PuedeRegistrarPago || !AuthState.TienePermiso(Permisos.CuentasCobrarPagar))"
+                           OnClick="MostrarPanelPago">
+                    Registrar pago
+                </MudButton>
+            </MudStack>
+
+            <MudTable Items="FilteredPendientes"
+                      Dense="true"
+                      Hover="true"
+                      Breakpoint="Breakpoint.Sm"
+                      Loading="_loading">
+
+                    <HeaderContent>
+                        <MudTh></MudTh>
+                        <MudTh>Fecha</MudTh>
+                        <MudTh>DNI</MudTh>
+                        <MudTh>Trabajador</MudTh>
+                        <MudTh>Concepto</MudTh>
+                        <MudTh>Categoría</MudTh>
+                        <MudTh>Descripción</MudTh>
+                        <MudTh Style="text-align:right">Importe</MudTh>
+                        <MudTh>Registrado por</MudTh>
+                    </HeaderContent>
+
+                    <RowTemplate>
+                        <MudTd DataLabel="Sel.">
+                            <MudCheckBox T="bool"
+                                         Value="@context.Seleccionado"
+                                         ValueChanged="@((bool value) => CambiarSeleccion(context, value))"
+                                         Disabled="@(!PuedeSeleccionar(context))"
+                                         Color="Color.Primary" />
+                        </MudTd>
+
+                        <MudTd DataLabel="Fecha">@context.Fecha.ToString("dd/MM/yyyy")</MudTd>
+                        <MudTd DataLabel="DNI">@context.Dni</MudTd>
+                        <MudTd DataLabel="Trabajador">@context.EmpleadoNombre</MudTd>
+
+                        <MudTd DataLabel="Concepto">
+                            <MudChip T="string"
+                                     Size="Size.Small"
+                                     Color="@(context.TipoCuenta == TipoCuentaPorCobrar.MenuPrincipal ? Color.Warning : Color.Info)"
+                                     Variant="Variant.Outlined">
+                                @context.Concepto
+                            </MudChip>
+                        </MudTd>
+
+                        <MudTd DataLabel="Categoría">
+                            @(context.Categoria?.ToString() ?? context.TipoServicio?.ToString() ?? "-")
+                        </MudTd>
+
+                        <MudTd DataLabel="Descripción">@context.Descripcion</MudTd>
+
+                        <MudTd DataLabel="Importe" Style="text-align:right">
+                            @context.Precio.ToString("C2", _culture)
+                        </MudTd>
+
+                        <MudTd DataLabel="Registrado por">@context.UsuarioRegistroNombre</MudTd>
+                    </RowTemplate>
+
+                <NoRecordsContent>
+                    <MudText Class="pa-4" Color="Color.Secondary">
+                        No hay consumos pendientes en el rango seleccionado.
+                    </MudText>
+                </NoRecordsContent>
+
+                <PagerContent>
+                    <MudTablePager PageSizeOptions="new int[] { 10, 20, 50 }" />
+                </PagerContent>
+
+            </MudTable>
+
+        </MudStack>
+    </MudPaper>
+
+    
+
+    @if (_showPagoPanel)
+    {
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudStack Spacing="3">
+
+                <MudText Typo="Typo.h6">Registrar pago</MudText>
+
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                    Trabajador: <b>@TrabajadorSeleccionadoNombre</b><br />
+                    Total a cobrar: <b>@TotalSeleccionado.ToString("C2", _culture)</b>
+                </MudAlert>
+
+                <MudGrid Spacing="3">
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="FormaPagoCredito"
+                                   @bind-Value="_formaPago"
+                                   Label="Forma de pago"
+                                   Variant="Variant.Outlined">
+                            <MudSelectItem Value="FormaPagoCredito.Efectivo">Efectivo</MudSelectItem>
+                            <MudSelectItem Value="FormaPagoCredito.Yape">Yape</MudSelectItem>
+                            <MudSelectItem Value="FormaPagoCredito.Plin">Plin</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+
+                    <MudItem xs="12" md="4">
+                        <MudDatePicker @bind-Date="_fechaPago"
+                                       Label="Fecha de pago"
+                                       Variant="Variant.Outlined"
+                                       DateFormat="dd/MM/yyyy" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="4">
+                        <MudTextField @bind-Value="_observacionPago"
+                                      Label="Observación"
+                                      Variant="Variant.Outlined"
+                                      Lines="1" />
+                    </MudItem>
+                </MudGrid>
+
+                <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+                    <MudButton Variant="Variant.Text"
+                               Color="Color.Default"
+                               OnClick="CancelarPago">
+                        Cancelar
+                    </MudButton>
+
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Success"
+                               StartIcon="@Icons.Material.Filled.CheckCircle"
+                               Disabled="_savingPago"
+                               OnClick="RegistrarPago">
+                        Confirmar pago
+                    </MudButton>
+                </MudStack>
+
+            </MudStack>
+        </MudPaper>
+    }
+
+</MudStack>
+
+</RequirePermission>
+
+@code {
+    private readonly System.Globalization.CultureInfo _culture = new("es-PE");
+
+    private List<CuentaPorCobrarDto> _pendientes = new();
+
+    private DateTime? _fechaInicio = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+    private DateTime? _fechaFin = DateTime.Today;
+
+    private string _search = string.Empty;
+    private bool _loading;
+    private bool _showPagoPanel;
+    private bool _savingPago;
+
+    private FormaPagoCredito _formaPago = FormaPagoCredito.Efectivo;
+    private DateTime? _fechaPago = DateTime.Today;
+    private string? _observacionPago;
+
+    private IEnumerable<CuentaPorCobrarDto> FilteredPendientes
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(_search))
+                return _pendientes;
+
+            var term = _search.Trim().ToLower();
+
+            return _pendientes.Where(x =>
+                x.Dni.ToLower().Contains(term) ||
+                x.EmpleadoNombre.ToLower().Contains(term));
+        }
+    }
+
+    private List<CuentaPorCobrarDto> Seleccionados =>
+        _pendientes.Where(x => x.Seleccionado).ToList();
+
+    private decimal TotalPendiente =>
+        FilteredPendientes.Sum(x => x.Precio);
+
+    private decimal TotalSeleccionado =>
+        PuedeRegistrarPago
+            ? Seleccionados.Sum(x => x.Precio)
+            : 0m;
+
+    private int TotalTrabajadores =>
+        FilteredPendientes
+            .Select(x => x.EmpleadoId)
+            .Distinct()
+            .Count();
+
+    private bool PuedeRegistrarPago =>
+        Seleccionados.Count > 0 &&
+        Seleccionados.Select(x => x.EmpleadoId).Distinct().Count() == 1;
+
+    private string TrabajadorSeleccionadoNombre =>
+        PuedeRegistrarPago
+            ? Seleccionados.First().EmpleadoNombre
+            : string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Buscar();
+    }
+
+    private async Task Buscar()
+    {
+        if (_fechaInicio is null || _fechaFin is null)
+        {
+            Snackbar.Add("Debe seleccionar fecha inicio y fecha fin.", Severity.Warning);
+            return;
+        }
+
+        if (_fechaInicio.Value.Date > _fechaFin.Value.Date)
+        {
+            Snackbar.Add("La fecha inicio no puede ser mayor que la fecha fin.", Severity.Warning);
+            return;
+        }
+
+        _loading = true;
+        _showPagoPanel = false;
+
+        _pendientes = await CuentaPorCobrarService.GetPendientesAsync(
+            _fechaInicio.Value,
+            _fechaFin.Value);
+
+        _loading = false;
+    }
+
+    private bool PuedeSeleccionar(CuentaPorCobrarDto item)
+    {
+        if (item.Seleccionado)
+            return true;
+
+        if (!Seleccionados.Any())
+            return true;
+
+        return Seleccionados.All(x => x.EmpleadoId == item.EmpleadoId);
+    }
+
+    private void CambiarSeleccion(CuentaPorCobrarDto item, bool value)
+    {
+        if (value)
+        {
+            if (Seleccionados.Any(x => x.EmpleadoId != item.EmpleadoId))
+            {
+                item.Seleccionado = false;
+                Snackbar.Add("Solo puedes seleccionar consumos de un mismo trabajador.", Severity.Warning);
+                StateHasChanged();
+                return;
+            }
+
+            item.Seleccionado = true;
+        }
+        else
+        {
+            item.Seleccionado = false;
+
+            if (!Seleccionados.Any())
+                _showPagoPanel = false;
+        }
+
+        StateHasChanged();
+    }
+
+    private void MostrarPanelPago()
+    {
+        if (!PuedeRegistrarPago)
+        {
+            Snackbar.Add("Selecciona pendientes de un mismo trabajador para registrar el pago.", Severity.Warning);
+            return;
+        }
+
+        _formaPago = FormaPagoCredito.Efectivo;
+        _fechaPago = DateTime.Today;
+        _observacionPago = string.Empty;
+        _showPagoPanel = true;
+    }
+
+    private void CancelarPago()
+    {
+        _showPagoPanel = false;
+        _observacionPago = string.Empty;
+    }
+
+    private async Task RegistrarPago()
+    {
+        if (!PuedeRegistrarPago)
+        {
+            Snackbar.Add("Selecciona consumos pendientes de un mismo trabajador.", Severity.Warning);
+            return;
+        }
+
+        if (_fechaPago is null)
+        {
+            Snackbar.Add("Debe seleccionar la fecha de pago.", Severity.Warning);
+            return;
+        }
+
+        if (!AuthState.EstaAutenticado || AuthState.UsuarioActual is null)
+        {
+            Snackbar.Add("Debe iniciar sesión para registrar pagos.", Severity.Warning);
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        var empleadoId = Seleccionados.First().EmpleadoId;
+
+        var input = new PagoCreditoInputDto
+        {
+            EmpleadoId = empleadoId,
+
+            ConsumoMenuIds = Seleccionados
+                .Where(x => x.TipoCuenta == TipoCuentaPorCobrar.MenuPrincipal)
+                .Select(x => x.ConsumoMenuId)
+                .ToList(),
+
+            ConsumoAdicionalIds = Seleccionados
+                .Where(x => x.TipoCuenta == TipoCuentaPorCobrar.Adicional)
+                .Select(x => x.ConsumoAdicionalId)
+                .ToList(),
+
+            FormaPago = _formaPago,
+            FechaPago = _fechaPago.Value,
+            Observacion = _observacionPago,
+            UsuarioRegistroId = AuthState.UsuarioActual.Id,
+            UsuarioRegistroNombre = AuthState.UsuarioActual.NombreCompleto
+        };
+
+        _savingPago = true;
+
+        var result = await CuentaPorCobrarService.RegistrarPagoAsync(input);
+
+        if (result.Success)
+        {
+            Snackbar.Add(result.Message, Severity.Success);
+            _showPagoPanel = false;
+            await Buscar();
+        }
+        else
+        {
+            Snackbar.Add(result.Message, Severity.Warning);
+        }
+
+        _savingPago = false;
+    }
+}

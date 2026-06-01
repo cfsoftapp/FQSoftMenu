@@ -1,0 +1,100 @@
+﻿<MudPaper Class="pa-3" Elevation="0" Outlined="true">
+    <MudStack Spacing="2">
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+            <div>
+                <MudText Typo="Typo.subtitle1">Productos adicionales</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Bebidas, galletas, postres, snacks u otros productos.
+                </MudText>
+            </div>
+
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="OnAgregar">
+                Agregar producto
+            </MudButton>
+        </MudStack>
+
+        @if (Items.Count == 0)
+        {
+            <MudAlert Severity="Severity.Info" Variant="Variant.Text">
+                No hay productos adicionales.
+            </MudAlert>
+        }
+        else
+        {
+            @foreach (var item in Items)
+            {
+                <MudGrid Spacing="2" Class="mb-2">
+
+                    <MudItem xs="12" md="3">
+                        <MudSelect T="CategoriaConsumoAdicional"
+                                   @bind-Value="item.Categoria"
+                                   Label="Categoría"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense">
+                            <MudSelectItem Value="CategoriaConsumoAdicional.Bebida">Bebida</MudSelectItem>
+                            <MudSelectItem Value="CategoriaConsumoAdicional.Galleta">Galleta</MudSelectItem>
+                            <MudSelectItem Value="CategoriaConsumoAdicional.Postre">Postre</MudSelectItem>
+                            <MudSelectItem Value="CategoriaConsumoAdicional.Snack">Snack</MudSelectItem>
+                            <MudSelectItem Value="CategoriaConsumoAdicional.Otro">Otro</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+
+                    <MudItem xs="12" md="3">
+                        <MudTextField @bind-Value="item.Descripcion"
+                                      Label="Descripción"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Immediate="true" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="2">
+                        <MudNumericField T="decimal"
+                                         @bind-Value="item.Precio"
+                                         Label="Precio"
+                                         Variant="Variant.Outlined"
+                                         Margin="Margin.Dense"
+                                         Adornment="Adornment.Start"
+                                         AdornmentText="S/"
+                                         Min="0" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="3">
+                        <MudSelect T="FormaCobroAdicional"
+                                   @bind-Value="item.FormaCobro"
+                                   Label="Forma cobro"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense">
+                            <MudSelectItem Value="FormaCobroAdicional.Efectivo">Efectivo</MudSelectItem>
+                            <MudSelectItem Value="FormaCobroAdicional.Yape">Yape</MudSelectItem>
+                            <MudSelectItem Value="FormaCobroAdicional.Plin">Plin</MudSelectItem>
+                            <MudSelectItem Value="FormaCobroAdicional.CreditoComedor">Crédito comedor</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+
+                    <MudItem xs="12" md="1">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                       Color="Color.Error"
+                                       OnClick="@(() => OnQuitar.InvokeAsync(item))" />
+                    </MudItem>
+
+                </MudGrid>
+            }
+        }
+
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired]
+    public List<ConsumoAdicionalInputDto> Items { get; set; } = new();
+
+    [Parameter]
+    public EventCallback OnAgregar { get; set; }
+
+    [Parameter]
+    public EventCallback<ConsumoAdicionalInputDto> OnQuitar { get; set; }
+}

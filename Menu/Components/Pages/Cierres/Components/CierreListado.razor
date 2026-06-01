@@ -1,0 +1,99 @@
+@using Menu.DTOs.Cierres
+
+<MudPaper Class="pa-3 rounded-lg" Elevation="1">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.ReceiptLong" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">Cierres por día</MudText>
+        </MudStack>
+
+        <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small">
+            @Cierres.Count día(s)
+        </MudChip>
+    </MudStack>
+
+    <MudTable Items="Cierres"
+              Hover="true"
+              Dense="true"
+              Bordered="true"
+              Striped="true"
+              Breakpoint="Breakpoint.Sm"
+              Loading="Cargando">
+        <HeaderContent>
+            <MudTh></MudTh>
+            <MudTh>Fecha</MudTh>
+            <MudTh Style="text-align:center">Menús</MudTh>
+            <MudTh Style="text-align:center">Adic.</MudTh>
+            <MudTh Style="text-align:right">Proveedor</MudTh>
+            <MudTh Style="text-align:right">Caja</MudTh>
+            <MudTh Style="text-align:right">Pendiente</MudTh>
+            <MudTh Style="text-align:right">Total</MudTh>
+            <MudTh Style="text-align:center">Anul.</MudTh>
+        </HeaderContent>
+
+        <RowTemplate Context="cierre">
+            <MudTd>
+                <MudIconButton Icon="@GetExpandIcon(cierre.Fecha)"
+                               Size="Size.Small"
+                               OnClick="@(() => ToggleFecha(cierre.Fecha))" />
+            </MudTd>
+            <MudTd DataLabel="Fecha">@cierre.Fecha.ToString("dd/MM/yyyy")</MudTd>
+            <MudTd DataLabel="Menús" Style="text-align:center">@cierre.TotalMenus</MudTd>
+            <MudTd DataLabel="Adicionales" Style="text-align:center">@cierre.TotalAdicionales</MudTd>
+            <MudTd DataLabel="Proveedor" Style="text-align:right">@cierre.TotalProveedor.ToString("C", _culture)</MudTd>
+            <MudTd DataLabel="Caja" Style="text-align:right">@cierre.TotalCobrado.ToString("C", _culture)</MudTd>
+            <MudTd DataLabel="Pendiente" Style="text-align:right">@cierre.TotalCreditoPendiente.ToString("C", _culture)</MudTd>
+            <MudTd DataLabel="Total" Style="text-align:right">
+                <MudText Typo="Typo.body2" Class="fw-bold">
+                    @cierre.TotalGeneral.ToString("C", _culture)
+                </MudText>
+            </MudTd>
+            <MudTd DataLabel="Anulados" Style="text-align:center">@MostrarCantidad(cierre.TotalAnulados)</MudTd>
+        </RowTemplate>
+
+        <ChildRowContent Context="cierre">
+            @if (_fechaExpandida == cierre.Fecha)
+            {
+                <MudTr>
+                    <td colspan="9">
+                        <CierreDetalle Detalles="cierre.Detalles" />
+                    </td>
+                </MudTr>
+            }
+        </ChildRowContent>
+
+        <NoRecordsContent>
+            <MudText Class="pa-4" Color="Color.Secondary">
+                No hay movimientos en el rango seleccionado.
+            </MudText>
+        </NoRecordsContent>
+    </MudTable>
+</MudPaper>
+
+@code {
+    private readonly System.Globalization.CultureInfo _culture = new("es-PE");
+    private DateTime? _fechaExpandida;
+
+    [Parameter, EditorRequired]
+    public List<CierreDto> Cierres { get; set; } = new();
+
+    [Parameter]
+    public bool Cargando { get; set; }
+
+    private void ToggleFecha(DateTime fecha)
+    {
+        _fechaExpandida = _fechaExpandida == fecha ? null : fecha;
+    }
+
+    private string GetExpandIcon(DateTime fecha)
+    {
+        return _fechaExpandida == fecha
+            ? Icons.Material.Filled.KeyboardArrowUp
+            : Icons.Material.Filled.KeyboardArrowDown;
+    }
+
+    private static string MostrarCantidad(int cantidad)
+    {
+        return cantidad == 0 ? "-" : cantidad.ToString();
+    }
+}

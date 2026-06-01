@@ -1,0 +1,93 @@
+﻿@using Menu.DTOs.Reportes
+
+<MudPaper Class="pa-3 rounded-lg" Elevation="1">
+
+    <MudStack Row="true"
+              AlignItems="AlignItems.Center"
+              Justify="Justify.SpaceBetween"
+              Class="mb-2">
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.Assessment"
+                     Color="Color.Primary" />
+
+            <div>
+                <MudText Typo="Typo.subtitle1" Class="fw-bold">
+                    Resumen financiero
+                </MudText>
+
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    Consolidado del periodo seleccionado.
+                </MudText>
+            </div>
+        </MudStack>
+
+    </MudStack>
+
+    <MudDivider Class="my-2" />
+
+    <MudGrid Spacing="2">
+
+        <MudItem xs="12" sm="6" md="2">
+            <MudPaper Class="pa-2 rounded-lg h-100" Elevation="0" Outlined="true">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    Liquidación proveedor
+                </MudText>
+                <MudText Typo="Typo.subtitle1" Color="Color.Warning" Class="fw-bold">
+                    @Resumen.TotalProveedor.ToString("C")
+                </MudText>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="2">
+            <MudPaper Class="pa-2 rounded-lg h-100" Elevation="0" Outlined="true">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    Costo empresa
+                </MudText>
+                <MudText Typo="Typo.subtitle1" Color="Color.Success" Class="fw-bold">
+                    @Resumen.TotalEmpresa.ToString("C")
+                </MudText>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="2">
+            <MudPaper Class="pa-2 rounded-lg h-100" Elevation="0" Outlined="true">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    A recuperar planilla
+                </MudText>
+                <MudText Typo="Typo.subtitle1" Color="Color.Warning" Class="fw-bold">
+                    @Resumen.TotalPlanilla.ToString("C")
+                </MudText>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="2">
+            <MudPaper Class="pa-2 rounded-lg h-100" Elevation="0" Outlined="true">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    Cobrado directo
+                </MudText>
+                <MudText Typo="Typo.subtitle1" Color="Color.Success" Class="fw-bold">
+                    @Resumen.TotalCobradoDirecto.ToString("C")
+                </MudText>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="2">
+            <MudPaper Class="pa-2 rounded-lg h-100" Elevation="0" Outlined="true">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    Pendiente crédito
+                </MudText>
+                <MudText Typo="Typo.subtitle1" Color="Color.Error" Class="fw-bold">
+                    @Resumen.TotalPendienteCredito.ToString("C")
+                </MudText>
+            </MudPaper>
+        </MudItem>
+
+    </MudGrid>
+
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired]
+    public ReporteResumenDto Resumen { get; set; } = new();
+}

@@ -1,0 +1,42 @@
+@page "/reportes"
+
+@using Menu.Components.Pages.Reportes.Components
+@using Menu.Components.Shared
+@using Menu.DTOs.Reportes
+@using Menu.Security
+
+<RequirePermission Permisos="new[] { Permisos.ReportesVer }">
+
+<MudContainer MaxWidth="MaxWidth.False" Class="pa-4">
+    <MudStack Spacing="3">
+        <MudStack Spacing="1">
+            <MudText Typo="Typo.h5">Reportes</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Primary">
+                Resumen de consumos, proveedor, planilla, cobros directos y créditos comedor.
+            </MudText>
+        </MudStack>
+
+        <ReporteFiltros Filtro="_filtro"
+                        Cargando="_cargando"
+                        OnBuscar="BuscarAsync" />
+
+        @if (_cargando)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+        }
+
+        <ReporteKpis Resumen="_resumen" />
+
+        <MudTabs Rounded="true" Elevation="0" Class="pt-4">
+            <MudTabPanel Text="Resumen general">
+                <ReporteResumenGeneral Resumen="_resumen" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Detalle por empleado">
+                <ReporteDetalleEmpleados Empleados="_empleados" />
+            </MudTabPanel>
+        </MudTabs>
+    </MudStack>
+</MudContainer>
+
+</RequirePermission>

@@ -1,0 +1,28 @@
+﻿@using Menu.DTOs.Reportes
+
+<MudStack Spacing="3" Class="mt-3">
+
+    <MudGrid Spacing="3">
+
+        <MudItem xs="12" md="4" Class="d-flex">
+            <ReporteDistribucionMenu Resumen="Resumen" />
+        </MudItem>
+
+        <MudItem xs="12" md="4" Class="d-flex">
+            <ReporteCobrosDirectos Resumen="Resumen" />
+        </MudItem>
+
+        <MudItem xs="12" md="4" Class="d-flex">
+            <ReporteCreditoPendiente Resumen="Resumen" />
+        </MudItem>
+
+    </MudGrid>
+
+    <ReporteResumenFinanciero Resumen="Resumen" />
+
+</MudStack>
+
+@code {
+    [Parameter, EditorRequired]
+    public ReporteResumenDto Resumen { get; set; } = new();
+}

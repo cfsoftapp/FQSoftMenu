@@ -1,0 +1,187 @@
+﻿@using Menu.DTOs.RegistroDiario
+
+@if (Consumos is not null && Consumos.Any())
+{
+    <MudPaper Class="pa-3 rounded-lg mt-3" Elevation="1">
+
+        <MudStack Row="true"
+                  AlignItems="AlignItems.Center"
+                  Justify="Justify.SpaceBetween"
+                  Class="mb-3">
+
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.History"
+                         Color="Color.Primary"
+                         Size="Size.Small" />
+
+                <div>
+                    <MudText Typo="Typo.subtitle2" Class="fw-bold">
+                        Historial del día
+                    </MudText>
+
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                        Consumos registrados hoy.
+                    </MudText>
+                </div>
+            </MudStack>
+
+            <MudChip T="string"
+                     Size="Size.Small"
+                     Color="Color.Primary"
+                     Variant="Variant.Outlined">
+                @Consumos.Count registro(s)
+            </MudChip>
+
+        </MudStack>
+
+        <div class="registro-timeline">
+            @foreach (var item in Consumos)
+            {
+                <div class="registro-timeline-item" @key="GetConsumoKey(item)">
+
+                    <div class="registro-timeline-marker @GetMarkerClass(item)"></div>
+
+                    <div class="@GetConsumoCardClass(item)">
+
+                        <div class="d-flex justify-space-between align-center">
+                            <div>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    @item.FechaRegistro.ToString("HH:mm")
+                                </MudText>
+
+                                <MudChip T="string"
+                                         Size="Size.Small"
+                                         Color="@(item.Origen == "MenuPrincipal" ? Color.Success : Color.Info)"
+                                         Variant="Variant.Outlined"
+                                         Class="ml-1">
+                                    @item.Tipo
+                                </MudChip>
+                            </div>
+
+                            @* <MudText Typo="Typo.body2" Class="fw-bold">
+                                @item.Importe.ToString("C")
+                            </MudText> *@
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+
+                                <MudText Typo="Typo.body2" Class="fw-bold">
+                                    @item.Importe.ToString("C")
+                                </MudText>
+
+                                @if (!item.Anulado && item.PuedeAnular)
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline"
+                                                   Color="Color.Error"
+                                                   Size="Size.Small"
+                                                   aria-label="Anular consumo"
+                                                   OnClick="@(() => SolicitarAnulacion(item))" />
+                                }
+
+                            </MudStack>
+                        </div>
+
+                        <MudText Typo="Typo.body2" Class="mt-1">
+                            @item.Descripcion
+                        </MudText>
+
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            @GetEtiquetaPago(item): @GetTextoPago(item) · Estado: @GetTextoEstado(item)
+                        </MudText>
+
+                        @if (item.Anulado && !string.IsNullOrWhiteSpace(item.MotivoAnulacion))
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Error">
+                                @if (item.Anulado)
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Error" Class="registro-motivo-anulado">
+                                        Motivo: @item.MotivoAnulacion
+                                    </MudText>
+                                }
+                            </MudText>
+                        }
+
+                    </div>
+
+                </div>
+            }
+        </div>
+
+    </MudPaper>
+}
+
+@code {
+    [Parameter]
+    public List<ConsumoDiaDto> Consumos { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<ConsumoDiaDto> OnAnular { get; set; }
+
+    private static string GetConsumoKey(ConsumoDiaDto item)
+    {
+        return $"{item.Origen}-{item.Id}-{item.Anulado}";
+    }
+
+    private static string GetConsumoCardClass(ConsumoDiaDto item)
+    {
+        return item.Anulado
+            ? "registro-consumo-card registro-consumo-anulado"
+            : "registro-consumo-card";
+    }
+
+    private static string GetMarkerClass(ConsumoDiaDto item)
+    {
+        if (item.Anulado)
+            return "registro-timeline-marker-anulado";
+
+        if (item.Origen == "MenuPrincipal")
+            return "registro-timeline-marker-menu";
+
+        return "registro-timeline-marker-adicional";
+    }
+
+    private static string GetEtiquetaPago(ConsumoDiaDto item)
+    {
+        return item.Origen == "MenuPrincipal"
+            ? "Responsable"
+            : "Pago";
+    }
+
+    private static string GetTextoPago(ConsumoDiaDto item)
+    {
+        return item.FormaPago switch
+        {
+            "DescuentoPlanilla" => "Descuento planilla",
+            "CreditoComedor" => "Crédito comedor",
+            "PagoDirecto" => "Pago directo",
+            _ => item.FormaPago
+        };
+    }
+
+    private static string GetTextoEstado(ConsumoDiaDto item)
+    {
+        if (item.Anulado)
+            return "Anulado";
+
+        if (item.Origen == "MenuPrincipal" &&
+            (string.IsNullOrWhiteSpace(item.EstadoCobro) || item.EstadoCobro == "-"))
+        {
+            return "Registrado";
+        }
+
+        return item.EstadoCobro switch
+        {
+            "Pagado" => "Pagado",
+            "Pendiente" => "Pendiente",
+            "Anulado" => "Anulado",
+            "-" => "Registrado",
+            _ => item.EstadoCobro
+        };
+    }
+
+    private async Task SolicitarAnulacion(ConsumoDiaDto item)
+    {
+        if (OnAnular.HasDelegate)
+        {
+            await OnAnular.InvokeAsync(item);
+        }
+    }
+}

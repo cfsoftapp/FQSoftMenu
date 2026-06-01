@@ -1,0 +1,160 @@
+﻿@using Menu.DTOs.Reportes
+
+<MudPaper Class="pa-3 my-2" Elevation="0" Outlined="true">
+
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+        <MudIcon Icon="@Icons.Material.Filled.CalendarMonth"
+                 Color="Color.Primary"
+                 Size="Size.Small" />
+
+        <MudText Typo="Typo.subtitle2">
+            Detalle por fecha consumida
+        </MudText>
+    </MudStack>
+
+    <MudTable Items="Detalles"
+              Dense="true"
+              Hover="true"
+              Bordered="true"
+              Breakpoint="Breakpoint.Sm">
+
+        <HeaderContent>
+            <MudTh></MudTh>
+            <MudTh>Fecha</MudTh>
+            <MudTh>Menú</MudTh>
+            <MudTh>Tipo pago</MudTh>
+            <MudTh>Medio</MudTh>
+            <MudTh>Empresa</MudTh>
+            <MudTh>Planilla</MudTh>
+            <MudTh>Cobrado</MudTh>
+            <MudTh>Pendiente</MudTh>
+            <MudTh>Menú extra</MudTh>
+            <MudTh>Productos</MudTh>
+        </HeaderContent>
+
+        <RowTemplate Context="detalleFecha">
+            <MudTd>
+                <MudIconButton Icon="@GetFechaExpandIcon(detalleFecha.FechaConsumo)"
+                               Size="Size.Small"
+                               Disabled="@(!detalleFecha.Adicionales.Any())"
+                               aria-label="@(detalleFecha.Adicionales.Any() ? "Ver extras/productos" : "Sin extras/productos")"
+                               OnClick="@(() => ToggleFecha(detalleFecha.FechaConsumo))" />
+            </MudTd>
+
+            <MudTd>@detalleFecha.FechaConsumo.ToString("dd/MM/yyyy")</MudTd>
+
+            <MudTd>
+                @if (detalleFecha.ConsumioMenuPrincipal)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Success">
+                        Sí
+                    </MudChip>
+                }
+                else
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Default">
+                        No
+                    </MudChip>
+                }
+            </MudTd>
+
+            <MudTd>@detalleFecha.TipoPagoMenuPrincipal</MudTd>
+            <MudTd>@detalleFecha.MedioPago</MudTd>
+            <MudTd>@detalleFecha.ImporteEmpresa.ToString("C")</MudTd>
+            <MudTd>@detalleFecha.ImportePlanilla.ToString("C")</MudTd>
+            <MudTd>@detalleFecha.TotalCobrado.ToString("C")</MudTd>
+            <MudTd>@detalleFecha.TotalPendiente.ToString("C")</MudTd>
+            <MudTd>@detalleFecha.ImporteMenuExtra.ToString("C")</MudTd>
+            <MudTd>@detalleFecha.ImporteProductos.ToString("C")</MudTd>
+        </RowTemplate>
+
+        <ChildRowContent Context="detalleFecha">
+            @if (_fechaExpandida == detalleFecha.FechaConsumo.Date && detalleFecha.Adicionales.Any())
+            {
+                <MudTr>
+                    <td colspan="11">
+                        <MudPaper Class="pa-3 my-2" Elevation="0" Outlined="true">
+
+                            <MudStack Row="true"
+                                      AlignItems="AlignItems.Center"
+                                      Justify="Justify.SpaceBetween"
+                                      Class="mb-2">
+
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudIcon Icon="@Icons.Material.Filled.ShoppingCart"
+                                             Color="Color.Info"
+                                             Size="Size.Small" />
+
+                                    <MudText Typo="Typo.subtitle2">
+                                        Extras y productos consumidos
+                                    </MudText>
+                                </MudStack>
+
+                                <MudChip T="string"
+                                         Size="Size.Small"
+                                         Color="Color.Info"
+                                         Variant="Variant.Outlined">
+                                    Total: @detalleFecha.Adicionales.Sum(x => x.Importe).ToString("C")
+                                </MudChip>
+
+                            </MudStack>
+
+                            <MudTable Items="detalleFecha.Adicionales"
+                                      Dense="true"
+                                      Hover="true"
+                                      Bordered="true">
+
+                                <HeaderContent>
+                                    <MudTh>Tipo</MudTh>
+                                    <MudTh>Categoría</MudTh>
+                                    <MudTh>Descripción</MudTh>
+                                    <MudTh>Forma cobro</MudTh>
+                                    <MudTh>Estado</MudTh>
+                                    <MudTh Style="text-align:right">Importe</MudTh>
+                                </HeaderContent>
+
+                                <RowTemplate Context="adicional">
+                                    <MudTd>@adicional.Tipo</MudTd>
+                                    <MudTd>@adicional.Categoria</MudTd>
+                                    <MudTd>@adicional.Descripcion</MudTd>
+                                    <MudTd>@adicional.FormaCobro</MudTd>
+                                    <MudTd>@adicional.EstadoCobro</MudTd>
+                                    <MudTd Style="text-align:right">
+                                        @adicional.Importe.ToString("C")
+                                    </MudTd>
+                                </RowTemplate>
+
+                            </MudTable>
+
+                        </MudPaper>
+                    </td>
+                </MudTr>
+            }
+        </ChildRowContent>
+
+    </MudTable>
+
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired]
+    public List<ReporteEmpleadoFechaDto> Detalles { get; set; } = new();
+
+    private DateTime? _fechaExpandida;
+
+    private void ToggleFecha(DateTime fecha)
+    {
+        var fechaDate = fecha.Date;
+
+        _fechaExpandida = _fechaExpandida == fechaDate
+            ? null
+            : fechaDate;
+    }
+
+    private string GetFechaExpandIcon(DateTime fecha)
+    {
+        return _fechaExpandida == fecha.Date
+            ? Icons.Material.Filled.KeyboardArrowUp
+            : Icons.Material.Filled.KeyboardArrowDown;
+    }
+}

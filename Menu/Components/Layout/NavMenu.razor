@@ -1,0 +1,90 @@
+﻿@using Menu.Security
+@using Menu.Services
+@inject AuthStateService AuthState
+@implements IDisposable
+
+<MudNavMenu>
+
+    @if (AuthState.EstaAutenticado)
+    {
+        @if (AuthState.TienePermiso(Permisos.DashboardVer))
+        {
+            <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">
+                Inicio
+            </MudNavLink>
+        }
+
+        @if (AuthState.TienePermiso(Permisos.EmpleadosVer))
+        {
+            <MudNavLink Href="empleados" Icon="@Icons.Material.Filled.People">
+                Empleados
+            </MudNavLink>
+        }
+
+        @if (AuthState.TienePermiso(Permisos.RegistroDiarioVer))
+        {
+            <MudNavLink Href="registro-diario" Icon="@Icons.Material.Filled.PointOfSale">
+                Registro diario
+            </MudNavLink>
+        }
+
+        @if (AuthState.TienePermiso(Permisos.CuentasCobrarVer))
+        {
+            <MudNavLink Href="cuentas-por-cobrar" Icon="@Icons.Material.Filled.Payments">
+                Cuentas por cobrar
+            </MudNavLink>
+        }
+
+        @if (AuthState.TienePermiso(Permisos.ReportesVer))
+        {
+            <MudNavLink Href="reportes" Icon="@Icons.Material.Filled.Assessment">
+                Reportes
+            </MudNavLink>
+        }
+
+        @if (AuthState.TienePermiso(Permisos.CierresVer))
+        {
+            <MudNavLink Href="cierres" Icon="@Icons.Material.Filled.ReceiptLong">
+                Cierres
+            </MudNavLink>
+        }
+
+        @if (AuthState.TienePermiso(Permisos.UsuariosVer))
+        {
+            <MudNavLink Href="usuarios" Icon="@Icons.Material.Filled.ManageAccounts">
+                Usuarios
+            </MudNavLink>
+        }
+
+        @if (AuthState.TienePermiso(Permisos.ConfiguracionVer))
+        {
+            <MudNavLink Href="configuracion" Icon="@Icons.Material.Filled.Settings">
+                Configuración
+            </MudNavLink>
+        }
+    }
+    else
+    {
+        <MudNavLink Href="login" Icon="@Icons.Material.Filled.Login">
+            Login
+        </MudNavLink>
+    }
+
+</MudNavMenu>
+
+@code {
+    protected override void OnInitialized()
+    {
+        AuthState.OnChange += RefreshMenu;
+    }
+
+    private void RefreshMenu()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        AuthState.OnChange -= RefreshMenu;
+    }
+}

@@ -1,0 +1,436 @@
+﻿@page "/empleados"
+
+@using Menu.Components.Shared
+@using Menu.Enums
+@using Menu.Models
+@using Menu.Services
+
+@inject EmpleadoService EmpleadoService
+@inject AuthStateService AuthState
+@inject ISnackbar Snackbar
+
+
+<RequirePermission Permisos="new[] { Permisos.EmpleadosVer }">
+
+<PageTitle>Empleados</PageTitle>
+
+<MudStack Spacing="3">
+
+    <MudStack Row="true"
+                  AlignItems="AlignItems.Center"
+                  Justify="Justify.SpaceBetween" 
+                  Class="mb-3">
+
+            <div>
+                <MudText Typo="Typo.h4">
+                    Empleados
+                </MudText>
+
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Mantenimiento de trabajadores y estado del beneficio de menú.
+                </MudText>
+            </div>
+        @if (AuthState.TienePermiso(Permisos.EmpleadosCrear))
+        {
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="NuevoEmpleado">
+                Nuevo empleado
+            </MudButton>
+        }
+    </MudStack>
+
+        <MudPaper Class="pa-3 mb-3 rounded-lg" Elevation="1">
+
+            <MudTextField @bind-Value="_search"
+                          Label="Buscar por DNI o nombre"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Immediate="true"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Class="max-width-search" />
+
+        </MudPaper>
+
+    <MudPaper Class="pa-0 mb-4 rounded-lg overflow-hidden" Elevation="1">
+        <MudTable Items="FilteredEmpleados"
+                  Hover="true"
+                  Dense="true"
+                  Bordered="false"
+                  Striped="true"
+                  Breakpoint="Breakpoint.Sm"
+                  Loading="_loading">
+
+            <HeaderContent>
+                <MudTh>DNI</MudTh>
+                <MudTh>Nombres y Apellidos</MudTh>
+                <MudTh>Tipo trabajador</MudTh>
+                <MudTh>Estado</MudTh>
+                <MudTh>Activo</MudTh>
+                <MudTh>Fecha creación</MudTh>
+                <MudTh Style="text-align:right">Acciones</MudTh>
+            </HeaderContent>
+
+            <RowTemplate>
+                <MudTd DataLabel="DNI">@context.Dni</MudTd>
+                <MudTd DataLabel="Nombre">@context.NombreCompleto</MudTd>
+
+                <MudTd DataLabel="Categoría">
+                    <MudChip T="string"
+                             Size="Size.Small"
+                             Color="Color.Info"
+                             Variant="Variant.Outlined">
+                        @context.Categoria
+                    </MudChip>
+                </MudTd>
+
+                <MudTd DataLabel="Estado">
+                    <MudChip T="string"
+                             Size="Size.Small"
+                             Color="@(context.Estado == EstadoEmpleado.Activo ? Color.Success : Color.Warning)"
+                             Variant="Variant.Filled">
+                        @context.Estado
+                    </MudChip>
+                </MudTd>
+
+                <MudTd DataLabel="Activo">
+                    <MudChip T="string"
+                             Size="Size.Small"
+                             Color="@(context.Activo ? Color.Success : Color.Error)"
+                             Variant="Variant.Outlined">
+                        @(context.Activo ? "Sí" : "No")
+                    </MudChip>
+                </MudTd>
+
+                <MudTd DataLabel="Fecha creación">
+                    @context.FechaCreacion.ToString("dd/MM/yyyy")
+                </MudTd>
+
+                    <MudTd DataLabel="Acciones" Style="text-align:right">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                       Color="Color.Primary"
+                                       Size="Size.Small"
+                                       aria-label="Editar empleado"
+                                       OnClick="@(() => EditarEmpleado(context))" />
+
+                        <MudIconButton Icon="@(context.Estado == EstadoEmpleado.Activo ? Icons.Material.Filled.PauseCircle : Icons.Material.Filled.PlayCircle)"
+                                       Color="@(context.Estado == EstadoEmpleado.Activo ? Color.Warning : Color.Success)"
+                                       Size="Size.Small"
+                                       aria-label="@(context.Estado == EstadoEmpleado.Activo ? "Suspender beneficio" : "Activar beneficio")"
+                                       OnClick="@(() => CambiarEstadoBeneficio(context.Id))" />
+
+                        <MudIconButton Icon="@(context.Activo ? Icons.Material.Filled.Block : Icons.Material.Filled.CheckCircle)"
+                                       Color="@(context.Activo ? Color.Error : Color.Success)"
+                                       Size="Size.Small"
+                                       aria-label="@(context.Activo ? "Desactivar empleado" : "Activar empleado")"
+                                       OnClick="@(() => CambiarActivo(context.Id))" />
+                    </MudTd>
+            </RowTemplate>
+
+            <NoRecordsContent>
+                <MudText Class="pa-4" Color="Color.Secondary">
+                    No se encontraron empleados.
+                </MudText>
+            </NoRecordsContent>
+
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new int[] { 5, 10, 20, 50 }" />
+            </PagerContent>
+
+        </MudTable>
+    </MudPaper>
+
+        @if (_showForm)
+        {
+            <MudPaper Class="pa-4 rounded-lg mt-4" Elevation="1">
+
+                <MudStack Row="true"
+                          AlignItems="AlignItems.Center"
+                          Justify="Justify.SpaceBetween"
+                          Class="mb-3">
+
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.Person"
+                                 Color="Color.Primary" />
+
+                        <div>
+                            <MudText Typo="Typo.h6">
+                                @(_editingId == 0 ? "Nuevo empleado" : "Editar empleado")
+                            </MudText>
+
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Completa los datos del trabajador y su estado del beneficio de menú.
+                            </MudText>
+                        </div>
+                    </MudStack>
+
+                    @if (_editingId != 0)
+                    {
+                        <MudChip T="string"
+                                 Color="Color.Info"
+                                 Variant="Variant.Outlined"
+                                 Size="Size.Small">
+                            DNI: @_model.Dni
+                        </MudChip>
+                    }
+
+                </MudStack>
+
+                <MudDivider Class="mb-4" />
+
+                <MudForm @ref="_form">
+
+                    <MudGrid Spacing="2">
+
+                        <MudItem xs="12" sm="6" md="2">
+                            <MudTextField @bind-Value="_model.Dni"
+                                          Label="DNI"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          MaxLength="15"
+                                          Required="true"
+                                          Immediate="true"
+                                          Disabled="@(_editingId != 0)"
+                                          Adornment="Adornment.Start"
+                                          AdornmentIcon="@Icons.Material.Filled.Badge" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudTextField @bind-Value="_model.Nombres"
+                                          Label="Nombres"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          Required="true"
+                                          Immediate="true"
+                                          Adornment="Adornment.Start"
+                                          AdornmentIcon="@Icons.Material.Filled.Person" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudTextField @bind-Value="_model.Apellidos"
+                                          Label="Apellidos"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          Required="true"
+                                          Immediate="true"
+                                          Adornment="Adornment.Start"
+                                          AdornmentIcon="@Icons.Material.Filled.PersonOutline" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6" md="2">
+                            <MudSelect T="CategoriaEmpleado"
+                                       @bind-Value="_model.Categoria"
+                                       Label="Tipo de trabajador"
+                                       Variant="Variant.Outlined"
+                                       Margin="Margin.Dense">
+                                @foreach (var categoria in Enum.GetValues<CategoriaEmpleado>())
+                                {
+                                    <MudSelectItem Value="@categoria">
+                                        @GetCategoriaTexto(categoria)
+                                    </MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6" md="2">
+                            <MudSelect T="EstadoEmpleado"
+                                       @bind-Value="_model.Estado"
+                                       Label="Estado"
+                                       Variant="Variant.Outlined"
+                                       Margin="Margin.Dense">
+                                <MudSelectItem Value="EstadoEmpleado.Activo">Activo</MudSelectItem>
+                                <MudSelectItem Value="EstadoEmpleado.Suspendido">Suspendido</MudSelectItem>
+                            </MudSelect>
+                        </MudItem>
+
+                    </MudGrid>
+
+                    <MudDivider Class="my-4" />
+
+                    <MudStack Row="true"
+                              AlignItems="AlignItems.Center"
+                              Justify="Justify.SpaceBetween">
+
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            Los campos marcados con * son obligatorios.
+                        </MudText>
+
+                        <MudStack Row="true" Spacing="2">
+                            <MudButton Variant="Variant.Text"
+                                       Color="Color.Default"
+                                       StartIcon="@Icons.Material.Filled.Close"
+                                       OnClick="Cancelar">
+                                Cancelar
+                            </MudButton>
+
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.Save"
+                                       OnClick="Guardar">
+                                Guardar
+                            </MudButton>
+                        </MudStack>
+
+                    </MudStack>
+
+                </MudForm>
+
+            </MudPaper>
+        }
+
+</MudStack>
+
+</RequirePermission>
+
+@code {
+    private List<Empleado> _empleados = new();
+    private Empleado _model = new();
+    private MudForm? _form;
+
+    private bool _loading = true;
+    private bool _showForm;
+    private int _editingId;
+    private string _search = string.Empty;
+
+    private IEnumerable<Empleado> FilteredEmpleados
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(_search))
+                return _empleados;
+
+            var term = _search.Trim().ToLower();
+
+            return _empleados.Where(e =>
+                e.Dni.ToLower().Contains(term) ||
+                e.NombreCompleto.ToLower().Contains(term));
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEmpleados();
+    }
+
+    private async Task LoadEmpleados()
+    {
+        _loading = true;
+        _empleados = await EmpleadoService.GetAllAsync();
+        _loading = false;
+    }
+
+    private void NuevoEmpleado()
+    {
+        _editingId = 0;
+        _model = new Empleado
+        {
+            Estado = EstadoEmpleado.Activo,
+            Categoria = CategoriaEmpleado.Operativo,
+            Activo = true,
+            FechaCreacion = DateTime.Now
+        };
+
+        _showForm = true;
+    }
+
+    private void EditarEmpleado(Empleado empleado)
+    {
+        _editingId = empleado.Id;
+
+        _model = new Empleado
+        {
+            Id = empleado.Id,
+            Dni = empleado.Dni,
+            Nombres = empleado.Nombres,
+            Apellidos = empleado.Apellidos,
+            Estado = empleado.Estado,
+            Categoria = empleado.Categoria,
+            Activo = empleado.Activo,
+            FechaCreacion = empleado.FechaCreacion
+        };
+
+        _showForm = true;
+    }
+
+    private async Task Guardar()
+    {
+        if (_form is not null)
+        {
+            await _form.ValidateAsync();
+
+            if (!_form.IsValid)
+                return;
+        }
+
+        (bool Success, string Message) result;
+
+        if (_editingId == 0)
+            result = await EmpleadoService.CreateAsync(_model);
+        else
+            result = await EmpleadoService.UpdateAsync(_model);
+
+        if (result.Success)
+        {
+            Snackbar.Add(result.Message, Severity.Success);
+            _showForm = false;
+            await LoadEmpleados();
+        }
+        else
+        {
+            Snackbar.Add(result.Message, Severity.Warning);
+        }
+    }
+
+    private async Task CambiarActivo(int id)
+    {
+        var result = await EmpleadoService.ToggleActivoAsync(id);
+
+        if (result.Success)
+        {
+            Snackbar.Add(result.Message, Severity.Success);
+            await LoadEmpleados();
+        }
+        else
+        {
+            Snackbar.Add(result.Message, Severity.Warning);
+        }
+    }
+
+    private void Cancelar()
+    {
+        _showForm = false;
+        _model = new Empleado();
+        _editingId = 0;
+    }
+
+    private async Task CambiarEstadoBeneficio(int id)
+    {
+        var result = await EmpleadoService.ToggleEstadoBeneficioAsync(id);
+
+        if (result.Success)
+        {
+            Snackbar.Add(result.Message, Severity.Success);
+            await LoadEmpleados();
+        }
+        else
+        {
+            Snackbar.Add(result.Message, Severity.Warning);
+        }
+    }
+
+    private static string GetCategoriaTexto(CategoriaEmpleado categoria)
+    {
+        return categoria switch
+        {
+            CategoriaEmpleado.Administrativo => "Administrativo",
+            CategoriaEmpleado.Operativo => "Operativo",
+            CategoriaEmpleado.Tercero => "Tercero",
+            CategoriaEmpleado.Practicante => "Practicante",
+            CategoriaEmpleado.Visitante => "Visitante",
+            CategoriaEmpleado.Otro => "Otro",
+            _ => categoria.ToString()
+        };
+    }
+}

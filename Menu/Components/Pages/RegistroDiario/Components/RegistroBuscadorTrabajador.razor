@@ -1,0 +1,77 @@
+﻿
+<MudPaper Class="pa-4" Elevation="1">
+    <MudStack Spacing="3">
+
+        <MudText Typo="Typo.h6">Buscar trabajador</MudText>
+
+        <MudTextField Value="@Dni"
+                      ValueChanged="DniChanged"
+                      Label="DNI"
+                      Variant="Variant.Outlined"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Badge"
+                      Immediate="true"
+                      InputMode="InputMode.numeric"
+                      OnKeyDown="OnKeyDown" />
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Search"
+                   OnClick="OnBuscar"
+                   FullWidth="true">
+            Buscar
+        </MudButton>
+
+        @if (Empleado is not null)
+        {
+            <MudDivider />
+
+            <MudCard Elevation="0" Class="pa-2">
+                <MudCardContent>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">
+                        Trabajador
+                    </MudText>
+
+                    <MudText Typo="Typo.h6">
+                        @Empleado.NombreCompleto
+                    </MudText>
+
+                    <MudText Typo="Typo.body2">
+                        DNI: @Empleado.Dni
+                    </MudText>
+
+                    <MudChip T="string"
+                             Class="mt-2"
+                             Size="Size.Small"
+                             Color="@(Empleado.Estado == EstadoEmpleado.Activo ? Color.Success : Color.Warning)"
+                             Variant="Variant.Filled">
+                        @Empleado.Estado
+                    </MudChip>
+                </MudCardContent>
+            </MudCard>
+        }
+
+        @ChildContent
+
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter]
+    public string Dni { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback<string> DniChanged { get; set; }
+
+    [Parameter]
+    public Empleado? Empleado { get; set; }
+
+    [Parameter]
+    public EventCallback OnBuscar { get; set; }
+
+    [Parameter]
+    public EventCallback<KeyboardEventArgs> OnKeyDown { get; set; }
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}

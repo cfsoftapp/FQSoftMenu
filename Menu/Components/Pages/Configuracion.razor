@@ -1,0 +1,167 @@
+﻿@page "/configuracion"
+
+@using Menu.Components.Shared
+@using Menu.Models
+@using Menu.Services
+
+@inject ConfiguracionMenuService ConfiguracionMenuService
+@inject AuthStateService AuthState
+@inject ISnackbar Snackbar
+
+<RequirePermission Permisos="new[] { Permisos.ConfiguracionVer }">
+
+<PageTitle>Configuración</PageTitle>
+
+<MudStack Spacing="3">
+
+    <div>
+        <MudText Typo="Typo.h4">Configuración</MudText>
+        <MudText Typo="Typo.body1" Color="Color.Secondary">
+            Parámetros generales del comedor y precio actual del menú.
+        </MudText>
+    </div>
+
+    <MudGrid Spacing="3">
+
+        <MudItem xs="12" md="5">
+            <MudPaper Class="pa-4" Elevation="1">
+
+                <MudStack Spacing="3">
+
+                    <MudText Typo="Typo.h6">
+                        Precio del menú
+                    </MudText>
+
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                        Este precio se usará al registrar nuevos consumos de menú.
+                        Los consumos anteriores conservarán el precio histórico.
+                    </MudAlert>
+
+                    <MudForm @ref="_form">
+                        <MudNumericField T="decimal"
+                                         @bind-Value="_precioMenu"
+                                         Label="Precio actual"
+                                         Variant="Variant.Outlined"
+                                         Adornment="Adornment.Start"
+                                         AdornmentText="S/"
+                                         Min="0"
+                                         Required="true" />
+
+                        <MudTextField Value="@_moneda"
+                                      Label="Moneda"
+                                      Variant="Variant.Outlined"
+                                      Disabled="true"
+                                      Class="mt-3" />
+
+                        <MudTextField Value="@_fechaActualizacion"
+                                      Label="Última actualización"
+                                      Variant="Variant.Outlined"
+                                      Disabled="true"
+                                      Class="mt-3" />
+                    </MudForm>
+
+                    <MudStack Row="true" Justify="Justify.FlexEnd">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.Save"
+                                   OnClick="Guardar"
+                                       Disabled="@(_saving || !AuthState.TienePermiso(Permisos.ConfiguracionEditar))">
+                            Guardar cambios
+                        </MudButton>
+                    </MudStack>
+
+                </MudStack>
+
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" md="7">
+            <MudPaper Class="pa-4" Elevation="1">
+
+                <MudText Typo="Typo.h6">
+                    Reglas actuales
+                </MudText>
+
+                <MudDivider Class="my-3" />
+
+                <MudList T="string" Dense="true">
+                    <MudListItem Icon="@Icons.Material.Filled.Business">
+                        Empleado activo: el menú lo paga la empresa.
+                    </MudListItem>
+
+                    <MudListItem Icon="@Icons.Material.Filled.Badge">
+                        Empleado suspendido: el menú va a descuento por planilla.
+                    </MudListItem>
+
+                    <MudListItem Icon="@Icons.Material.Filled.Payments">
+                        Los consumos adicionales son por cuenta del trabajador.
+                    </MudListItem>
+
+                    <MudListItem Icon="@Icons.Material.Filled.CreditCard">
+                        Los adicionales pueden pagarse al momento o quedar como crédito comedor.
+                    </MudListItem>
+
+                    <MudListItem Icon="@Icons.Material.Filled.History">
+                        Cada consumo guarda su precio histórico al momento del registro.
+                    </MudListItem>
+                </MudList>
+
+            </MudPaper>
+        </MudItem>
+
+    </MudGrid>
+
+</MudStack>
+
+
+</RequirePermission>
+
+@code {
+    private MudForm? _form;
+
+    private decimal _precioMenu;
+    private string _moneda = "PEN";
+    private string _fechaActualizacion = string.Empty;
+    private bool _saving;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarConfiguracion();
+    }
+
+    private async Task CargarConfiguracion()
+    {
+        var config = await ConfiguracionMenuService.GetActualAsync();
+
+        _precioMenu = config.PrecioMenu;
+        _moneda = config.Moneda;
+        _fechaActualizacion = config.FechaActualizacion.ToString("dd/MM/yyyy HH:mm");
+    }
+
+    private async Task Guardar()
+    {
+        if (_form is not null)
+        {
+            await _form.ValidateAsync();
+
+            if (!_form.IsValid)
+                return;
+        }
+
+        _saving = true;
+
+        var result = await ConfiguracionMenuService.UpdatePrecioAsync(_precioMenu);
+
+        if (result.Success)
+        {
+            Snackbar.Add(result.Message, Severity.Success);
+            await CargarConfiguracion();
+        }
+        else
+        {
+            Snackbar.Add(result.Message, Severity.Warning);
+        }
+
+        _saving = false;
+    }
+}
