@@ -1,23 +1,93 @@
-# Build output
-bin/
-obj/
-
-# Visual Studio / local IDE state
+## Visual Studio / .NET
 .vs/
-*.user
+*.rsuser
 *.suo
+*.user
 *.userosscache
 *.sln.docstates
+*.userprefs
 
-# Local databases and SQLite sidecar files
+bin/
+obj/
+**/[Bb]in/*
+**/[Oo]bj/*
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+artifacts/
+.artifacts/
+
+## Build/test output
+TestResult.xml
+nunit-*.xml
+*.trx
+coverage*.json
+coverage*.xml
+coverage*.info
+*.coverage
+*.coveragexml
+*.binlog
+
+## NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+project.lock.json
+project.fragment.lock.json
+*.nuget.props
+*.nuget.targets
+
+## Publish/deploy output
+publish/
+*.[Pp]ublish.xml
+*.azurePubxml
+*.pubxml
+*.publishproj
+PublishScripts/
+
+## Local databases and SQLite sidecar files
 *.db
 *.db-shm
 *.db-wal
 *.db-journal
+*.mdf
+*.ldf
+*.ndf
 
-# Local logs
+## Secrets / local env
+*.env
+*.pfx
+*.publishsettings
+
+## Logs and temp files
 *.log
+*.tlog
+*.tmp
+*.tmp_proj
+*.cache
+*.pidb
+*.svclog
+*.scc
+~$*
+*~
 
-# OS files
+## Tooling
+node_modules/
+.sass-cache/
+BenchmarkDotNet.Artifacts/
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+.history/
+
+## OS files
 Thumbs.db
 Desktop.ini
