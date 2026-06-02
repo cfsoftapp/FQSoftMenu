@@ -13,11 +13,11 @@
 
             <div>
                 <MudText Typo="Typo.subtitle1" Class="fw-bold">
-                    Resumen financiero
+                    Resumen operativo
                 </MudText>
 
                 <MudText Typo="Typo.caption" Color="Color.Secondary">
-                    Consolidado del periodo seleccionado.
+                    Consumos y recuperos del periodo seleccionado.
                 </MudText>
             </div>
         </MudStack>
@@ -28,18 +28,7 @@
 
     <MudGrid Spacing="2">
 
-        <MudItem xs="12" sm="6" md="2">
-            <MudPaper Class="pa-2 rounded-lg h-100" Elevation="0" Outlined="true">
-                <MudText Typo="Typo.caption" Color="Color.Secondary">
-                    Liquidación proveedor
-                </MudText>
-                <MudText Typo="Typo.subtitle1" Color="Color.Warning" Class="fw-bold">
-                    @Resumen.TotalProveedor.ToString("C")
-                </MudText>
-            </MudPaper>
-        </MudItem>
-
-        <MudItem xs="12" sm="6" md="2">
+        <MudItem xs="12" sm="6" md="3">
             <MudPaper Class="pa-2 rounded-lg h-100" Elevation="0" Outlined="true">
                 <MudText Typo="Typo.caption" Color="Color.Secondary">
                     Costo empresa
@@ -50,7 +39,7 @@
             </MudPaper>
         </MudItem>
 
-        <MudItem xs="12" sm="6" md="2">
+        <MudItem xs="12" sm="6" md="3">
             <MudPaper Class="pa-2 rounded-lg h-100" Elevation="0" Outlined="true">
                 <MudText Typo="Typo.caption" Color="Color.Secondary">
                     A recuperar planilla
@@ -61,7 +50,7 @@
             </MudPaper>
         </MudItem>
 
-        <MudItem xs="12" sm="6" md="2">
+        <MudItem xs="12" sm="6" md="3">
             <MudPaper Class="pa-2 rounded-lg h-100" Elevation="0" Outlined="true">
                 <MudText Typo="Typo.caption" Color="Color.Secondary">
                     Cobrado directo
@@ -72,10 +61,10 @@
             </MudPaper>
         </MudItem>
 
-        <MudItem xs="12" sm="6" md="2">
+        <MudItem xs="12" sm="6" md="3">
             <MudPaper Class="pa-2 rounded-lg h-100" Elevation="0" Outlined="true">
                 <MudText Typo="Typo.caption" Color="Color.Secondary">
-                    Pendiente crédito
+                    Pendiente credito del periodo
                 </MudText>
                 <MudText Typo="Typo.subtitle1" Color="Color.Error" Class="fw-bold">
                     @Resumen.TotalPendienteCredito.ToString("C")

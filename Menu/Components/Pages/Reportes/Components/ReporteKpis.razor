@@ -17,9 +17,9 @@
         <MudPaper Class="pa-3 rounded-lg h-100" Elevation="1">
             <MudStack Spacing="1">
                 <MudIcon Icon="@Icons.Material.Filled.Business" Color="Color.Success" />
-                <MudText Typo="Typo.body2" Color="Color.Secondary">Liquidación proveedor</MudText>
-                <MudText Typo="Typo.h5">@Resumen.TotalProveedor.ToString("C")</MudText>
-                <MudText Typo="Typo.caption">Empresa + planilla</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Costo empresa</MudText>
+                <MudText Typo="Typo.h5">@Resumen.TotalEmpresa.ToString("C")</MudText>
+                <MudText Typo="Typo.caption">Beneficio asumido</MudText>
             </MudStack>
         </MudPaper>
     </MudItem>
@@ -52,7 +52,7 @@
                 <MudIcon Icon="@Icons.Material.Filled.PendingActions" Color="Color.Error" />
                 <MudText Typo="Typo.body2" Color="Color.Secondary">Pendiente crédito</MudText>
                 <MudText Typo="Typo.h5">@Resumen.TotalPendienteCredito.ToString("C")</MudText>
-                <MudText Typo="Typo.caption">Menú, extras y productos</MudText>
+                <MudText Typo="Typo.caption">Consumos del periodo</MudText>
             </MudStack>
         </MudPaper>
     </MudItem>
