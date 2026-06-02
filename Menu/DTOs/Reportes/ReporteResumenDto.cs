@@ -4,7 +4,7 @@ public class ReporteResumenDto
 {
     public int TotalMenus { get; set; }
 
-    // Menú principal
+    // Menu principal y adicionales asumidos por la empresa
     public decimal TotalEmpresa { get; set; }
 
     public decimal TotalPlanilla { get; set; }
@@ -12,7 +12,7 @@ public class ReporteResumenDto
     public decimal TotalMenuCreditoPendiente { get; set; }
     public decimal TotalMenuCreditoPagado { get; set; }
 
-    // Proveedor
+    // Valor operativo empresa + planilla
     public decimal TotalProveedor { get; set; }
 
     // Cobros directos

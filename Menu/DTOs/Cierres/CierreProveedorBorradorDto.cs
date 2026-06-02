@@ -12,14 +12,18 @@ public class CierreProveedorBorradorDto
 
     public List<CierreProveedorItemDto> Items { get; set; } = new();
 
-    public int TotalMenusActivos => Items.Count(x => x.TipoPagoMenu == Enums.TipoPagoMenu.Empresa);
+    public int TotalMenusActivos => Items.Count(x =>
+        x.TipoPagoMenu == Enums.TipoPagoMenu.Empresa &&
+        !x.EsAdicionalEmpresa);
+
+    public int TotalAdicionalesEmpresa => Items.Count(x => x.EsAdicionalEmpresa);
 
     public int TotalMenusPlanilla => Items.Count(x => x.TipoPagoMenu == Enums.TipoPagoMenu.DescuentoPlanilla);
 
     public int TotalMenusPlanillaExcluidos => Items.Count(x => x.ExcluirDeProveedor);
 
     public decimal TotalPersonalActivo => Items
-        .Where(x => x.TipoPagoMenu == Enums.TipoPagoMenu.Empresa)
+        .Where(x => x.TipoPagoMenu == Enums.TipoPagoMenu.Empresa && !x.ExcluirDeProveedor)
         .Sum(x => x.Importe);
 
     public decimal TotalPlanilla => Items

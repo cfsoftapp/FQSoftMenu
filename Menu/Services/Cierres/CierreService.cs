@@ -88,7 +88,11 @@ public class CierreService : ICierreService
                 TotalAnulados = menusFecha.Count(x => x.Anulado) + adicionalesFecha.Count(x => x.Anulado),
                 TotalEmpresa = menusActivos
                     .Where(x => x.TipoPagoMenu == TipoPagoMenu.Empresa)
-                    .Sum(x => x.PrecioMenu),
+                    .Sum(x => x.PrecioMenu)
+                    +
+                    adicionalesActivos
+                        .Where(x => x.FormaCobro == FormaCobroAdicional.Empresa)
+                        .Sum(x => x.Precio),
                 TotalPlanilla = menusActivos
                     .Where(x => x.TipoPagoMenu == TipoPagoMenu.DescuentoPlanilla)
                     .Sum(x => x.PrecioMenu),
@@ -166,7 +170,7 @@ public class CierreService : ICierreService
                 FechaDesde = x.FechaDesde,
                 FechaHasta = x.FechaHasta,
                 Estado = x.Estado,
-                TotalMenus = x.TotalMenusActivos + x.TotalMenusPlanilla,
+                TotalMenus = x.TotalMenusActivos + x.TotalMenusPlanilla + x.Detalles.Count(d => d.ConsumoAdicionalId.HasValue),
                 TotalLiquidarProveedor = x.TotalLiquidarProveedor,
                 TotalExcluidoRevision = x.TotalExcluidoRevision,
                 FechaRegistro = x.FechaConfirmacion,
@@ -207,9 +211,38 @@ public class CierreService : ICierreService
                 EmpleadoNombre = x.Empleado.NombreCompleto,
                 TipoServicio = x.TipoServicio,
                 TipoPagoMenu = x.TipoPagoMenu,
+                Concepto = x.TipoServicio.ToString(),
                 Importe = x.PrecioMenu
             })
             .ToListAsync();
+
+        var adicionalesEmpresa = await _context.ConsumosAdicionales
+            .AsNoTracking()
+            .Include(x => x.Empleado)
+            .Where(x => !x.Anulado)
+            .Where(x => x.Fecha >= desde && x.Fecha < hastaExclusivo)
+            .Where(x => x.FormaCobro == FormaCobroAdicional.Empresa)
+            .OrderBy(x => x.Fecha)
+            .ThenBy(x => x.Empleado.Apellidos)
+            .ThenBy(x => x.Empleado.Nombres)
+            .Select(x => new CierreProveedorItemDto
+            {
+                ConsumoMenuId = 0,
+                ConsumoAdicionalId = x.Id,
+                Fecha = x.Fecha,
+                EmpleadoId = x.EmpleadoId,
+                Dni = x.Empleado.Dni,
+                EmpleadoNombre = x.Empleado.NombreCompleto,
+                TipoServicio = TipoServicioMenu.Almuerzo,
+                TipoPagoMenu = TipoPagoMenu.Empresa,
+                TipoAdicional = x.TipoAdicional,
+                Concepto = (x.TipoAdicional == TipoAdicional.MenuExtra ? "Menu extra" : "Producto adicional") +
+                           (string.IsNullOrWhiteSpace(x.Descripcion) ? string.Empty : $" - {x.Descripcion}"),
+                Importe = x.Precio
+            })
+            .ToListAsync();
+
+        items.AddRange(adicionalesEmpresa);
 
         var cierre = CrearCierreProveedor(
             desde,
@@ -294,12 +327,15 @@ public class CierreService : ICierreService
                 .Select(x => new CierreProveedorItemDto
                 {
                     ConsumoMenuId = x.ConsumoMenuId,
+                    ConsumoAdicionalId = x.ConsumoAdicionalId,
                     Fecha = x.Fecha,
                     EmpleadoId = x.EmpleadoId,
                     Dni = x.Dni,
                     EmpleadoNombre = x.EmpleadoNombre,
                     TipoServicio = x.TipoServicio,
                     TipoPagoMenu = x.TipoPagoMenu,
+                    TipoAdicional = x.TipoAdicional,
+                    Concepto = x.Concepto,
                     Importe = x.Importe,
                     ExcluirDeProveedor = x.ExcluidoPorPagoDirecto,
                     MotivoExclusion = x.MotivoExclusion
@@ -357,7 +393,17 @@ public class CierreService : ICierreService
         DateTime desde,
         DateTime hasta)
     {
-        var consumoIds = input.Items.Select(x => x.ConsumoMenuId).Distinct().ToList();
+        var consumoIds = input.Items
+            .Where(x => !x.EsAdicionalEmpresa)
+            .Select(x => x.ConsumoMenuId)
+            .Distinct()
+            .ToList();
+
+        var adicionalIds = input.Items
+            .Where(x => x.EsAdicionalEmpresa)
+            .Select(x => x.ConsumoAdicionalId!.Value)
+            .Distinct()
+            .ToList();
 
         var consumos = await _context.ConsumosMenu
             .AsNoTracking()
@@ -374,6 +420,25 @@ public class CierreService : ICierreService
                 consumo.Fecha.Date > hasta ||
                 (consumo.TipoPagoMenu != TipoPagoMenu.Empresa &&
                  consumo.TipoPagoMenu != TipoPagoMenu.DescuentoPlanilla))
+            {
+                return ResultadoOperacionDto.Fail("El borrador cambio. Vuelva a generar la liquidacion antes de guardar.");
+            }
+        }
+
+        var adicionales = await _context.ConsumosAdicionales
+            .AsNoTracking()
+            .Where(x => adicionalIds.Contains(x.Id))
+            .ToListAsync();
+
+        if (adicionales.Count != adicionalIds.Count)
+            return ResultadoOperacionDto.Fail("Algunos adicionales del borrador ya no existen. Vuelva a generar el borrador.");
+
+        foreach (var adicional in adicionales)
+        {
+            if (adicional.Anulado ||
+                adicional.Fecha.Date < desde ||
+                adicional.Fecha.Date > hasta ||
+                adicional.FormaCobro != FormaCobroAdicional.Empresa)
             {
                 return ResultadoOperacionDto.Fail("El borrador cambio. Vuelva a generar la liquidacion antes de guardar.");
             }
@@ -435,12 +500,15 @@ public class CierreService : ICierreService
             cierre.Detalles.Add(new CierreProveedorDetalle
             {
                 ConsumoMenuId = item.ConsumoMenuId,
+                ConsumoAdicionalId = item.ConsumoAdicionalId,
                 Fecha = item.Fecha.Date,
                 EmpleadoId = item.EmpleadoId,
                 Dni = item.Dni,
                 EmpleadoNombre = item.EmpleadoNombre,
                 TipoServicio = item.TipoServicio,
                 TipoPagoMenu = item.TipoPagoMenu,
+                TipoAdicional = item.TipoAdicional,
+                Concepto = string.IsNullOrWhiteSpace(item.Concepto) ? item.TipoServicio.ToString() : item.Concepto.Trim(),
                 Importe = item.Importe,
                 IncluidoProveedor = !item.ExcluirDeProveedor,
                 ExcluidoPorPagoDirecto = item.ExcluirDeProveedor,
@@ -448,11 +516,11 @@ public class CierreService : ICierreService
             });
         }
 
-        cierre.TotalMenusActivos = cierre.Detalles.Count(x => x.TipoPagoMenu == TipoPagoMenu.Empresa);
+        cierre.TotalMenusActivos = cierre.Detalles.Count(x => x.TipoPagoMenu == TipoPagoMenu.Empresa && x.ConsumoAdicionalId is null);
         cierre.TotalMenusPlanilla = cierre.Detalles.Count(x => x.TipoPagoMenu == TipoPagoMenu.DescuentoPlanilla);
         cierre.TotalMenusPlanillaExcluidos = cierre.Detalles.Count(x => x.ExcluidoPorPagoDirecto);
         cierre.TotalPersonalActivo = cierre.Detalles
-            .Where(x => x.TipoPagoMenu == TipoPagoMenu.Empresa)
+            .Where(x => x.TipoPagoMenu == TipoPagoMenu.Empresa && x.IncluidoProveedor)
             .Sum(x => x.Importe);
         cierre.TotalPlanilla = cierre.Detalles
             .Where(x => x.TipoPagoMenu == TipoPagoMenu.DescuentoPlanilla && x.IncluidoProveedor)
@@ -533,7 +601,8 @@ public class CierreService : ICierreService
             new object?[] { "Total a liquidar proveedor", cierre.TotalLiquidarProveedor },
             new object?[] { "Excepciones para revision/concesionario", cierre.TotalExcluidoRevision },
             new object?[] { string.Empty, string.Empty },
-            new object?[] { "Cantidad activos", cierre.TotalMenusActivos },
+            new object?[] { "Cantidad menus activos", cierre.TotalMenusActivos },
+            new object?[] { "Cantidad adicionales empresa", cierre.Detalles.Count(x => x.ConsumoAdicionalId.HasValue) },
             new object?[] { "Cantidad planilla", cierre.TotalMenusPlanilla },
             new object?[] { "Cantidad excepciones", cierre.TotalMenusPlanillaExcluidos },
             new object?[] { "Observacion", cierre.Observacion ?? string.Empty }
@@ -549,6 +618,7 @@ public class CierreService : ICierreService
                 "DNI",
                 "Trabajador",
                 "Menus activo",
+                "Adicionales empresa",
                 "Menus planilla",
                 "Excepciones",
                 "Total proveedor",
@@ -563,7 +633,8 @@ public class CierreService : ICierreService
             {
                 x.Key.Dni,
                 x.Key.EmpleadoNombre,
-                x.Count(d => d.TipoPagoMenu == TipoPagoMenu.Empresa),
+                x.Count(d => d.TipoPagoMenu == TipoPagoMenu.Empresa && d.ConsumoAdicionalId is null),
+                x.Count(d => d.ConsumoAdicionalId.HasValue),
                 x.Count(d => d.TipoPagoMenu == TipoPagoMenu.DescuentoPlanilla && d.IncluidoProveedor),
                 x.Count(d => d.ExcluidoPorPagoDirecto),
                 x.Where(d => d.IncluidoProveedor).Sum(d => d.Importe),
@@ -582,7 +653,7 @@ public class CierreService : ICierreService
                 "Fecha",
                 "DNI",
                 "Trabajador",
-                "Servicio",
+                "Concepto",
                 "Tipo pago",
                 "Incluido proveedor",
                 "Revision/concesionario",
@@ -599,8 +670,10 @@ public class CierreService : ICierreService
                 x.Fecha.ToString("dd/MM/yyyy"),
                 x.Dni,
                 x.EmpleadoNombre,
-                x.TipoServicio.ToString(),
-                x.TipoPagoMenu == TipoPagoMenu.Empresa ? "Personal activo" : "Descuento planilla",
+                string.IsNullOrWhiteSpace(x.Concepto) ? x.TipoServicio.ToString() : x.Concepto,
+                x.ConsumoAdicionalId.HasValue
+                    ? "Empresa adicional"
+                    : x.TipoPagoMenu == TipoPagoMenu.Empresa ? "Personal activo" : "Descuento planilla",
                 x.IncluidoProveedor ? "Si" : "No",
                 x.ExcluidoPorPagoDirecto ? "Si" : "No",
                 x.MotivoExclusion ?? string.Empty,

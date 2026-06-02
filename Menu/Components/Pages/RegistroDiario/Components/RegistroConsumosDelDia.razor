@@ -152,6 +152,7 @@
             "DescuentoPlanilla" => "Descuento planilla",
             "CreditoComedor" => "Crédito comedor",
             "PagoDirecto" => "Pago directo",
+            "Empresa" => "Empresa",
             _ => item.FormaPago
         };
     }
@@ -166,6 +167,9 @@
         {
             return "Registrado";
         }
+
+        if (item.Origen == "Adicional" && item.FormaPago == "Empresa")
+            return "Registrado";
 
         return item.EstadoCobro switch
         {

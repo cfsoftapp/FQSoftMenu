@@ -89,7 +89,7 @@
                 <HeaderContent>
                     <MudTh>Periodo</MudTh>
                     <MudTh>Estado</MudTh>
-                    <MudTh Style="text-align:center">Menus</MudTh>
+                    <MudTh Style="text-align:center">Items</MudTh>
                     <MudTh Style="text-align:right">Monto</MudTh>
                     <MudTh>Generado</MudTh>
                     <MudTh Style="text-align:right">Acciones</MudTh>
@@ -111,7 +111,7 @@
                         </MudChip>
                     </MudTd>
 
-                    <MudTd DataLabel="Menus" Style="text-align:center">@context.TotalMenus</MudTd>
+                    <MudTd DataLabel="Items" Style="text-align:center">@context.TotalMenus</MudTd>
                     <MudTd DataLabel="Monto" Style="text-align:right">
                         <MudText Typo="Typo.body2" Class="fw-bold">
                             @context.TotalLiquidarProveedor.ToString("C", _culture)
@@ -212,7 +212,7 @@
                             <MudPaper Class="pa-3 h-100 cierre-summary-card" Elevation="0">
                                 <MudText Typo="Typo.body2" Color="Color.Secondary">Activos incluidos</MudText>
                                 <MudText Typo="Typo.h6">@_borradorProveedor.TotalPersonalActivo.ToString("C", _culture)</MudText>
-                                <MudText Typo="Typo.caption">@_borradorProveedor.TotalMenusActivos menu(s)</MudText>
+                                <MudText Typo="Typo.caption">@_borradorProveedor.TotalMenusActivos menu(s), @_borradorProveedor.TotalAdicionalesEmpresa adicional(es)</MudText>
                             </MudPaper>
                         </MudItem>
 
@@ -252,9 +252,9 @@
                     <MudPaper Class="pa-3 cierre-review-section" Elevation="0">
                         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                             <div>
-                                <MudText Typo="Typo.subtitle1" Class="fw-bold">Menus empresa (activos)</MudText>
+                                <MudText Typo="Typo.subtitle1" Class="fw-bold">Empresa (activos y autorizados)</MudText>
                                 <MudText Typo="Typo.body2" Color="Color.Secondary">
-                                    Se incluyen automaticamente. Revisalos solo si pudo faltar suspender a alguien.
+                                    Se incluyen automaticamente. Revisa activos, extras o productos autorizados por gerencia.
                                 </MudText>
                             </div>
 
@@ -272,7 +272,7 @@
                                 <HeaderContent>
                                     <MudTh></MudTh>
                                     <MudTh>Empleado</MudTh>
-                                    <MudTh Style="text-align:center">Menus</MudTh>
+                                    <MudTh Style="text-align:center">Items</MudTh>
                                     <MudTh Style="text-align:right">Proveedor</MudTh>
                                     <MudTh Style="text-align:right">Revision</MudTh>
                                 </HeaderContent>
@@ -283,7 +283,7 @@
                                                        OnClick="@(() => ToggleEmpleado(context.EmpleadoId))" />
                                     </MudTd>
                                     <MudTd DataLabel="Empleado">@context.Dni - @context.EmpleadoNombre</MudTd>
-                                    <MudTd DataLabel="Menus" Style="text-align:center">@context.CantidadMenus</MudTd>
+                                    <MudTd DataLabel="Items" Style="text-align:center">@context.CantidadItems</MudTd>
                                     <MudTd DataLabel="Proveedor" Style="text-align:right">@context.TotalProveedor.ToString("C", _culture)</MudTd>
                                     <MudTd DataLabel="Revision" Style="text-align:right">@context.TotalRevision.ToString("C", _culture)</MudTd>
                                 </RowTemplate>
@@ -297,7 +297,7 @@
                                                     {
                                                         <div class="cierre-detail-compact">
                                                             <span>@item.Fecha.ToString("dd/MM")</span>
-                                                            <span>@item.TipoServicio</span>
+                                                            <span>@item.ConceptoCierre</span>
                                                             <span class="text-end">@item.Importe.ToString("C", _culture)</span>
                                                             <MudCheckBox T="bool"
                                                                          Dense="true"
@@ -329,7 +329,7 @@
                     </MudPaper>
 
                     <MudPaper Class="pa-3 cierre-review-section" Elevation="0">
-                        <MudText Typo="Typo.subtitle1" Class="fw-bold">Menus descuento planilla (suspendidos)</MudText>
+                        <MudText Typo="Typo.subtitle1" Class="fw-bold">Descuento planilla (suspendidos)</MudText>
                         <MudText Typo="Typo.body2" Color="Color.Secondary">
                             Revisa por empleado. Lo incluido pasa al proveedor y se recupera via planilla.
                         </MudText>
@@ -338,7 +338,7 @@
                             <HeaderContent>
                                 <MudTh></MudTh>
                                 <MudTh>Empleado</MudTh>
-                                <MudTh Style="text-align:center">Menus</MudTh>
+                                <MudTh Style="text-align:center">Items</MudTh>
                                 <MudTh Style="text-align:center">Excepciones</MudTh>
                                 <MudTh Style="text-align:right">Proveedor</MudTh>
                                 <MudTh Style="text-align:right">Revision</MudTh>
@@ -350,7 +350,7 @@
                                                    OnClick="@(() => ToggleEmpleado(context.EmpleadoId))" />
                                 </MudTd>
                                 <MudTd DataLabel="Empleado">@context.Dni - @context.EmpleadoNombre</MudTd>
-                                <MudTd DataLabel="Menus" Style="text-align:center">@context.CantidadMenus</MudTd>
+                                <MudTd DataLabel="Items" Style="text-align:center">@context.CantidadItems</MudTd>
                                 <MudTd DataLabel="Excepciones" Style="text-align:center">@context.CantidadExcepciones</MudTd>
                                 <MudTd DataLabel="Proveedor" Style="text-align:right">@context.TotalProveedor.ToString("C", _culture)</MudTd>
                                 <MudTd DataLabel="Revision" Style="text-align:right">@context.TotalRevision.ToString("C", _culture)</MudTd>
@@ -365,7 +365,7 @@
                                                 {
                                                     <div class="cierre-detail-compact">
                                                         <span>@item.Fecha.ToString("dd/MM")</span>
-                                                        <span>@item.TipoServicio</span>
+                                                        <span>@item.ConceptoCierre</span>
                                                         <span class="text-end">@item.Importe.ToString("C", _culture)</span>
                                                         <MudCheckBox T="bool"
                                                                      Dense="true"

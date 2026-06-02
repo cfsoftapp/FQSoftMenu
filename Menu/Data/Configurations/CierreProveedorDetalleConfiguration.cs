@@ -28,6 +28,13 @@ public class CierreProveedorDetalleConfiguration : IEntityTypeConfiguration<Cier
             .HasConversion<int>()
             .IsRequired();
 
+        entity.Property(e => e.TipoAdicional)
+            .HasConversion<int>();
+
+        entity.Property(e => e.Concepto)
+            .IsRequired()
+            .HasMaxLength(200);
+
         entity.Property(e => e.Importe)
             .HasPrecision(18, 2)
             .IsRequired();
@@ -41,5 +48,7 @@ public class CierreProveedorDetalleConfiguration : IEntityTypeConfiguration<Cier
             .OnDelete(DeleteBehavior.Cascade);
 
         entity.HasIndex(e => e.ConsumoMenuId);
+
+        entity.HasIndex(e => e.ConsumoAdicionalId);
     }
 }

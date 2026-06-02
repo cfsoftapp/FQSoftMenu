@@ -155,7 +155,7 @@ public partial class Cierres : ComponentBase
             _empleadoExpandidoId = null;
 
             if (!_borradorProveedor.Items.Any())
-                Snackbar.Add("No hay menus de activo o planilla para liquidar con proveedor.", Severity.Info);
+                Snackbar.Add("No hay consumos de empresa o planilla para liquidar con proveedor.", Severity.Info);
             else if (_borradorProveedor.YaConfirmado)
                 Snackbar.Add("Se recupero una liquidacion ya confirmada para este rango.", Severity.Info);
             else
@@ -367,7 +367,7 @@ public partial class Cierres : ComponentBase
 
         public List<CierreProveedorItemDto> Items { get; set; } = new();
 
-        public int CantidadMenus => Items.Count;
+        public int CantidadItems => Items.Count;
 
         public int CantidadExcepciones => Items.Count(x => x.ExcluirDeProveedor);
 

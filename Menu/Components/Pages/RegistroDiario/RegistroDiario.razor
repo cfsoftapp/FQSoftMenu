@@ -197,7 +197,10 @@
         _tipoPagoMenuSuspendido == TipoPagoMenu.CreditoComedor;
 
     private decimal TotalPagaEmpresa =>
-        MenuEmpresa ? _precioMenu : 0m;
+        (MenuEmpresa ? _precioMenu : 0m)
+        + TodosLosAdicionales
+            .Where(x => x.FormaCobro == FormaCobroAdicional.Empresa)
+            .Sum(x => x.Precio);
 
     private decimal TotalDescuentoPlanilla =>
         MenuDescuentoPlanilla ? _precioMenu : 0m;
@@ -206,12 +209,16 @@
         TodosLosAdicionales.Sum(x => x.Precio);
 
     private decimal TotalCobraTrabajador =>
-        TotalAdicionales +
+        TodosLosAdicionales
+            .Where(x => x.FormaCobro != FormaCobroAdicional.Empresa)
+            .Sum(x => x.Precio) +
         (MenuDescuentoPlanilla || MenuPagoDirecto || MenuCreditoComedor ? _precioMenu : 0m);
 
     private decimal TotalPagadoMomento =>
         TodosLosAdicionales
-            .Where(x => x.FormaCobro != FormaCobroAdicional.CreditoComedor)
+            .Where(x => x.FormaCobro == FormaCobroAdicional.Efectivo ||
+                        x.FormaCobro == FormaCobroAdicional.Yape ||
+                        x.FormaCobro == FormaCobroAdicional.Plin)
             .Sum(x => x.Precio)
         + (MenuPagoDirecto ? _precioMenu : 0m);
 

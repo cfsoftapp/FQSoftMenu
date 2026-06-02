@@ -12,6 +12,8 @@ public class CierreProveedorDetalle
 
     public int ConsumoMenuId { get; set; }
 
+    public int? ConsumoAdicionalId { get; set; }
+
     public DateTime Fecha { get; set; }
 
     public int EmpleadoId { get; set; }
@@ -23,6 +25,10 @@ public class CierreProveedorDetalle
     public TipoServicioMenu TipoServicio { get; set; }
 
     public TipoPagoMenu TipoPagoMenu { get; set; }
+
+    public TipoAdicional? TipoAdicional { get; set; }
+
+    public string Concepto { get; set; } = string.Empty;
 
     public decimal Importe { get; set; }
 

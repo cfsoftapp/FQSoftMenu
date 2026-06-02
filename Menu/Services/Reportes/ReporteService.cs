@@ -62,7 +62,11 @@ public class ReporteService : IReporteService
 
             TotalEmpresa = consumosMenu
                 .Where(x => x.TipoPagoMenu == TipoPagoMenu.Empresa)
-                .Sum(x => x.PrecioMenu),
+                .Sum(x => x.PrecioMenu)
+                +
+                adicionales
+                    .Where(x => x.FormaCobro == FormaCobroAdicional.Empresa)
+                    .Sum(x => x.Precio),
 
             TotalPlanilla = consumosMenu
                 .Where(x => x.TipoPagoMenu == TipoPagoMenu.DescuentoPlanilla)
@@ -229,7 +233,11 @@ public class ReporteService : IReporteService
 
                 TotalEmpresa = menusEmpleado
                     .Where(x => x.TipoPagoMenu == TipoPagoMenu.Empresa)
-                    .Sum(x => x.PrecioMenu),
+                    .Sum(x => x.PrecioMenu)
+                    +
+                    adicionalesEmpleado
+                        .Where(x => x.FormaCobro == FormaCobroAdicional.Empresa)
+                        .Sum(x => x.Precio),
 
                 TotalPlanilla = menusEmpleado
                     .Where(x => x.TipoPagoMenu == TipoPagoMenu.DescuentoPlanilla)
@@ -275,7 +283,9 @@ public class ReporteService : IReporteService
                 dto.TotalCreditoPagado +
                 adicionalesEmpleado
                     .Where(x => x.EstadoCobro == EstadoCobroAdicional.Pagado &&
-                                x.FormaCobro != FormaCobroAdicional.CreditoComedor)
+                                (x.FormaCobro == FormaCobroAdicional.Efectivo ||
+                                 x.FormaCobro == FormaCobroAdicional.Yape ||
+                                 x.FormaCobro == FormaCobroAdicional.Plin))
                     .Sum(x => x.Precio);
 
             dto.TotalPendiente = dto.TotalCreditoPendiente;
@@ -343,7 +353,11 @@ public class ReporteService : IReporteService
 
                 ImporteEmpresa = menusFecha
                     .Where(x => x.TipoPagoMenu == TipoPagoMenu.Empresa)
-                    .Sum(x => x.PrecioMenu),
+                    .Sum(x => x.PrecioMenu)
+                    +
+                    adicionalesFecha
+                        .Where(x => x.FormaCobro == FormaCobroAdicional.Empresa)
+                        .Sum(x => x.Precio),
 
                 ImportePlanilla = menusFecha
                     .Where(x => x.TipoPagoMenu == TipoPagoMenu.DescuentoPlanilla)
@@ -394,7 +408,10 @@ public class ReporteService : IReporteService
                 detalle.ImportePagoDirecto +
                 detalle.ImporteCreditoPagado +
                 adicionalesFecha
-                    .Where(x => x.EstadoCobro == EstadoCobroAdicional.Pagado)
+                    .Where(x => x.EstadoCobro == EstadoCobroAdicional.Pagado &&
+                                (x.FormaCobro == FormaCobroAdicional.Efectivo ||
+                                 x.FormaCobro == FormaCobroAdicional.Yape ||
+                                 x.FormaCobro == FormaCobroAdicional.Plin))
                     .Sum(x => x.Precio);
 
             detalle.TotalPendiente =
