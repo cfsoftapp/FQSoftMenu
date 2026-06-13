@@ -5,44 +5,49 @@
                     Icono="@Icons.Material.Filled.RestaurantMenu"
                     ColorIcono="Color.Primary">
 
-    <MudGrid Spacing="2">
+    <MudStack Spacing="1">
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.body2">Empresa</MudText>
+            <MudText Typo="Typo.subtitle2" Class="fw-bold">@Resumen.TotalEmpresa.ToString("C")</MudText>
+        </MudStack>
 
-        <MudItem xs="6" md="4">
-            <MudPaper Class="pa-2 rounded-lg" Elevation="0" Outlined="true">
-                <MudText Typo="Typo.caption" Color="Color.Secondary">Empresa</MudText>
-                <MudText Typo="Typo.subtitle2">@Resumen.TotalEmpresa.ToString("C")</MudText>
-            </MudPaper>
-        </MudItem>
+        <MudDivider />
 
-        <MudItem xs="6" md="4">
-            <MudPaper Class="pa-2 rounded-lg" Elevation="0" Outlined="true">
-                <MudText Typo="Typo.caption" Color="Color.Secondary">Planilla</MudText>
-                <MudText Typo="Typo.subtitle2">@Resumen.TotalPlanilla.ToString("C")</MudText>
-            </MudPaper>
-        </MudItem>
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.body2">Planilla</MudText>
+            <MudText Typo="Typo.subtitle2" Class="fw-bold">@Resumen.TotalPlanilla.ToString("C")</MudText>
+        </MudStack>
 
-        <MudItem xs="6" md="4">
-            <MudPaper Class="pa-2 rounded-lg" Elevation="0" Outlined="true">
-                <MudText Typo="Typo.caption" Color="Color.Secondary">Pago directo</MudText>
-                <MudText Typo="Typo.subtitle2">@Resumen.TotalMenuPagoDirecto.ToString("C")</MudText>
-            </MudPaper>
-        </MudItem>
+        <MudDivider />
 
-        <MudItem xs="6" md="6">
-            <MudPaper Class="pa-2 rounded-lg" Elevation="0" Outlined="true">
-                <MudText Typo="Typo.caption" Color="Color.Secondary">Crédito pendiente</MudText>
-                <MudText Typo="Typo.subtitle2">@Resumen.TotalMenuCreditoPendiente.ToString("C")</MudText>
-            </MudPaper>
-        </MudItem>
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.body2">Pago directo</MudText>
+            <MudText Typo="Typo.subtitle2" Class="fw-bold">@Resumen.TotalMenuPagoDirecto.ToString("C")</MudText>
+        </MudStack>
 
-        <MudItem xs="6" md="6">
-            <MudPaper Class="pa-2 rounded-lg" Elevation="0" Outlined="true">
-                <MudText Typo="Typo.caption" Color="Color.Secondary">Crédito pagado</MudText>
-                <MudText Typo="Typo.subtitle2">@Resumen.TotalMenuCreditoPagado.ToString("C")</MudText>
-            </MudPaper>
-        </MudItem>
+        <MudDivider />
 
-    </MudGrid>
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.body2">Crédito pendiente</MudText>
+            <MudText Typo="Typo.subtitle2" Color="Color.Error" Class="fw-bold">@Resumen.TotalMenuCreditoPendiente.ToString("C")</MudText>
+        </MudStack>
+
+        <MudDivider />
+
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.body2">Crédito pagado</MudText>
+            <MudText Typo="Typo.subtitle2" Color="Color.Success" Class="fw-bold">@Resumen.TotalMenuCreditoPagado.ToString("C")</MudText>
+        </MudStack>
+    </MudStack>
+
+    <MudDivider Class="my-3" />
+
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+        <MudText Typo="Typo.body2" Color="Color.Secondary">Total clasificado</MudText>
+        <MudText Typo="Typo.h6" Color="Color.Primary" Class="fw-bold">
+            @((Resumen.TotalEmpresa + Resumen.TotalPlanilla + Resumen.TotalMenuPagoDirecto + Resumen.TotalMenuCreditoPendiente + Resumen.TotalMenuCreditoPagado).ToString("C"))
+        </MudText>
+    </MudStack>
 
 </ReporteCardResumen>
 

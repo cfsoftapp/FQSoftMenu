@@ -20,4 +20,17 @@
     <PackageReference Include="MudBlazor" Version="9.5.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Menu.Core\Menu.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Data\**\*.cs" />
+    <Compile Remove="DTOs\**\*.cs" />
+    <Compile Remove="Enums\**\*.cs" />
+    <Compile Remove="Models\**\*.cs" />
+    <Compile Remove="Security\**\*.cs" />
+    <Compile Remove="Services\**\*.cs" />
+  </ItemGroup>
+
 </Project>

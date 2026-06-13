@@ -132,6 +132,12 @@
                                            Size="Size.Small"
                                            aria-label="Editar borrador"
                                            OnClick="@(() => AbrirCierreProveedorAsync(context))" />
+
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Color="Color.Error"
+                                           Size="Size.Small"
+                                           aria-label="Eliminar borrador"
+                                           OnClick="@(() => ConfirmarEliminarBorradorAsync(context))" />
                         }
 
                         <MudIconButton Icon="@Icons.Material.Filled.Download"
@@ -433,7 +439,7 @@
                         <MudButton Variant="Variant.Filled"
                                    Color="Color.Success"
                                    StartIcon="@Icons.Material.Filled.CheckCircle"
-                                   Disabled="@(_confirmandoProveedor || _borradorProveedor.YaConfirmado || !_borradorProveedor.Items.Any())"
+                                   Disabled="@(_confirmandoProveedor || _borradorProveedor.YaConfirmado || !_borradorGuardadoParaConfirmar || !_borradorProveedor.Items.Any())"
                                    OnClick="ConfirmarYActualizarAsync">
                             Confirmar
                         </MudButton>

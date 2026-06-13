@@ -1,9 +1,12 @@
 ﻿@page "/empleados"
 
 @using Menu.Components.Shared
+@using Menu.DTOs.Empleados
 @using Menu.Enums
 @using Menu.Models
 @using Menu.Services
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Text
 
 @inject EmpleadoService EmpleadoService
 @inject AuthStateService AuthState
@@ -43,14 +46,110 @@
 
         <MudPaper Class="pa-3 mb-3 rounded-lg" Elevation="1">
 
-            <MudTextField @bind-Value="_search"
-                          Label="Buscar por DNI o nombre"
-                          Variant="Variant.Outlined"
-                          Margin="Margin.Dense"
-                          Immediate="true"
-                          Adornment="Adornment.Start"
-                          AdornmentIcon="@Icons.Material.Filled.Search"
-                          Class="max-width-search" />
+            <MudStack Spacing="3">
+                <MudStack Row="true"
+                          AlignItems="AlignItems.Center"
+                          Justify="Justify.SpaceBetween"
+                          Spacing="2">
+                    <MudTextField @bind-Value="_search"
+                                  Label="Buscar por DNI o nombre"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
+                                  Immediate="true"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Class="max-width-search" />
+
+                    @if (AuthState.TienePermiso(Permisos.EmpleadosCrear))
+                    {
+                        <MudStack Row="true" Spacing="2">
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.Download"
+                                       Href="/empleados/formato-carga.csv"
+                                       Target="_blank">
+                                Formato carga
+                            </MudButton>
+                        </MudStack>
+                    }
+                </MudStack>
+
+                @if (AuthState.TienePermiso(Permisos.EmpleadosCrear))
+                {
+                    <MudPaper Class="pa-3 rounded-lg" Elevation="0" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <div>
+                                    <MudText Typo="Typo.subtitle2" Class="fw-bold">Carga masiva</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        Usa el formato CSV. Primero se revisa; luego confirma para guardar los registros válidos.
+                                    </MudText>
+                                </div>
+
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                    @if (_filasCargaPendiente.Count > 0 && _resultadoCarga?.Pendientes > 0)
+                                    {
+                                        <MudButton Variant="Variant.Filled"
+                                                   Color="Color.Success"
+                                                   Size="Size.Small"
+                                                   StartIcon="@Icons.Material.Filled.CheckCircle"
+                                                   Disabled="@_procesandoCarga"
+                                                   OnClick="ConfirmarCargaMasiva">
+                                            Confirmar carga
+                                        </MudButton>
+                                    }
+
+                                    <InputFile OnChange="PrevisualizarCargaMasiva"
+                                               accept=".csv,text/csv"
+                                               disabled="@_procesandoCarga" />
+                                </MudStack>
+                            </MudStack>
+
+                            @if (_resultadoCarga is not null)
+                            {
+                                <MudAlert Severity="@(_resultadoCarga.Observados > 0 ? Severity.Warning : Severity.Success)" Variant="Variant.Outlined">
+                                    @if (_resultadoCarga.Importados > 0)
+                                    {
+                                        <span>Importados: @_resultadoCarga.Importados / @_resultadoCarga.TotalFilas.</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Listos para importar: @_resultadoCarga.Pendientes / @_resultadoCarga.TotalFilas.</span>
+                                    }
+                                    Observados: @_resultadoCarga.Observados.
+                                </MudAlert>
+
+                                <MudTable Items="_resultadoCarga.Resultados"
+                                          Dense="true"
+                                          Hover="true"
+                                          Breakpoint="Breakpoint.Sm">
+                                    <HeaderContent>
+                                        <MudTh>Fila</MudTh>
+                                        <MudTh>DNI</MudTh>
+                                        <MudTh>Trabajador</MudTh>
+                                        <MudTh>Estado</MudTh>
+                                        <MudTh>Mensaje</MudTh>
+                                    </HeaderContent>
+                                    <RowTemplate>
+                                        <MudTd DataLabel="Fila">@context.NumeroFila</MudTd>
+                                        <MudTd DataLabel="DNI">@context.Dni</MudTd>
+                                        <MudTd DataLabel="Trabajador">@context.Trabajador</MudTd>
+                                        <MudTd DataLabel="Estado">
+                                            <MudChip T="string"
+                                                     Size="Size.Small"
+                                                     Color="@(context.Importado ? Color.Success : Color.Warning)"
+                                                     Variant="Variant.Outlined">
+                                                @context.Estado
+                                            </MudChip>
+                                        </MudTd>
+                                        <MudTd DataLabel="Mensaje">@context.Mensaje</MudTd>
+                                    </RowTemplate>
+                                </MudTable>
+                            }
+                        </MudStack>
+                    </MudPaper>
+                }
+            </MudStack>
 
         </MudPaper>
 
@@ -66,7 +165,7 @@
             <HeaderContent>
                 <MudTh>DNI</MudTh>
                 <MudTh>Nombres y Apellidos</MudTh>
-                <MudTh>Tipo trabajador</MudTh>
+                <MudTh>Tipo de personal</MudTh>
                 <MudTh>Estado</MudTh>
                 <MudTh>Activo</MudTh>
                 <MudTh>Fecha creación</MudTh>
@@ -77,7 +176,7 @@
                 <MudTd DataLabel="DNI">@context.Dni</MudTd>
                 <MudTd DataLabel="Nombre">@context.NombreCompleto</MudTd>
 
-                <MudTd DataLabel="Categoría">
+                <MudTd DataLabel="Tipo de personal">
                     <MudChip T="string"
                              Size="Size.Small"
                              Color="Color.Info"
@@ -222,7 +321,7 @@
                         <MudItem xs="12" sm="6" md="2">
                             <MudSelect T="CategoriaEmpleado"
                                        @bind-Value="_model.Categoria"
-                                       Label="Tipo de trabajador"
+                                       Label="Tipo de personal"
                                        Variant="Variant.Outlined"
                                        Margin="Margin.Dense">
                                 @foreach (var categoria in Enum.GetValues<CategoriaEmpleado>())
@@ -293,6 +392,9 @@
     private bool _showForm;
     private int _editingId;
     private string _search = string.Empty;
+    private bool _procesandoCarga;
+    private EmpleadoCargaMasivaResumenDto? _resultadoCarga;
+    private List<EmpleadoCargaMasivaFilaDto> _filasCargaPendiente = new();
 
     private IEnumerable<Empleado> FilteredEmpleados
     {
@@ -327,7 +429,7 @@
         _model = new Empleado
         {
             Estado = EstadoEmpleado.Activo,
-            Categoria = CategoriaEmpleado.Operativo,
+            Categoria = CategoriaEmpleado.Obrero,
             Activo = true,
             FechaCreacion = DateTime.Now
         };
@@ -424,13 +526,156 @@
     {
         return categoria switch
         {
-            CategoriaEmpleado.Administrativo => "Administrativo",
-            CategoriaEmpleado.Operativo => "Operativo",
+            CategoriaEmpleado.Empleado => "Empleado",
+            CategoriaEmpleado.Obrero => "Obrero",
             CategoriaEmpleado.Tercero => "Tercero",
             CategoriaEmpleado.Practicante => "Practicante",
             CategoriaEmpleado.Visitante => "Visitante",
+            CategoriaEmpleado.Gerencia => "Gerencia",
             CategoriaEmpleado.Otro => "Otro",
             _ => categoria.ToString()
         };
+    }
+
+    private async Task PrevisualizarCargaMasiva(InputFileChangeEventArgs args)
+    {
+        if (!AuthState.TienePermiso(Permisos.EmpleadosCrear))
+        {
+            Snackbar.Add("No tiene permiso para crear empleados.", Severity.Warning);
+            return;
+        }
+
+        var file = args.File;
+
+        if (!file.Name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+        {
+            Snackbar.Add("Seleccione un archivo CSV.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            _procesandoCarga = true;
+
+            await using var stream = file.OpenReadStream(maxAllowedSize: 2 * 1024 * 1024);
+            using var reader = new StreamReader(stream, Encoding.UTF8);
+            var contenido = await reader.ReadToEndAsync();
+            _filasCargaPendiente = ParsearCsvEmpleados(contenido);
+
+            _resultadoCarga = await EmpleadoService.PrevisualizarCargaMasivaAsync(_filasCargaPendiente);
+
+            Snackbar.Add($"Carga revisada. Listos: {_resultadoCarga.Pendientes}. Observados: {_resultadoCarga.Observados}.", Severity.Info);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error al revisar carga masiva: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _procesandoCarga = false;
+        }
+    }
+
+    private async Task ConfirmarCargaMasiva()
+    {
+        if (_filasCargaPendiente.Count == 0)
+        {
+            Snackbar.Add("Primero selecciona un archivo para revisar.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            _procesandoCarga = true;
+            _resultadoCarga = await EmpleadoService.ImportarCargaMasivaAsync(_filasCargaPendiente);
+
+            if (_resultadoCarga.Importados > 0)
+                await LoadEmpleados();
+
+            _filasCargaPendiente = new();
+            Snackbar.Add($"Carga confirmada. Importados: {_resultadoCarga.Importados}. Observados: {_resultadoCarga.Observados}.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error al confirmar carga masiva: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _procesandoCarga = false;
+        }
+    }
+
+    private static List<EmpleadoCargaMasivaFilaDto> ParsearCsvEmpleados(string contenido)
+    {
+        var filas = new List<EmpleadoCargaMasivaFilaDto>();
+        var lineas = contenido
+            .Replace("\r\n", "\n")
+            .Replace('\r', '\n')
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries);
+
+        for (var index = 1; index < lineas.Length; index++)
+        {
+            var columnas = ParsearLineaCsv(lineas[index]);
+
+            if (columnas.Count == 0 || columnas.All(string.IsNullOrWhiteSpace))
+                continue;
+
+            filas.Add(new EmpleadoCargaMasivaFilaDto
+            {
+                NumeroFila = index + 1,
+                Dni = GetColumna(columnas, 0),
+                Nombres = GetColumna(columnas, 1),
+                Apellidos = GetColumna(columnas, 2),
+                TipoPersonalTexto = GetColumna(columnas, 3),
+                EstadoTexto = GetColumna(columnas, 4),
+                ActivoTexto = GetColumna(columnas, 5)
+            });
+        }
+
+        return filas;
+    }
+
+    private static List<string> ParsearLineaCsv(string linea)
+    {
+        var columnas = new List<string>();
+        var actual = new StringBuilder();
+        var enComillas = false;
+
+        for (var i = 0; i < linea.Length; i++)
+        {
+            var caracter = linea[i];
+
+            if (caracter == '"')
+            {
+                if (enComillas && i + 1 < linea.Length && linea[i + 1] == '"')
+                {
+                    actual.Append('"');
+                    i++;
+                }
+                else
+                {
+                    enComillas = !enComillas;
+                }
+
+                continue;
+            }
+
+            if (caracter == ',' && !enComillas)
+            {
+                columnas.Add(actual.ToString().Trim());
+                actual.Clear();
+                continue;
+            }
+
+            actual.Append(caracter);
+        }
+
+        columnas.Add(actual.ToString().Trim());
+        return columnas;
+    }
+
+    private static string GetColumna(List<string> columnas, int index)
+    {
+        return index < columnas.Count ? columnas[index] : string.Empty;
     }
 }

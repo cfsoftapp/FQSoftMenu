@@ -24,4 +24,23 @@ public static class Permisos
 
     public const string ConfiguracionVer = "CONFIGURACION_VER";
     public const string ConfiguracionEditar = "CONFIGURACION_EDITAR";
+
+    public static readonly string[] Todos =
+    {
+        DashboardVer,
+        EmpleadosVer,
+        EmpleadosCrear,
+        EmpleadosEditar,
+        RegistroDiarioVer,
+        RegistroDiarioRegistrar,
+        CuentasCobrarVer,
+        CuentasCobrarPagar,
+        ReportesVer,
+        CierresVer,
+        UsuariosVer,
+        UsuariosCrear,
+        UsuariosEditar,
+        ConfiguracionVer,
+        ConfiguracionEditar
+    };
 }

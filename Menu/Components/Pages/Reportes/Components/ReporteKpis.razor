@@ -1,58 +1,78 @@
-ï»¿@using Menu.DTOs.Reportes
+@using Menu.DTOs.Reportes
 
-<MudGrid Spacing="3">
+<MudGrid Spacing="2">
 
     <MudItem xs="12" sm="6" md="2">
-        <MudPaper Class="pa-3 rounded-lg h-100" Elevation="1">
-            <MudStack Spacing="1">
-                <MudIcon Icon="@Icons.Material.Filled.RestaurantMenu" Color="Color.Primary" />
-                <MudText Typo="Typo.body2" Color="Color.Secondary">Total menÃºs</MudText>
-                <MudText Typo="Typo.h5">@Resumen.TotalMenus</MudText>
-                <MudText Typo="Typo.caption">MenÃºs principales</MudText>
+        <MudPaper Class="pa-3 report-kpi h-100" Elevation="1">
+            <MudStack Row="true" AlignItems="AlignItems.Start" Spacing="2">
+                <MudAvatar Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small">
+                    <MudIcon Icon="@Icons.Material.Filled.RestaurantMenu" Size="Size.Small" />
+                </MudAvatar>
+                <div>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Menús principales</MudText>
+                    <MudText Typo="Typo.h5" Class="fw-bold">@Resumen.TotalMenus</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Periodo consultado</MudText>
+                </div>
             </MudStack>
         </MudPaper>
     </MudItem>
 
     <MudItem xs="12" sm="6" md="2">
-        <MudPaper Class="pa-3 rounded-lg h-100" Elevation="1">
-            <MudStack Spacing="1">
-                <MudIcon Icon="@Icons.Material.Filled.Business" Color="Color.Success" />
-                <MudText Typo="Typo.body2" Color="Color.Secondary">Costo empresa</MudText>
-                <MudText Typo="Typo.h5">@Resumen.TotalEmpresa.ToString("C")</MudText>
-                <MudText Typo="Typo.caption">Beneficio asumido</MudText>
+        <MudPaper Class="pa-3 report-kpi h-100" Elevation="1">
+            <MudStack Row="true" AlignItems="AlignItems.Start" Spacing="2">
+                <MudAvatar Color="Color.Success" Variant="Variant.Outlined" Size="Size.Small">
+                    <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small" />
+                </MudAvatar>
+                <div>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Costo empresa</MudText>
+                    <MudText Typo="Typo.h5" Class="fw-bold">@Resumen.TotalEmpresa.ToString("C")</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Beneficio asumido</MudText>
+                </div>
             </MudStack>
         </MudPaper>
     </MudItem>
 
     <MudItem xs="12" sm="6" md="2">
-        <MudPaper Class="pa-3 rounded-lg h-100" Elevation="1">
-            <MudStack Spacing="1">
-                <MudIcon Icon="@Icons.Material.Filled.Badge" Color="Color.Warning" />
-                <MudText Typo="Typo.body2" Color="Color.Secondary">A planilla</MudText>
-                <MudText Typo="Typo.h5">@Resumen.TotalPlanilla.ToString("C")</MudText>
-                <MudText Typo="Typo.caption">Descuento trabajador</MudText>
+        <MudPaper Class="pa-3 report-kpi h-100" Elevation="1">
+            <MudStack Row="true" AlignItems="AlignItems.Start" Spacing="2">
+                <MudAvatar Color="Color.Warning" Variant="Variant.Outlined" Size="Size.Small">
+                    <MudIcon Icon="@Icons.Material.Filled.Badge" Size="Size.Small" />
+                </MudAvatar>
+                <div>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">A planilla</MudText>
+                    <MudText Typo="Typo.h5" Class="fw-bold">@Resumen.TotalPlanilla.ToString("C")</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Descuento trabajador</MudText>
+                </div>
             </MudStack>
         </MudPaper>
     </MudItem>
 
     <MudItem xs="12" sm="6" md="3">
-        <MudPaper Class="pa-3 rounded-lg h-100" Elevation="1">
-            <MudStack Spacing="1">
-                <MudIcon Icon="@Icons.Material.Filled.Payments" Color="Color.Info" />
-                <MudText Typo="Typo.body2" Color="Color.Secondary">Cobrado directo</MudText>
-                <MudText Typo="Typo.h5">@Resumen.TotalCobradoDirecto.ToString("C")</MudText>
-                <MudText Typo="Typo.caption">Efectivo, Yape, Plin y crÃ©dito pagado</MudText>
+        <MudPaper Class="pa-3 report-kpi h-100" Elevation="1">
+            <MudStack Row="true" AlignItems="AlignItems.Start" Spacing="2">
+                <MudAvatar Color="Color.Info" Variant="Variant.Outlined" Size="Size.Small">
+                    <MudIcon Icon="@Icons.Material.Filled.Payments" Size="Size.Small" />
+                </MudAvatar>
+                <div>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Cobrado directo</MudText>
+                    <MudText Typo="Typo.h5" Class="fw-bold">@Resumen.TotalCobradoDirecto.ToString("C")</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Efectivo, Yape, Plin y crédito pagado</MudText>
+                </div>
             </MudStack>
         </MudPaper>
     </MudItem>
 
     <MudItem xs="12" sm="6" md="3">
-        <MudPaper Class="pa-3 rounded-lg h-100" Elevation="1">
-            <MudStack Spacing="1">
-                <MudIcon Icon="@Icons.Material.Filled.PendingActions" Color="Color.Error" />
-                <MudText Typo="Typo.body2" Color="Color.Secondary">Pendiente crÃ©dito</MudText>
-                <MudText Typo="Typo.h5">@Resumen.TotalPendienteCredito.ToString("C")</MudText>
-                <MudText Typo="Typo.caption">Consumos del periodo</MudText>
+        <MudPaper Class="pa-3 report-kpi h-100" Elevation="1">
+            <MudStack Row="true" AlignItems="AlignItems.Start" Spacing="2">
+                <MudAvatar Color="Color.Error" Variant="Variant.Outlined" Size="Size.Small">
+                    <MudIcon Icon="@Icons.Material.Filled.PendingActions" Size="Size.Small" />
+                </MudAvatar>
+                <div>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Pendiente crédito</MudText>
+                    <MudText Typo="Typo.h5" Class="fw-bold">@Resumen.TotalPendienteCredito.ToString("C")</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Consumos no cobrados</MudText>
+                </div>
             </MudStack>
         </MudPaper>
     </MudItem>

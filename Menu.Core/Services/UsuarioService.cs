@@ -1,7 +1,9 @@
 ﻿using Menu.Data;
 using Menu.DTOs;
 using Menu.Models;
+using Menu.Security;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace Menu.Services;
 
@@ -57,6 +59,24 @@ public class UsuarioService
                 .ToList(),
             EstaAutenticado = true
         };
+    }
+
+    public ClaimsPrincipal CrearPrincipal(UsuarioSesionDto usuario)
+    {
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.Name, usuario.NombreUsuario),
+            new(AppClaimTypes.UserId, usuario.Id.ToString()),
+            new(AppClaimTypes.FullName, usuario.NombreCompleto),
+            new(AppClaimTypes.RoleId, usuario.RolSistemaId.ToString()),
+            new(AppClaimTypes.RoleCode, usuario.RolCodigo),
+            new(AppClaimTypes.RoleName, usuario.RolNombre)
+        };
+
+        claims.AddRange(usuario.Permisos.Select(permiso => new Claim(AppClaimTypes.Permission, permiso)));
+
+        var identity = new ClaimsIdentity(claims, "FQSoftCookie");
+        return new ClaimsPrincipal(identity);
     }
 
     public async Task<List<UsuarioSistema>> GetAllAsync()

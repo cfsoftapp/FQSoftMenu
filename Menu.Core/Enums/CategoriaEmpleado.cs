@@ -2,10 +2,11 @@
 
 public enum CategoriaEmpleado
 {
-    Administrativo = 1,
-    Operativo = 2,
+    Empleado = 1,
+    Obrero = 2,
     Tercero = 3,
     Practicante = 4,
     Visitante = 5,
+    Gerencia = 6,
     Otro = 99
 }

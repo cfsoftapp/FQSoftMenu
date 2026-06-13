@@ -2,6 +2,7 @@
 
 @inject AuthStateService AuthState
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @implements IDisposable
 
 @inherits LayoutComponentBase
@@ -89,9 +90,11 @@
 @code {
     private bool _drawerOpen = true;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         AuthState.OnChange += RefreshLayout;
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        AuthState.SetUsuario(authState.User);
     }
 
     private void DrawerToggle()
@@ -102,7 +105,7 @@
     private void CerrarSesion()
     {
         AuthState.Logout();
-        Navigation.NavigateTo("/login");
+        Navigation.NavigateTo("/auth/logout", forceLoad: true);
     }
 
     private void RefreshLayout()

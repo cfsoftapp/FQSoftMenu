@@ -112,7 +112,8 @@ public class CuentaPorCobrarService
                 input.ConsumoMenuIds.Contains(x.Id) &&
                 x.EmpleadoId == input.EmpleadoId &&
                 x.TipoPagoMenu == TipoPagoMenu.CreditoComedor &&
-                x.EstadoCobroMenu == EstadoCobroAdicional.Pendiente)
+                x.EstadoCobroMenu == EstadoCobroAdicional.Pendiente &&
+                !x.Anulado)
             .ToListAsync();
 
         var adicionalesPendientes = await _context.ConsumosAdicionales
@@ -120,7 +121,8 @@ public class CuentaPorCobrarService
                 input.ConsumoAdicionalIds.Contains(x.Id) &&
                 x.EmpleadoId == input.EmpleadoId &&
                 x.FormaCobro == FormaCobroAdicional.CreditoComedor &&
-                x.EstadoCobro == EstadoCobroAdicional.Pendiente)
+                x.EstadoCobro == EstadoCobroAdicional.Pendiente &&
+                !x.Anulado)
             .ToListAsync();
 
         if (menusPendientes.Count != input.ConsumoMenuIds.Count)

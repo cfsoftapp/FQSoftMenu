@@ -1,6 +1,6 @@
 ﻿@using Menu.DTOs.Reportes
 
-<MudPaper Class="pa-3 rounded-lg" Elevation="1">
+<MudPaper Class="pa-3 report-panel" Elevation="1">
 
     <MudStack Row="true"
               AlignItems="AlignItems.Center"
@@ -21,19 +21,25 @@
 
     </MudStack>
 
-    <MudTextField @bind-Value="_buscarEmpleado"
-                  Label="Buscar por DNI o nombre..."
-                  Variant="Variant.Outlined"
-                  Margin="Margin.Dense"
-                  Immediate="true"
-                  Adornment="Adornment.Start"
-                  AdornmentIcon="@Icons.Material.Filled.Search"
-                  Class="mt-2 mb-3" />
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mt-2 mb-3 report-detail-toolbar">
+        <MudTextField @bind-Value="_buscarEmpleado"
+                      Label="Buscar por DNI o nombre"
+                      Variant="Variant.Outlined"
+                      Margin="Margin.Dense"
+                      Immediate="true"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      Class="flex-grow-1" />
+
+        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">
+            @EmpleadosFiltrados.Sum(x => x.TotalMenus) menú(s)
+        </MudChip>
+    </MudStack>
 
     <MudTable Items="EmpleadosFiltrados"
               Hover="true"
               Dense="true"
-              Bordered="true"
+              Bordered="false"
               Striped="true"
               Breakpoint="Breakpoint.Sm">
 
@@ -41,7 +47,7 @@
             <MudTh></MudTh>
             <MudTh>DNI</MudTh>
             <MudTh>Trabajador</MudTh>
-            <MudTh>Tipo trabajador</MudTh>
+            <MudTh>Tipo de personal</MudTh>
             <MudTh>Estado</MudTh>
             <MudTh Style="text-align:center">Alm.</MudTh>
             <MudTh Style="text-align:center">Cena</MudTh>
@@ -68,7 +74,7 @@
                 </MudText>
             </MudTd>
 
-            <MudTd DataLabel="Tipo trabajador">
+            <MudTd DataLabel="Tipo de personal">
                 <MudChip T="string"
                          Size="Size.Small"
                          Color="Color.Info"

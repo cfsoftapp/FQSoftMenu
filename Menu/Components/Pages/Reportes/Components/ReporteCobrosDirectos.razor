@@ -5,46 +5,39 @@
                     Icono="@Icons.Material.Filled.Payments"
                     ColorIcono="Color.Info">
 
-    <MudGrid Spacing="2">
+    <MudStack Spacing="1">
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.body2">Efectivo</MudText>
+            <MudText Typo="Typo.subtitle2" Class="fw-bold">@Resumen.CobradoEfectivo.ToString("C")</MudText>
+        </MudStack>
+        <MudDivider />
 
-        <MudItem xs="6" md="3">
-            <MudPaper Class="pa-2 rounded-lg" Elevation="0" Outlined="true">
-                <MudText Typo="Typo.caption" Color="Color.Secondary">Efectivo</MudText>
-                <MudText Typo="Typo.subtitle2">@Resumen.CobradoEfectivo.ToString("C")</MudText>
-            </MudPaper>
-        </MudItem>
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.body2">Yape</MudText>
+            <MudText Typo="Typo.subtitle2" Class="fw-bold">@Resumen.CobradoYape.ToString("C")</MudText>
+        </MudStack>
+        <MudDivider />
 
-        <MudItem xs="6" md="3">
-            <MudPaper Class="pa-2 rounded-lg" Elevation="0" Outlined="true">
-                <MudText Typo="Typo.caption" Color="Color.Secondary">Yape</MudText>
-                <MudText Typo="Typo.subtitle2">@Resumen.CobradoYape.ToString("C")</MudText>
-            </MudPaper>
-        </MudItem>
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.body2">Plin</MudText>
+            <MudText Typo="Typo.subtitle2" Class="fw-bold">@Resumen.CobradoPlin.ToString("C")</MudText>
+        </MudStack>
+        <MudDivider />
 
-        <MudItem xs="6" md="3">
-            <MudPaper Class="pa-2 rounded-lg" Elevation="0" Outlined="true">
-                <MudText Typo="Typo.caption" Color="Color.Secondary">Plin</MudText>
-                <MudText Typo="Typo.subtitle2">@Resumen.CobradoPlin.ToString("C")</MudText>
-            </MudPaper>
-        </MudItem>
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.body2">Crédito pagado</MudText>
+            <MudText Typo="Typo.subtitle2" Class="fw-bold">@Resumen.CreditoPagado.ToString("C")</MudText>
+        </MudStack>
+    </MudStack>
 
-        <MudItem xs="6" md="3">
-            <MudPaper Class="pa-2 rounded-lg" Elevation="0" Outlined="true">
-                <MudText Typo="Typo.caption" Color="Color.Secondary">Crédito pagado</MudText>
-                <MudText Typo="Typo.subtitle2">@Resumen.CreditoPagado.ToString("C")</MudText>
-            </MudPaper>
-        </MudItem>
-
-    </MudGrid>
-
-    <MudDivider Class="my-2" />
+    <MudDivider Class="my-3" />
 
     <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
         <MudText Typo="Typo.body2" Color="Color.Secondary">
             Total cobrado directo
         </MudText>
 
-        <MudText Typo="Typo.h6" Color="Color.Info">
+        <MudText Typo="Typo.h6" Color="Color.Info" Class="fw-bold">
             @Resumen.TotalCobradoDirecto.ToString("C")
         </MudText>
     </MudStack>

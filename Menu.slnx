@@ -1,3 +1,5 @@
 <Solution>
+  <Project Path="Menu.Core/Menu.Core.csproj" />
+  <Project Path="Menu.Desktop/Menu.Desktop.csproj" />
   <Project Path="Menu/Menu.csproj" />
 </Solution>

@@ -1,4 +1,6 @@
-﻿using Menu.DTOs;
+using Menu.DTOs;
+using Menu.Security;
+using System.Security.Claims;
 
 namespace Menu.Services;
 
@@ -13,6 +15,12 @@ public class AuthStateService
     public void SetUsuario(UsuarioSesionDto usuario)
     {
         UsuarioActual = usuario;
+        NotifyStateChanged();
+    }
+
+    public void SetUsuario(ClaimsPrincipal principal)
+    {
+        UsuarioActual = principal.ToUsuarioSesion();
         NotifyStateChanged();
     }
 

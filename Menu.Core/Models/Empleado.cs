@@ -16,7 +16,7 @@ namespace Menu.Models
 
         public EstadoEmpleado Estado { get; set; } = EstadoEmpleado.Activo;
 
-        public CategoriaEmpleado Categoria { get; set; } = CategoriaEmpleado.Operativo;
+        public CategoriaEmpleado Categoria { get; set; } = CategoriaEmpleado.Obrero;
 
         public bool Activo { get; set; } = true;
 

@@ -6,21 +6,50 @@
 
         <MudTextField Value="@Dni"
                       ValueChanged="DniChanged"
-                      Label="DNI"
+                      Label="DNI o nombre"
                       Variant="Variant.Outlined"
                       Adornment="Adornment.Start"
-                      AdornmentIcon="@Icons.Material.Filled.Badge"
+                      AdornmentIcon="@Icons.Material.Filled.PersonSearch"
                       Immediate="true"
-                      InputMode="InputMode.numeric"
                       OnKeyDown="OnKeyDown" />
 
         <MudButton Variant="Variant.Filled"
                    Color="Color.Primary"
                    StartIcon="@Icons.Material.Filled.Search"
                    OnClick="OnBuscar"
+                   Disabled="@Buscando"
                    FullWidth="true">
             Buscar
         </MudButton>
+
+        @if (ResultadosBusqueda.Any())
+        {
+            <MudPaper Class="pa-2" Elevation="0" Outlined="true">
+                <MudStack Spacing="1">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                        Selecciona un trabajador
+                    </MudText>
+
+                    @foreach (var trabajador in ResultadosBusqueda)
+                    {
+                        <MudButton Variant="Variant.Text"
+                                   Color="Color.Default"
+                                   FullWidth="true"
+                                   Class="justify-start"
+                                   OnClick="@(() => OnSeleccionarEmpleado.InvokeAsync(trabajador))">
+                            <MudStack Spacing="0">
+                                <MudText Typo="Typo.body2" Class="fw-bold">
+                                    @trabajador.NombreCompleto
+                                </MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    DNI: @trabajador.Dni - @trabajador.Estado
+                                </MudText>
+                            </MudStack>
+                        </MudButton>
+                    }
+                </MudStack>
+            </MudPaper>
+        }
 
         @if (Empleado is not null)
         {
@@ -68,6 +97,15 @@
 
     [Parameter]
     public EventCallback OnBuscar { get; set; }
+
+    [Parameter]
+    public IReadOnlyList<Empleado> ResultadosBusqueda { get; set; } = Array.Empty<Empleado>();
+
+    [Parameter]
+    public EventCallback<Empleado> OnSeleccionarEmpleado { get; set; }
+
+    [Parameter]
+    public bool Buscando { get; set; }
 
     [Parameter]
     public EventCallback<KeyboardEventArgs> OnKeyDown { get; set; }

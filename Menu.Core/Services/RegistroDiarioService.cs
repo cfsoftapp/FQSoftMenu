@@ -31,6 +31,29 @@ public class RegistroDiarioService
             .FirstOrDefaultAsync(e => e.Dni == dni && e.Activo);
     }
 
+    public async Task<List<Empleado>> BuscarEmpleadosActivosAsync(string termino, int limite = 8)
+    {
+        termino = termino.Trim();
+
+        if (string.IsNullOrWhiteSpace(termino))
+            return new List<Empleado>();
+
+        var patron = $"%{termino}%";
+
+        return await _context.Empleados
+            .AsNoTracking()
+            .Where(e => e.Activo &&
+                        (EF.Functions.Like(e.Dni, patron) ||
+                         EF.Functions.Like(e.Nombres, patron) ||
+                         EF.Functions.Like(e.Apellidos, patron) ||
+                         EF.Functions.Like(e.Nombres + " " + e.Apellidos, patron)))
+            .OrderBy(e => e.Dni == termino ? 0 : 1)
+            .ThenBy(e => e.Apellidos)
+            .ThenBy(e => e.Nombres)
+            .Take(limite)
+            .ToListAsync();
+    }
+
     public async Task<bool> YaConsumioMenuAsync(int empleadoId, DateTime fecha, TipoServicioMenu tipoServicio)
     {
         var fechaSolo = fecha.Date;
@@ -267,6 +290,14 @@ public class RegistroDiarioService
             if (consumo.Fecha.Date != DateTime.Today)
                 return (false, "Solo se pueden anular consumos del día actual.");
 
+            var estaEnCierreConfirmado = await _context.CierresProveedorDetalle
+                .AsNoTracking()
+                .AnyAsync(x => x.ConsumoMenuId == consumo.Id &&
+                               x.CierreProveedor.Estado == EstadoCierreProveedor.Confirmado);
+
+            if (estaEnCierreConfirmado)
+                return (false, "No se puede anular un consumo incluido en una liquidación confirmada.");
+
             consumo.Anulado = true;
             consumo.FechaAnulacion = DateTime.Now;
             consumo.UsuarioAnulacionId = usuarioId;
@@ -285,6 +316,14 @@ public class RegistroDiarioService
 
             if (adicional.Fecha.Date != DateTime.Today)
                 return (false, "Solo se pueden anular consumos del día actual.");
+
+            var estaEnCierreConfirmado = await _context.CierresProveedorDetalle
+                .AsNoTracking()
+                .AnyAsync(x => x.ConsumoAdicionalId == adicional.Id &&
+                               x.CierreProveedor.Estado == EstadoCierreProveedor.Confirmado);
+
+            if (estaEnCierreConfirmado)
+                return (false, "No se puede anular un adicional incluido en una liquidación confirmada.");
 
             adicional.Anulado = true;
             adicional.FechaAnulacion = DateTime.Now;

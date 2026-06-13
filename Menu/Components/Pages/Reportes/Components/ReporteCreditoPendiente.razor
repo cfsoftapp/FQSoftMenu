@@ -1,43 +1,37 @@
 ﻿@using Menu.DTOs.Reportes
 
-<ReporteCardResumen Titulo="Credito pendiente del periodo"
-                    Subtitulo="Consumos del periodo aun no cobrados."
+<ReporteCardResumen Titulo="Crédito pendiente"
+                    Subtitulo="Consumos del periodo aún no cobrados."
                     Icono="@Icons.Material.Filled.PendingActions"
                     ColorIcono="Color.Error">
 
-    <MudGrid Spacing="2">
+    <MudStack Spacing="1">
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.body2">Menú principal</MudText>
+            <MudText Typo="Typo.subtitle2" Class="fw-bold">@Resumen.PendienteMenuPrincipal.ToString("C")</MudText>
+        </MudStack>
+        <MudDivider />
 
-        <MudItem xs="12" md="4">
-            <MudPaper Class="pa-2 rounded-lg" Elevation="0" Outlined="true">
-                <MudText Typo="Typo.caption" Color="Color.Secondary">Menú principal</MudText>
-                <MudText Typo="Typo.subtitle2">@Resumen.PendienteMenuPrincipal.ToString("C")</MudText>
-            </MudPaper>
-        </MudItem>
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.body2">Menú extra</MudText>
+            <MudText Typo="Typo.subtitle2" Class="fw-bold">@Resumen.PendienteMenuExtra.ToString("C")</MudText>
+        </MudStack>
+        <MudDivider />
 
-        <MudItem xs="12" md="4">
-            <MudPaper Class="pa-2 rounded-lg" Elevation="0" Outlined="true">
-                <MudText Typo="Typo.caption" Color="Color.Secondary">Menú extra</MudText>
-                <MudText Typo="Typo.subtitle2">@Resumen.PendienteMenuExtra.ToString("C")</MudText>
-            </MudPaper>
-        </MudItem>
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.body2">Producto adicional</MudText>
+            <MudText Typo="Typo.subtitle2" Class="fw-bold">@Resumen.PendienteProducto.ToString("C")</MudText>
+        </MudStack>
+    </MudStack>
 
-        <MudItem xs="12" md="4">
-            <MudPaper Class="pa-2 rounded-lg" Elevation="0" Outlined="true">
-                <MudText Typo="Typo.caption" Color="Color.Secondary">Producto adicional</MudText>
-                <MudText Typo="Typo.subtitle2">@Resumen.PendienteProducto.ToString("C")</MudText>
-            </MudPaper>
-        </MudItem>
-
-    </MudGrid>
-
-    <MudDivider Class="my-2" />
+    <MudDivider Class="my-3" />
 
     <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
         <MudText Typo="Typo.body2" Color="Color.Secondary">
             Total pendiente del periodo
         </MudText>
 
-        <MudText Typo="Typo.h6" Color="Color.Error">
+        <MudText Typo="Typo.h6" Color="Color.Error" Class="fw-bold">
             @Resumen.TotalPendienteCredito.ToString("C")
         </MudText>
     </MudStack>

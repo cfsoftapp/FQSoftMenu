@@ -36,6 +36,9 @@
                                             DniChanged="@(value => _dni = value)"
                                             Empleado="_empleado"
                                             OnBuscar="BuscarEmpleado"
+                                            ResultadosBusqueda="_resultadosBusqueda"
+                                            OnSeleccionarEmpleado="SeleccionarEmpleado"
+                                            Buscando="_buscandoTrabajador"
                                             OnKeyDown="OnDniKeyDown">
 
                     <RegistroConsumosDelDia Consumos="_consumosDelDia"
@@ -137,12 +140,14 @@
     private Empleado? _empleado;
     private bool _registraMenu = true;
     private bool _saving;
+    private bool _buscandoTrabajador;
 
     private decimal _precioMenu = 0m;
 
     private List<ConsumoAdicionalInputDto> _menusExtra = new();
     private List<ConsumoAdicionalInputDto> _productosAdicionales = new();
     private List<ConsumoDiaDto> _consumosDelDia = new();
+    private List<Empleado> _resultadosBusqueda = new();
    
     private string TipoPagoMenuTexto
     {
@@ -243,19 +248,38 @@
     {
         if (string.IsNullOrWhiteSpace(_dni))
         {
-            Snackbar.Add("Ingrese un DNI.", Severity.Warning);
+            Snackbar.Add("Ingrese DNI o nombre del trabajador.", Severity.Warning);
             return;
         }
 
-        _empleado = await RegistroDiarioService.BuscarEmpleadoPorDniAsync(_dni);
+        _buscandoTrabajador = true;
+        _resultadosBusqueda = await RegistroDiarioService.BuscarEmpleadosActivosAsync(_dni);
+        _buscandoTrabajador = false;
 
-        if (_empleado is null)
+        if (!_resultadosBusqueda.Any())
         {
             _consumosDelDia.Clear();
-            Snackbar.Add("No se encontró un empleado activo con ese DNI.", Severity.Warning);
+            Snackbar.Add("No se encontró un trabajador activo con ese dato.", Severity.Warning);
             return;
         }
 
+        var coincidenciaExacta = _resultadosBusqueda
+            .FirstOrDefault(x => string.Equals(x.Dni, _dni.Trim(), StringComparison.OrdinalIgnoreCase));
+
+        if (coincidenciaExacta is not null || _resultadosBusqueda.Count == 1)
+        {
+            await SeleccionarEmpleado(coincidenciaExacta ?? _resultadosBusqueda[0]);
+            return;
+        }
+
+        Snackbar.Add("Selecciona el trabajador en la lista de coincidencias.", Severity.Info);
+    }
+
+    private async Task SeleccionarEmpleado(Empleado empleado)
+    {
+        _empleado = empleado;
+        _dni = empleado.Dni;
+        _resultadosBusqueda.Clear();
         _registraMenu = false;
 
         _consumosDelDia = await RegistroDiarioService
@@ -379,6 +403,7 @@
     {
         _dni = string.Empty;
         _empleado = null;
+        _resultadosBusqueda = new List<Empleado>();
         _registraMenu = false;
         _menusExtra = new List<ConsumoAdicionalInputDto>();
         _productosAdicionales = new List<ConsumoAdicionalInputDto>();

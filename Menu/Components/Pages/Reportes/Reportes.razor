@@ -7,14 +7,26 @@
 
 <RequirePermission Permisos="new[] { Permisos.ReportesVer }">
 
-<MudContainer MaxWidth="MaxWidth.False" Class="pa-4">
+<MudContainer MaxWidth="MaxWidth.False" Class="pa-0">
     <MudStack Spacing="3">
-        <MudStack Spacing="1">
-            <MudText Typo="Typo.h5">Reportes</MudText>
-            <MudText Typo="Typo.body2" Color="Color.Primary">
-                Resumen operativo de consumos, planilla, cobros directos y creditos comedor del periodo.
-            </MudText>
-        </MudStack>
+        <MudPaper Class="px-4 py-3 reportes-header" Elevation="0" Square="true">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                <div>
+                    <MudText Typo="Typo.h5" Class="fw-bold">Reportes</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Consumos, costo empresa, planilla, cobros directos y crédito comedor.
+                    </MudText>
+                </div>
+
+                <MudChip T="string"
+                         Color="Color.Primary"
+                         Variant="Variant.Outlined"
+                         Size="Size.Small"
+                         Icon="@Icons.Material.Filled.DateRange">
+                    @((_filtro.FechaDesde ?? DateTime.Today).ToString("dd/MM/yyyy")) - @((_filtro.FechaHasta ?? DateTime.Today).ToString("dd/MM/yyyy"))
+                </MudChip>
+            </MudStack>
+        </MudPaper>
 
         <ReporteFiltros Filtro="_filtro"
                         Cargando="_cargando"
@@ -27,7 +39,7 @@
 
         <ReporteKpis Resumen="_resumen" />
 
-        <MudTabs Rounded="true" Elevation="0" Class="pt-4">
+        <MudTabs Rounded="true" Elevation="0" Class="reportes-tabs">
             <MudTabPanel Text="Resumen general">
                 <ReporteResumenGeneral Resumen="_resumen" />
             </MudTabPanel>

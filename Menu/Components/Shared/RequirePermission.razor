@@ -1,6 +1,7 @@
 ﻿@using Menu.Services
 @inject AuthStateService AuthState
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 @if (PuedeVer)
 {
@@ -25,11 +26,18 @@ else if (AuthState.EstaAutenticado)
         AuthState.UsuarioActual is not null &&
         Permisos.Any(p => AuthState.UsuarioActual.Permisos.Contains(p));
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         if (!AuthState.EstaAutenticado)
         {
-            Navigation.NavigateTo("/login");
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            AuthState.SetUsuario(authState.User);
+        }
+
+        if (!AuthState.EstaAutenticado)
+        {
+            var returnUrl = Uri.EscapeDataString(Navigation.ToBaseRelativePath(Navigation.Uri));
+            Navigation.NavigateTo($"/login?returnUrl=/{returnUrl}");
         }
     }
 }

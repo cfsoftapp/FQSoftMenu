@@ -2,6 +2,7 @@ using Menu.DTOs.Cierres;
 using Menu.Enums;
 using Menu.Services.Cierres;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Menu.Components.Pages.Cierres;
@@ -11,6 +12,8 @@ public partial class Cierres : ComponentBase
     [Inject] private ICierreService CierreService { get; set; } = default!;
 
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
+
+    [Inject] private IJSRuntime JsRuntime { get; set; } = default!;
 
     private CierreFiltroDto _filtro = new();
     private CierreResumenDto _resumen = new();
@@ -27,6 +30,8 @@ public partial class Cierres : ComponentBase
     private bool _cargandoBorrador;
     private bool _guardandoBorrador;
     private bool _confirmandoProveedor;
+    private bool _borradorGuardadoParaConfirmar;
+    private bool _abrirBorradorDesdeHistorial;
 
     private int TotalCierresProveedor => _historialProveedor.Count;
 
@@ -113,6 +118,8 @@ public partial class Cierres : ComponentBase
         _buscarEmpleadoCierre = string.Empty;
         _empleadoExpandidoId = null;
         _mostrarActivos = false;
+        _borradorGuardadoParaConfirmar = false;
+        _abrirBorradorDesdeHistorial = false;
         _mostrarNuevoCierre = true;
     }
 
@@ -121,6 +128,8 @@ public partial class Cierres : ComponentBase
         _mostrarNuevoCierre = false;
         _borradorProveedor = null;
         _empleadoExpandidoId = null;
+        _borradorGuardadoParaConfirmar = false;
+        _abrirBorradorDesdeHistorial = false;
     }
 
     private async Task AbrirCierreProveedorAsync(CierreProveedorListadoDto cierre)
@@ -130,7 +139,36 @@ public partial class Cierres : ComponentBase
         _mostrarNuevoCierre = true;
         _buscarEmpleadoCierre = string.Empty;
         _empleadoExpandidoId = null;
+        _abrirBorradorDesdeHistorial = true;
         await GenerarBorradorProveedorAsync();
+    }
+
+    private async Task ConfirmarEliminarBorradorAsync(CierreProveedorListadoDto cierre)
+    {
+        if (cierre.Estado != EstadoCierreProveedor.Borrador)
+        {
+            Snackbar.Add("Solo se pueden eliminar cierres en borrador.", Severity.Warning);
+            return;
+        }
+
+        var confirmado = await JsRuntime.InvokeAsync<bool>(
+            "confirm",
+            "Esto eliminará el borrador y su detalle. No afectará los consumos registrados.");
+
+        if (!confirmado)
+            return;
+
+        var result = await CierreService.EliminarBorradorProveedorAsync(cierre.Id);
+
+        if (result.Success)
+        {
+            Snackbar.Add(result.Message, Severity.Success);
+            await CargarPantallaAsync();
+        }
+        else
+        {
+            Snackbar.Add(result.Message, Severity.Warning);
+        }
     }
 
     private async Task GenerarBorradorProveedorAsync()
@@ -153,13 +191,17 @@ public partial class Cierres : ComponentBase
             _observacionConfirmacion = string.Empty;
             _borradorProveedor = await CierreService.GenerarBorradorProveedorAsync(_filtro);
             _empleadoExpandidoId = null;
+            _borradorGuardadoParaConfirmar = _abrirBorradorDesdeHistorial && !_borradorProveedor.YaConfirmado;
+            _abrirBorradorDesdeHistorial = false;
 
             if (!_borradorProveedor.Items.Any())
                 Snackbar.Add("No hay consumos de empresa o planilla para liquidar con proveedor.", Severity.Info);
             else if (_borradorProveedor.YaConfirmado)
                 Snackbar.Add("Se recupero una liquidacion ya confirmada para este rango.", Severity.Info);
             else
-                Snackbar.Add("Borrador generado/recuperado y guardado.", Severity.Success);
+                Snackbar.Add(_borradorGuardadoParaConfirmar
+                    ? "Borrador recuperado. Puedes revisarlo o confirmarlo."
+                    : "Borrador calculado. Guarda el borrador para habilitar la confirmacion.", Severity.Success);
         }
         catch (Exception ex)
         {
@@ -201,6 +243,7 @@ public partial class Cierres : ComponentBase
             {
                 Snackbar.Add(result.Message, Severity.Success);
                 _borradorProveedor = await CierreService.GenerarBorradorProveedorAsync(_filtro);
+                _borradorGuardadoParaConfirmar = !_borradorProveedor.YaConfirmado;
             }
             else
             {
@@ -254,6 +297,7 @@ public partial class Cierres : ComponentBase
             {
                 Snackbar.Add(result.Message, Severity.Success);
                 _borradorProveedor = await CierreService.GenerarBorradorProveedorAsync(_filtro);
+                _borradorGuardadoParaConfirmar = false;
             }
             else
             {

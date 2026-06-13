@@ -3,12 +3,13 @@ using Menu.Models;
 using Menu.Security;
 using Menu.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Menu.Data;
 
 public static class DbInitializer
 {
-    public static async Task InitializeAsync(IServiceProvider serviceProvider)
+    public static async Task InitializeAsync(IServiceProvider serviceProvider, bool seedDemoData)
     {
         using var scope = serviceProvider.CreateScope();
 
@@ -17,7 +18,8 @@ public static class DbInitializer
         await context.Database.MigrateAsync();
 
         await SeedConfiguracionMenuAsync(context);
-        await SeedEmpleadosDemoAsync(context);
+        if (seedDemoData)
+            await SeedEmpleadosDemoAsync(context);
 
         await SeedRolesPermisosAsync(context);
         await SeedUsuarioAdminAsync(context, scope.ServiceProvider);
@@ -183,26 +185,54 @@ public static class DbInitializer
         await context.SaveChangesAsync();
     }
 
-    private static async Task SeedUsuarioAdminAsync(AppDbContext context, IServiceProvider serviceProvider)
+    private static async Task SeedUsuarioAdminAsync(
+        AppDbContext context,
+        IServiceProvider serviceProvider)
     {
-        var existeUsuario = await context.UsuariosSistema.AnyAsync();
-
-        if (existeUsuario)
-            return;
-
         var rolAdmin = await context.RolesSistema
             .FirstOrDefaultAsync(x => x.Codigo == "ADMIN");
 
         if (rolAdmin is null)
             return;
 
+        var adminPassword = Environment.GetEnvironmentVariable("FQSOFT_ADMIN_PASSWORD");
+        var resetAdmin = string.Equals(
+            Environment.GetEnvironmentVariable("FQSOFT_RESET_ADMIN_PASSWORD"),
+            "true",
+            StringComparison.OrdinalIgnoreCase);
+
+        if (string.IsNullOrWhiteSpace(adminPassword))
+        {
+            adminPassword = "admin123";
+        }
+
         var passwordService = serviceProvider.GetRequiredService<PasswordService>();
+        var adminExistente = await context.UsuariosSistema
+            .FirstOrDefaultAsync(x => x.NombreUsuario == "admin");
+
+        if (adminExistente is not null)
+        {
+            if (!resetAdmin)
+                return;
+
+            adminExistente.ClaveHash = passwordService.HashPassword(adminPassword);
+            adminExistente.RolSistemaId = rolAdmin.Id;
+            adminExistente.Activo = true;
+
+            await context.SaveChangesAsync();
+            return;
+        }
+
+        var existeUsuario = await context.UsuariosSistema.AnyAsync();
+
+        if (existeUsuario && !resetAdmin)
+            return;
 
         context.UsuariosSistema.Add(new UsuarioSistema
         {
             NombreUsuario = "admin",
             NombreCompleto = "Administrador",
-            ClaveHash = passwordService.HashPassword("admin123"),
+            ClaveHash = passwordService.HashPassword(adminPassword),
             RolSistemaId = rolAdmin.Id,
             Activo = true,
             FechaCreacion = DateTime.Now

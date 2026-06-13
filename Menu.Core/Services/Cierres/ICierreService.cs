@@ -17,5 +17,7 @@ public interface ICierreService
 
     Task<ResultadoOperacionDto> ConfirmarLiquidacionProveedorAsync(ConfirmarCierreProveedorDto input);
 
+    Task<ResultadoOperacionDto> EliminarBorradorProveedorAsync(int cierreProveedorId);
+
     Task<byte[]> GenerarExcelProveedorAsync(int cierreProveedorId);
 }

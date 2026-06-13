@@ -63,6 +63,7 @@ PublishScripts/
 
 ## Logs and temp files
 *.log
+curl-login*.txt
 *.tlog
 *.tmp
 *.tmp_proj

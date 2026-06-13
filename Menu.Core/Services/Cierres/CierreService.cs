@@ -192,6 +192,9 @@ public class CierreService : ICierreService
         if (cierreExistente is not null)
             return MapearBorrador(cierreExistente);
 
+        if (await ExisteCierreProveedorSolapadoAsync(desde, hasta))
+            throw new InvalidOperationException("Ya existe un cierre proveedor con fechas que se cruzan con este rango.");
+
         var items = await _context.ConsumosMenu
             .AsNoTracking()
             .Include(x => x.Empleado)
@@ -280,6 +283,9 @@ public class CierreService : ICierreService
         if (cierre.Estado == EstadoCierreProveedor.Confirmado)
             return ResultadoOperacionDto.Fail("La liquidacion ya fue confirmada y no puede modificarse.");
 
+        if (await ExisteCierreProveedorSolapadoAsync(desde, hasta, cierre.Id))
+            return ResultadoOperacionDto.Fail("Ya existe otro cierre proveedor con fechas que se cruzan con este rango.");
+
         var validacion = await ValidarItemsBorradorAsync(input, desde, hasta);
 
         if (!validacion.Success)
@@ -298,6 +304,23 @@ public class CierreService : ICierreService
         await _context.SaveChangesAsync();
 
         return ResultadoOperacionDto.Ok("Borrador guardado correctamente.");
+    }
+
+    public async Task<ResultadoOperacionDto> EliminarBorradorProveedorAsync(int cierreProveedorId)
+    {
+        var cierre = await _context.CierresProveedor
+            .FirstOrDefaultAsync(x => x.Id == cierreProveedorId);
+
+        if (cierre is null)
+            return ResultadoOperacionDto.Fail("No se encontro el cierre proveedor.");
+
+        if (cierre.Estado != EstadoCierreProveedor.Borrador)
+            return ResultadoOperacionDto.Fail("Solo se pueden eliminar cierres en borrador.");
+
+        _context.CierresProveedor.Remove(cierre);
+        await _context.SaveChangesAsync();
+
+        return ResultadoOperacionDto.Ok("Borrador eliminado correctamente.");
     }
 
     public async Task<byte[]> GenerarExcelProveedorAsync(int cierreProveedorId)
@@ -367,6 +390,9 @@ public class CierreService : ICierreService
 
         if (cierre.Estado == EstadoCierreProveedor.Confirmado)
             return ResultadoOperacionDto.Fail("La liquidacion ya fue confirmada.");
+
+        if (await ExisteCierreProveedorSolapadoAsync(desde, hasta, cierre.Id))
+            return ResultadoOperacionDto.Fail("Ya existe otro cierre proveedor con fechas que se cruzan con este rango.");
 
         var validacion = await ValidarItemsBorradorAsync(input, desde, hasta);
 
@@ -451,6 +477,16 @@ public class CierreService : ICierreService
         }
 
         return ResultadoOperacionDto.Ok("OK");
+    }
+
+    private async Task<bool> ExisteCierreProveedorSolapadoAsync(DateTime desde, DateTime hasta, int? excluirId = null)
+    {
+        return await _context.CierresProveedor
+            .AsNoTracking()
+            .AnyAsync(x =>
+                (!excluirId.HasValue || x.Id != excluirId.Value) &&
+                x.FechaDesde <= hasta &&
+                x.FechaHasta >= desde);
     }
 
     private static CierreProveedor CrearCierreProveedor(
@@ -543,6 +579,7 @@ public class CierreService : ICierreService
                   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
                   <Default Extension="xml" ContentType="application/xml"/>
                   <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+                  <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
                   <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
                   <Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
                   <Override PartName="/xl/worksheets/sheet3.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
@@ -573,12 +610,41 @@ public class CierreService : ICierreService
                   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
                   <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/>
                   <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet3.xml"/>
+                  <Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
                 </Relationships>
                 """);
 
-            AddEntry(archive, "xl/worksheets/sheet1.xml", BuildSheet(GetResumenGeneralRows(cierre)));
-            AddEntry(archive, "xl/worksheets/sheet2.xml", BuildSheet(GetResumenEmpleadoRows(cierre)));
-            AddEntry(archive, "xl/worksheets/sheet3.xml", BuildSheet(GetDetalleRows(cierre)));
+            AddEntry(archive, "xl/styles.xml", GetWorkbookStyles());
+            AddEntry(archive, "xl/worksheets/sheet1.xml", BuildSheet(
+                GetResumenGeneralRows(cierre),
+                new SheetBuildOptions(
+                    HeaderRow: 8,
+                    AutoFilterRange: null,
+                    FreezeRows: 0,
+                    CurrencyColumns: new[] { 2 },
+                    TotalLabelColumn: 1,
+                    TotalText: "Total a liquidar proveedor",
+                    ColumnWidths: new double[] { 34, 22 })));
+            AddEntry(archive, "xl/worksheets/sheet2.xml", BuildSheet(
+                GetResumenEmpleadoRows(cierre),
+                new SheetBuildOptions(
+                    HeaderRow: 1,
+                    AutoFilterRange: $"A1:H{Math.Max(1, cierre.Detalles.Select(x => x.EmpleadoId).Distinct().Count() + 2)}",
+                    FreezeRows: 1,
+                    CurrencyColumns: new[] { 7, 8 },
+                    TotalLabelColumn: 2,
+                    TotalText: "TOTAL",
+                    ColumnWidths: new double[] { 14, 34, 14, 18, 15, 13, 18, 16 })));
+            AddEntry(archive, "xl/worksheets/sheet3.xml", BuildSheet(
+                GetDetalleRows(cierre),
+                new SheetBuildOptions(
+                    HeaderRow: 1,
+                    AutoFilterRange: $"A1:I{Math.Max(1, cierre.Detalles.Count + 1)}",
+                    FreezeRows: 1,
+                    CurrencyColumns: new[] { 9 },
+                    TotalLabelColumn: 8,
+                    TotalText: "TOTAL",
+                    ColumnWidths: new double[] { 14, 14, 34, 28, 22, 18, 24, 32, 15 })));
         }
 
         return stream.ToArray();
@@ -595,7 +661,7 @@ public class CierreService : ICierreService
             new object?[] { "Generado/confirmado por", cierre.UsuarioConfirmacionNombre },
             new object?[] { "Fecha registro", cierre.FechaConfirmacion.ToString("dd/MM/yyyy HH:mm") },
             new object?[] { string.Empty, string.Empty },
-            new object?[] { "Concepto", "Importe" },
+            new object?[] { "Concepto", "Importe (S/)" },
             new object?[] { "Personal activo", cierre.TotalPersonalActivo },
             new object?[] { "Descuento planilla incluido", cierre.TotalPlanilla },
             new object?[] { "Total a liquidar proveedor", cierre.TotalLiquidarProveedor },
@@ -621,8 +687,8 @@ public class CierreService : ICierreService
                 "Adicionales empresa",
                 "Menus planilla",
                 "Excepciones",
-                "Total proveedor",
-                "Total revision"
+                "Total proveedor (S/)",
+                "Total revision (S/)"
             }
         };
 
@@ -641,6 +707,18 @@ public class CierreService : ICierreService
                 x.Where(d => d.ExcluidoPorPagoDirecto).Sum(d => d.Importe)
             }));
 
+        rows.Add(new object?[]
+        {
+            string.Empty,
+            "TOTAL",
+            cierre.Detalles.Count(x => x.TipoPagoMenu == TipoPagoMenu.Empresa && x.ConsumoAdicionalId is null),
+            cierre.Detalles.Count(x => x.ConsumoAdicionalId.HasValue),
+            cierre.Detalles.Count(x => x.TipoPagoMenu == TipoPagoMenu.DescuentoPlanilla && x.IncluidoProveedor),
+            cierre.Detalles.Count(x => x.ExcluidoPorPagoDirecto),
+            cierre.Detalles.Where(x => x.IncluidoProveedor).Sum(x => x.Importe),
+            cierre.Detalles.Where(x => x.ExcluidoPorPagoDirecto).Sum(x => x.Importe)
+        });
+
         return rows;
     }
 
@@ -658,7 +736,7 @@ public class CierreService : ICierreService
                 "Incluido proveedor",
                 "Revision/concesionario",
                 "Motivo excepcion",
-                "Importe"
+                "Importe (S/)"
             }
         };
 
@@ -680,47 +758,173 @@ public class CierreService : ICierreService
                 x.Importe
             }));
 
+        rows.Add(new object?[]
+        {
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            "TOTAL",
+            cierre.Detalles.Where(x => x.IncluidoProveedor).Sum(x => x.Importe)
+        });
+
         return rows;
     }
 
-    private static string BuildSheet(List<object?[]> rows)
+    private static string BuildSheet(List<object?[]> rows, SheetBuildOptions options)
     {
         var builder = new StringBuilder();
-        builder.Append("""<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>""");
+        builder.Append("""<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">""");
+
+        if (options.FreezeRows > 0)
+        {
+            var topLeftCell = $"A{options.FreezeRows + 1}";
+            builder.Append($"""<sheetViews><sheetView workbookViewId="0"><pane ySplit="{options.FreezeRows}" topLeftCell="{topLeftCell}" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="{topLeftCell}" sqref="{topLeftCell}"/></sheetView></sheetViews>""");
+        }
+
+        if (options.ColumnWidths.Length > 0)
+        {
+            builder.Append("<cols>");
+
+            for (var colIndex = 0; colIndex < options.ColumnWidths.Length; colIndex++)
+            {
+                var columnNumber = colIndex + 1;
+                var width = Convert.ToString(options.ColumnWidths[colIndex], System.Globalization.CultureInfo.InvariantCulture);
+                builder.Append($"""<col min="{columnNumber}" max="{columnNumber}" width="{width}" customWidth="1"/>""");
+            }
+
+            builder.Append("</cols>");
+        }
+
+        builder.Append("<sheetData>");
 
         for (var rowIndex = 0; rowIndex < rows.Count; rowIndex++)
         {
             var rowNumber = rowIndex + 1;
-            builder.Append($"""<row r="{rowNumber}">""");
+            var rowStyle = rowNumber == options.HeaderRow ? 2 : 0;
+            var isTitleRow = rowNumber == 1 && options.HeaderRow > 1;
+            var isTotalRow = IsTotalRow(rows[rowIndex], options);
+            var rowAttributes = rowStyle > 0
+                ? $" r=\"{rowNumber}\" s=\"{rowStyle}\" customFormat=\"1\""
+                : $" r=\"{rowNumber}\"";
+
+            builder.Append($"""<row{rowAttributes}>""");
 
             for (var colIndex = 0; colIndex < rows[rowIndex].Length; colIndex++)
             {
                 var reference = $"{GetColumnName(colIndex + 1)}{rowNumber}";
-                builder.Append(BuildCell(reference, rows[rowIndex][colIndex]));
+                var styleIndex = GetCellStyle(rowNumber, colIndex + 1, rows[rowIndex], options, isTitleRow, isTotalRow);
+                builder.Append(BuildCell(reference, rows[rowIndex][colIndex], styleIndex));
             }
 
             builder.Append("</row>");
         }
 
-        builder.Append("</sheetData></worksheet>");
+        builder.Append("</sheetData>");
+
+        if (!string.IsNullOrWhiteSpace(options.AutoFilterRange))
+            builder.Append($"""<autoFilter ref="{options.AutoFilterRange}"/>""");
+
+        builder.Append("</worksheet>");
 
         return builder.ToString();
     }
 
-    private static string BuildCell(string reference, object? value)
+    private static string BuildCell(string reference, object? value, int styleIndex)
     {
+        var style = styleIndex > 0 ? $" s=\"{styleIndex}\"" : string.Empty;
+
         if (value is null)
-            return $"""<c r="{reference}"/>""";
+            return $"""<c r="{reference}"{style}/>""";
 
         if (value is int or decimal)
         {
             var number = Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture);
-            return $"""<c r="{reference}"><v>{number}</v></c>""";
+            return $"""<c r="{reference}"{style}><v>{number}</v></c>""";
         }
 
         var text = SecurityElement.Escape(value.ToString()) ?? string.Empty;
-        return $"""<c r="{reference}" t="inlineStr"><is><t>{text}</t></is></c>""";
+        return $"""<c r="{reference}"{style} t="inlineStr"><is><t>{text}</t></is></c>""";
     }
+
+    private static bool IsTotalRow(object?[] row, SheetBuildOptions options)
+    {
+        if (options.TotalLabelColumn <= 0 || options.TotalLabelColumn > row.Length)
+            return false;
+
+        return string.Equals(row[options.TotalLabelColumn - 1]?.ToString(), options.TotalText, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static int GetCellStyle(
+        int rowNumber,
+        int columnNumber,
+        object?[] row,
+        SheetBuildOptions options,
+        bool isTitleRow,
+        bool isTotalRow)
+    {
+        if (isTitleRow)
+            return 1;
+
+        if (rowNumber == options.HeaderRow)
+            return 2;
+
+        if (isTotalRow)
+            return options.CurrencyColumns.Contains(columnNumber) ? 5 : 4;
+
+        return options.CurrencyColumns.Contains(columnNumber) ? 3 : 0;
+    }
+
+    private static string GetWorkbookStyles()
+    {
+        return """
+            <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+              <fonts count="3">
+                <font><sz val="11"/><name val="Calibri"/></font>
+                <font><b/><sz val="14"/><color rgb="FF1F2937"/><name val="Calibri"/></font>
+                <font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font>
+              </fonts>
+              <fills count="4">
+                <fill><patternFill patternType="none"/></fill>
+                <fill><patternFill patternType="gray125"/></fill>
+                <fill><patternFill patternType="solid"><fgColor rgb="FF1F4E78"/><bgColor indexed="64"/></patternFill></fill>
+                <fill><patternFill patternType="solid"><fgColor rgb="FFE2F0D9"/><bgColor indexed="64"/></patternFill></fill>
+              </fills>
+              <borders count="2">
+                <border><left/><right/><top/><bottom/><diagonal/></border>
+                <border><left style="thin"><color rgb="FFD9D9D9"/></left><right style="thin"><color rgb="FFD9D9D9"/></right><top style="thin"><color rgb="FFD9D9D9"/></top><bottom style="thin"><color rgb="FFD9D9D9"/></bottom><diagonal/></border>
+              </borders>
+              <cellStyleXfs count="1">
+                <xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>
+              </cellStyleXfs>
+              <cellXfs count="6">
+                <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+                <xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+                <xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>
+                <xf numFmtId="4" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>
+                <xf numFmtId="0" fontId="0" fillId="3" borderId="1" xfId="0" applyFill="1" applyBorder="1"/>
+                <xf numFmtId="4" fontId="0" fillId="3" borderId="1" xfId="0" applyNumberFormat="1" applyFill="1" applyBorder="1"/>
+              </cellXfs>
+              <cellStyles count="1">
+                <cellStyle name="Normal" xfId="0" builtinId="0"/>
+              </cellStyles>
+              <dxfs count="0"/>
+              <tableStyles count="0" defaultTableStyle="TableStyleMedium2" defaultPivotStyle="PivotStyleLight16"/>
+            </styleSheet>
+            """;
+    }
+
+    private sealed record SheetBuildOptions(
+        int HeaderRow,
+        string? AutoFilterRange,
+        int FreezeRows,
+        int[] CurrencyColumns,
+        int TotalLabelColumn,
+        string TotalText,
+        double[] ColumnWidths);
 
     private static string GetColumnName(int columnNumber)
     {
