@@ -1,0 +1,96 @@
+@using Menu.DTOs.RegistroDiario
+
+<MudPaper Class="pa-4" Elevation="1">
+    <MudStack Spacing="3">
+        <MudStack Row="true"
+                  AlignItems="AlignItems.Center"
+                  Justify="Justify.SpaceBetween">
+            <div>
+                <MudText Typo="Typo.h6">Últimos menús registrados</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Control de lecturas realizadas hoy.
+                </MudText>
+            </div>
+
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudChip T="string"
+                         Size="Size.Small"
+                         Color="Color.Primary"
+                         Variant="Variant.Outlined">
+                    @Registros.Count reciente(s)
+                </MudChip>
+
+                <MudIconButton Icon="@Icons.Material.Filled.Refresh"
+                               Color="Color.Primary"
+                               Size="Size.Small"
+                               Disabled="@Actualizando"
+                               aria-label="Actualizar historial"
+                               OnClick="OnActualizar" />
+            </MudStack>
+        </MudStack>
+
+        @if (Registros.Count == 0)
+        {
+            <MudAlert Severity="Severity.Info" Variant="Variant.Text">
+                Todavía no hay menús registrados hoy.
+            </MudAlert>
+        }
+        else
+        {
+            <div class="registro-recientes-lista">
+                @foreach (var registro in Registros)
+                {
+                    <div class="registro-reciente-fila @(registro.Anulado ? "registro-reciente-anulado" : null)"
+                         @key="registro.ConsumoMenuId">
+                        <div class="registro-reciente-hora">@registro.FechaRegistro.ToString("HH:mm")</div>
+                        <div class="registro-reciente-dni">@registro.Dni</div>
+
+                        <div class="registro-reciente-comensal">
+                            <MudText Typo="Typo.body2" Class="fw-bold">@registro.NombreCompleto</MudText>
+                            <MudText Typo="Typo.caption"
+                                     Color="@(registro.EstadoComensal == "Activo" ? Color.Success : Color.Warning)">
+                                @registro.EstadoComensal
+                            </MudText>
+                        </div>
+
+                        <div class="registro-reciente-servicio">
+                            <MudChip T="string"
+                                     Size="Size.Small"
+                                     Color="Color.Success"
+                                     Variant="Variant.Outlined">
+                                @registro.TipoServicio
+                            </MudChip>
+                        </div>
+
+                        <div class="registro-reciente-ubicacion">
+                            <MudText Typo="Typo.body2">@registro.EmpresaCliente</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">@registro.Sucursal</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Primary">@registro.FormaCobro</MudText>
+                        </div>
+
+                        <div class="registro-reciente-estado">
+                            <MudChip T="string"
+                                     Size="Size.Small"
+                                     Color="@(registro.Anulado ? Color.Error : Color.Success)"
+                                     Variant="Variant.Filled">
+                                @(registro.Anulado ? "Anulado" : "Registrado")
+                            </MudChip>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter]
+    public IReadOnlyList<RegistroComensalRecienteDto> Registros { get; set; } =
+        Array.Empty<RegistroComensalRecienteDto>();
+
+    [Parameter]
+    public bool Actualizando { get; set; }
+
+    [Parameter]
+    public EventCallback OnActualizar { get; set; }
+}

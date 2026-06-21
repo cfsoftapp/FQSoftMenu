@@ -1,0 +1,139 @@
+<Window x:Class="Menu.Desktop.Views.EmpleadoFormDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Comensal"
+        Width="660"
+        Height="500"
+        MinWidth="620"
+        MinHeight="460"
+        WindowStartupLocation="CenterOwner">
+    <Border Padding="26"
+            Background="#FFFFFF">
+        <DockPanel>
+            <DockPanel DockPanel.Dock="Top"
+                       Margin="0,0,0,18">
+                <TextBlock FontSize="22"
+                           FontWeight="SemiBold"
+                           Foreground="#333333"
+                           Text="{Binding FormTitle}" />
+            </DockPanel>
+
+            <StackPanel DockPanel.Dock="Bottom"
+                        Margin="0,18,0,0"
+                        HorizontalAlignment="Right"
+                        Orientation="Horizontal">
+                <Button Width="112"
+                        Height="34"
+                        Margin="0,0,10,0"
+                        Click="Cancelar_Click"
+                        Content="CANCELAR" />
+                <Button Width="122"
+                        Height="34"
+                        Background="#594AE2"
+                        BorderBrush="#594AE2"
+                        Click="Guardar_Click"
+                        Content="GUARDAR"
+                        Foreground="White"
+                        FontWeight="SemiBold" />
+            </StackPanel>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0"
+                            Grid.Column="0"
+                            Margin="0,0,12,14">
+                    <TextBlock Text="DNI*" />
+                    <TextBox Height="36"
+                             Margin="0,5,0,0"
+                             Padding="9,7"
+                             Text="{Binding FormDni, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+
+                <StackPanel Grid.Row="0"
+                            Grid.Column="1"
+                            Margin="12,0,0,14">
+                    <TextBlock Text="Tipo de comensal" />
+                    <ComboBox Height="36"
+                              Margin="0,5,0,0"
+                              DisplayMemberPath="Text"
+                              ItemsSource="{Binding TipoEmpleadoOptions}"
+                              SelectedValue="{Binding FormTipoEmpleadoId, Mode=TwoWay}"
+                              SelectedValuePath="Value" />
+                </StackPanel>
+
+                <StackPanel Grid.Row="1"
+                            Grid.Column="0"
+                            Margin="0,0,12,14">
+                    <TextBlock Text="Nombres*" />
+                    <TextBox Height="36"
+                             Margin="0,5,0,0"
+                             Padding="9,7"
+                             Text="{Binding FormNombres, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+
+                <StackPanel Grid.Row="1"
+                            Grid.Column="1"
+                            Margin="12,0,0,14">
+                    <TextBlock Text="Apellidos*" />
+                    <TextBox Height="36"
+                             Margin="0,5,0,0"
+                             Padding="9,7"
+                             Text="{Binding FormApellidos, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+
+                <StackPanel Grid.Row="2"
+                            Grid.Column="0"
+                            Margin="0,0,12,14">
+                    <TextBlock Text="Empresa cliente" />
+                    <ComboBox Height="36"
+                              Margin="0,5,0,0"
+                              DisplayMemberPath="Text"
+                              ItemsSource="{Binding EmpresaClienteOptions}"
+                              SelectedValue="{Binding FormEmpresaClienteId, Mode=TwoWay}"
+                              SelectedValuePath="Value" />
+                </StackPanel>
+
+                <StackPanel Grid.Row="2"
+                            Grid.Column="1"
+                            Margin="12,0,0,14">
+                    <TextBlock Text="Sucursal" />
+                    <ComboBox Height="36"
+                              Margin="0,5,0,0"
+                              DisplayMemberPath="Text"
+                              ItemsSource="{Binding SucursalOptions}"
+                              SelectedValue="{Binding FormSucursalId, Mode=TwoWay}"
+                              SelectedValuePath="Value" />
+                </StackPanel>
+
+                <StackPanel Grid.Row="3"
+                            Grid.Column="0"
+                            Margin="0,0,12,0">
+                    <TextBlock Text="Estado beneficio" />
+                    <ComboBox Height="36"
+                              Margin="0,5,0,0"
+                              DisplayMemberPath="Text"
+                              ItemsSource="{Binding EstadoOptions}"
+                              SelectedValue="{Binding FormEstado, Mode=TwoWay}"
+                              SelectedValuePath="Value" />
+                </StackPanel>
+
+                <TextBlock Grid.Row="3"
+                           Grid.Column="1"
+                           Margin="12,0,0,0"
+                           VerticalAlignment="Bottom"
+                           Foreground="#FF4081"
+                           Text="Los campos con * son obligatorios." />
+            </Grid>
+        </DockPanel>
+    </Border>
+</Window>

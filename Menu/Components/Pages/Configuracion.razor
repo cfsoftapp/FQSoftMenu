@@ -5,6 +5,9 @@
 @using Menu.Services
 
 @inject ConfiguracionMenuService ConfiguracionMenuService
+@inject TipoEmpleadoService TipoEmpleadoService
+@inject EmpresaClienteService EmpresaClienteService
+@inject SucursalService SucursalService
 @inject AuthStateService AuthState
 @inject ISnackbar Snackbar
 
@@ -17,99 +20,513 @@
     <div>
         <MudText Typo="Typo.h4">Configuración</MudText>
         <MudText Typo="Typo.body1" Color="Color.Secondary">
-            Parámetros generales del comedor y precio actual del menú.
+            Parámetros generales del comedor, empresas cliente y precio actual del menú.
         </MudText>
     </div>
 
-    <MudGrid Spacing="3">
+    <MudPaper Elevation="1">
+        <MudTabs Rounded="true"
+                 Elevation="0"
+                 Class="configuracion-tabs">
+            <MudTabPanel Text="General" Icon="@Icons.Material.Filled.Tune">
+                <MudGrid Spacing="3" Class="pa-4">
+                    <MudItem xs="12" md="6" lg="5">
+                        <MudStack Spacing="3">
+                            <MudText Typo="Typo.h6">Precio del menú</MudText>
 
-        <MudItem xs="12" md="5">
-            <MudPaper Class="pa-4" Elevation="1">
+                            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                                Este precio se usará al registrar nuevos consumos de menú.
+                                Los consumos anteriores conservarán el precio histórico.
+                            </MudAlert>
 
-                <MudStack Spacing="3">
+                            <MudForm @ref="_form">
+                                <MudNumericField T="decimal"
+                                                 @bind-Value="_precioMenu"
+                                                 Label="Precio actual"
+                                                 Variant="Variant.Outlined"
+                                                 Adornment="Adornment.Start"
+                                                 AdornmentText="S/"
+                                                 Min="0"
+                                                 Required="true" />
 
-                    <MudText Typo="Typo.h6">
-                        Precio del menú
-                    </MudText>
+                                <MudTextField Value="@_moneda"
+                                              Label="Moneda"
+                                              Variant="Variant.Outlined"
+                                              Disabled="true"
+                                              Class="mt-3" />
 
-                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
-                        Este precio se usará al registrar nuevos consumos de menú.
-                        Los consumos anteriores conservarán el precio histórico.
-                    </MudAlert>
+                                <MudTextField Value="@_fechaActualizacion"
+                                              Label="Última actualización"
+                                              Variant="Variant.Outlined"
+                                              Disabled="true"
+                                              Class="mt-3" />
+                            </MudForm>
 
-                    <MudForm @ref="_form">
-                        <MudNumericField T="decimal"
-                                         @bind-Value="_precioMenu"
-                                         Label="Precio actual"
-                                         Variant="Variant.Outlined"
-                                         Adornment="Adornment.Start"
-                                         AdornmentText="S/"
-                                         Min="0"
-                                         Required="true" />
+                            <MudStack Row="true" Justify="Justify.FlexEnd">
+                                <MudButton Variant="Variant.Filled"
+                                           Color="Color.Primary"
+                                           StartIcon="@Icons.Material.Filled.Save"
+                                           OnClick="Guardar"
+                                           Disabled="@(_saving || !AuthState.TienePermiso(Permisos.ConfiguracionEditar))">
+                                    Guardar cambios
+                                </MudButton>
+                            </MudStack>
+                        </MudStack>
+                    </MudItem>
 
-                        <MudTextField Value="@_moneda"
-                                      Label="Moneda"
-                                      Variant="Variant.Outlined"
-                                      Disabled="true"
-                                      Class="mt-3" />
+                    <MudItem xs="12" md="6" lg="7">
+                        <MudAlert Severity="Severity.Normal" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Info">
+                            Esta sección concentra parámetros globales. En una fase SaaS, aquí podremos separar valores por empresa cliente o sucursal si el contrato lo requiere.
+                        </MudAlert>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
 
-                        <MudTextField Value="@_fechaActualizacion"
-                                      Label="Última actualización"
-                                      Variant="Variant.Outlined"
-                                      Disabled="true"
-                                      Class="mt-3" />
-                    </MudForm>
+            <MudTabPanel Text="Tipos de comensal" Icon="@Icons.Material.Filled.Groups">
+                <MudStack Row="true"
+                          AlignItems="AlignItems.Center"
+                          Justify="Justify.SpaceBetween"
+                          Class="pa-4 pb-0 mb-3">
+                    <div>
+                        <MudText Typo="Typo.h6">Tipos de comensal</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Catálogo configurable para clasificar comensales según la cultura de cada empresa cliente.
+                        </MudText>
+                    </div>
 
-                    <MudStack Row="true" Justify="Justify.FlexEnd">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Add"
+                               Disabled="@(!AuthState.TienePermiso(Permisos.ConfiguracionEditar))"
+                               OnClick="NuevoTipoEmpleado">
+                        Nuevo tipo
+                    </MudButton>
+                </MudStack>
+
+                <div class="px-4 pb-4">
+                    @if (_showTipoEmpleadoForm)
+                    {
+                        <MudPaper Class="pa-3 mb-3 rounded-lg" Elevation="0" Outlined="true">
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" sm="4">
+                                <MudTextField @bind-Value="_tipoEmpleadoModel.Nombre"
+                                              Label="Nombre"
+                                              Variant="Variant.Outlined"
+                                              Margin="Margin.Dense"
+                                              Required="true"
+                                              Immediate="true" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="5">
+                                <MudTextField @bind-Value="_tipoEmpleadoModel.Descripcion"
+                                              Label="Descripción"
+                                              Variant="Variant.Outlined"
+                                              Margin="Margin.Dense"
+                                              Immediate="true" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="3" Class="d-flex align-center justify-end gap-2">
+                                <MudButton Variant="Variant.Text"
+                                           Color="Color.Default"
+                                           StartIcon="@Icons.Material.Filled.Close"
+                                           OnClick="CancelarTipoEmpleado">
+                                    Cancelar
+                                </MudButton>
+
+                                <MudButton Variant="Variant.Filled"
+                                           Color="Color.Primary"
+                                           StartIcon="@Icons.Material.Filled.Save"
+                                           OnClick="GuardarTipoEmpleado">
+                                    Guardar
+                                </MudButton>
+                            </MudItem>
+                        </MudGrid>
+                        </MudPaper>
+                    }
+
+                    <MudTable Items="_tiposEmpleado"
+                              Dense="true"
+                              Hover="true"
+                              Bordered="false"
+                              Striped="true">
+                        <HeaderContent>
+                            <MudTh>Nombre</MudTh>
+                            <MudTh>Descripción</MudTh>
+                            <MudTh>Estado</MudTh>
+                            <MudTh Style="text-align:right">Acciones</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Nombre">@context.Nombre</MudTd>
+                            <MudTd DataLabel="Descripción">@context.Descripcion</MudTd>
+                            <MudTd DataLabel="Estado">
+                                <MudChip T="string"
+                                         Size="Size.Small"
+                                         Color="@(context.Activo ? Color.Success : Color.Error)"
+                                         Variant="Variant.Outlined">
+                                    @(context.Activo ? "Activo" : "Inactivo")
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Acciones" Style="text-align:right">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                               Color="Color.Primary"
+                                               Size="Size.Small"
+                                               Disabled="@(!AuthState.TienePermiso(Permisos.ConfiguracionEditar))"
+                                               OnClick="@(() => EditarTipoEmpleado(context))" />
+
+                                <MudIconButton Icon="@(context.Activo ? Icons.Material.Filled.Block : Icons.Material.Filled.CheckCircle)"
+                                               Color="@(context.Activo ? Color.Error : Color.Success)"
+                                               Size="Size.Small"
+                                               Disabled="@(!AuthState.TienePermiso(Permisos.ConfiguracionEditar))"
+                                               OnClick="@(() => CambiarActivoTipoEmpleado(context.Id))" />
+                            </MudTd>
+                        </RowTemplate>
+                        <NoRecordsContent>
+                            <MudText Class="pa-4" Color="Color.Secondary">
+                                No hay tipos de comensal registrados.
+                            </MudText>
+                        </NoRecordsContent>
+                    </MudTable>
+                </div>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Reglas" Icon="@Icons.Material.Filled.Rule">
+                <div class="pa-4">
+                    <MudText Typo="Typo.h6">Reglas actuales</MudText>
+
+                    <MudDivider Class="my-3" />
+
+                    <MudList T="string" Dense="true">
+                        <MudListItem Icon="@Icons.Material.Filled.Business">
+                            Comensal activo: el menú se carga a la empresa cliente.
+                        </MudListItem>
+
+                        <MudListItem Icon="@Icons.Material.Filled.Badge">
+                            Comensal suspendido: el menú va a descuento por planilla.
+                        </MudListItem>
+
+                        <MudListItem Icon="@Icons.Material.Filled.Payments">
+                            Los consumos adicionales son por cuenta del comensal.
+                        </MudListItem>
+
+                        <MudListItem Icon="@Icons.Material.Filled.CreditCard">
+                            Los adicionales pueden pagarse al momento o quedar como pendiente del comensal.
+                        </MudListItem>
+
+                        <MudListItem Icon="@Icons.Material.Filled.History">
+                            Cada consumo guarda su precio histórico al momento del registro.
+                        </MudListItem>
+                    </MudList>
+                </div>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Empresas cliente" Icon="@Icons.Material.Filled.BusinessCenter">
+                <div class="pa-4">
+                    <MudStack Row="true"
+                              AlignItems="AlignItems.Center"
+                              Justify="Justify.SpaceBetween"
+                              Class="mb-3">
+                        <div>
+                            <MudText Typo="Typo.h6">Empresas cliente</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Catálogo de empresas atendidas por el concesionario.
+                            </MudText>
+                        </div>
+
                         <MudButton Variant="Variant.Filled"
                                    Color="Color.Primary"
-                                   StartIcon="@Icons.Material.Filled.Save"
-                                   OnClick="Guardar"
-                                       Disabled="@(_saving || !AuthState.TienePermiso(Permisos.ConfiguracionEditar))">
-                            Guardar cambios
+                                   StartIcon="@Icons.Material.Filled.Add"
+                                   Disabled="@(!AuthState.TienePermiso(Permisos.ConfiguracionEditar))"
+                                   OnClick="NuevaEmpresaCliente">
+                            Nueva empresa
                         </MudButton>
                     </MudStack>
 
-                </MudStack>
+                    @if (_showEmpresaForm)
+                    {
+                        <MudPaper Class="pa-3 mb-3 rounded-lg" Elevation="0" Outlined="true">
+                            <MudGrid Spacing="2">
+                                <MudItem xs="12" sm="4">
+                                    <MudTextField @bind-Value="_empresaModel.NombreComercial"
+                                                  Label="Nombre comercial"
+                                                  Variant="Variant.Outlined"
+                                                  Margin="Margin.Dense"
+                                                  Required="true"
+                                                  Immediate="true" />
+                                </MudItem>
 
-            </MudPaper>
-        </MudItem>
+                                <MudItem xs="12" sm="4">
+                                    <MudTextField @bind-Value="_empresaModel.RazonSocial"
+                                                  Label="Razón social"
+                                                  Variant="Variant.Outlined"
+                                                  Margin="Margin.Dense"
+                                                  Immediate="true" />
+                                </MudItem>
 
-        <MudItem xs="12" md="7">
-            <MudPaper Class="pa-4" Elevation="1">
+                                <MudItem xs="12" sm="2">
+                                    <MudTextField @bind-Value="_empresaModel.Ruc"
+                                                  Label="RUC"
+                                                  Variant="Variant.Outlined"
+                                                  Margin="Margin.Dense"
+                                                  Immediate="true" />
+                                </MudItem>
 
-                <MudText Typo="Typo.h6">
-                    Reglas actuales
-                </MudText>
+                                <MudItem xs="12" sm="2" Class="d-flex align-center justify-end gap-2">
+                                    <MudButton Variant="Variant.Text"
+                                               Color="Color.Default"
+                                               StartIcon="@Icons.Material.Filled.Close"
+                                               OnClick="CancelarEmpresaCliente">
+                                        Cancelar
+                                    </MudButton>
 
-                <MudDivider Class="my-3" />
+                                    <MudButton Variant="Variant.Filled"
+                                               Color="Color.Primary"
+                                               StartIcon="@Icons.Material.Filled.Save"
+                                               OnClick="GuardarEmpresaCliente">
+                                        Guardar
+                                    </MudButton>
+                                </MudItem>
+                            </MudGrid>
+                        </MudPaper>
+                    }
 
-                <MudList T="string" Dense="true">
-                    <MudListItem Icon="@Icons.Material.Filled.Business">
-                        Empleado activo: el menú lo paga la empresa.
-                    </MudListItem>
+                    <MudTable Items="_empresasCliente"
+                              Dense="true"
+                              Hover="true"
+                              Bordered="false"
+                              Striped="true">
+                        <HeaderContent>
+                            <MudTh>Nombre comercial</MudTh>
+                            <MudTh>Razón social</MudTh>
+                            <MudTh>RUC</MudTh>
+                            <MudTh>Estado</MudTh>
+                            <MudTh Style="text-align:right">Acciones</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Nombre comercial">@context.NombreComercial</MudTd>
+                            <MudTd DataLabel="Razón social">@context.RazonSocial</MudTd>
+                            <MudTd DataLabel="RUC">@context.Ruc</MudTd>
+                            <MudTd DataLabel="Estado">
+                                <MudChip T="string"
+                                         Size="Size.Small"
+                                         Color="@(context.Activo ? Color.Success : Color.Error)"
+                                         Variant="Variant.Outlined">
+                                    @(context.Activo ? "Activo" : "Inactivo")
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Acciones" Style="text-align:right">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                               Color="Color.Primary"
+                                               Size="Size.Small"
+                                               Disabled="@(!AuthState.TienePermiso(Permisos.ConfiguracionEditar))"
+                                               OnClick="@(() => EditarEmpresaCliente(context))" />
 
-                    <MudListItem Icon="@Icons.Material.Filled.Badge">
-                        Empleado suspendido: el menú va a descuento por planilla.
-                    </MudListItem>
+                                <MudIconButton Icon="@(context.Activo ? Icons.Material.Filled.Block : Icons.Material.Filled.CheckCircle)"
+                                               Color="@(context.Activo ? Color.Error : Color.Success)"
+                                               Size="Size.Small"
+                                               Disabled="@(!AuthState.TienePermiso(Permisos.ConfiguracionEditar))"
+                                               OnClick="@(() => CambiarActivoEmpresaCliente(context.Id))" />
+                            </MudTd>
+                        </RowTemplate>
+                        <NoRecordsContent>
+                            <MudText Class="pa-4" Color="Color.Secondary">
+                                No hay empresas cliente registradas.
+                            </MudText>
+                        </NoRecordsContent>
+                    </MudTable>
+                </div>
+            </MudTabPanel>
 
-                    <MudListItem Icon="@Icons.Material.Filled.Payments">
-                        Los consumos adicionales son por cuenta del trabajador.
-                    </MudListItem>
+            <MudTabPanel Text="Sucursales" Icon="@Icons.Material.Filled.Store">
+                <div class="pa-4">
+                    <MudStack Row="true"
+                              AlignItems="AlignItems.Center"
+                              Justify="Justify.SpaceBetween"
+                              Class="mb-3">
+                        <div>
+                            <MudText Typo="Typo.h6">Sucursales</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Sedes operativas del concesionario y su empresa cliente principal.
+                            </MudText>
+                        </div>
 
-                    <MudListItem Icon="@Icons.Material.Filled.CreditCard">
-                        Los adicionales pueden pagarse al momento o quedar como crédito comedor.
-                    </MudListItem>
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.Add"
+                                   Disabled="@(!AuthState.TienePermiso(Permisos.ConfiguracionEditar))"
+                                   OnClick="NuevaSucursal">
+                            Nueva sucursal
+                        </MudButton>
+                    </MudStack>
 
-                    <MudListItem Icon="@Icons.Material.Filled.History">
-                        Cada consumo guarda su precio histórico al momento del registro.
-                    </MudListItem>
-                </MudList>
+                    @if (_showSucursalForm)
+                    {
+                        <MudPaper Class="pa-3 mb-3 rounded-lg" Elevation="0" Outlined="true">
+                            <MudGrid Spacing="2">
+                                <MudItem xs="12" sm="3">
+                                    <MudTextField @bind-Value="_sucursalModel.Nombre"
+                                                  Label="Nombre"
+                                                  Variant="Variant.Outlined"
+                                                  Margin="Margin.Dense"
+                                                  Required="true"
+                                                  Immediate="true" />
+                                </MudItem>
 
-            </MudPaper>
-        </MudItem>
+                                <MudItem xs="12" sm="4">
+                                    <MudTextField @bind-Value="_sucursalModel.Direccion"
+                                                  Label="Dirección"
+                                                  Variant="Variant.Outlined"
+                                                  Margin="Margin.Dense"
+                                                  Immediate="true" />
+                                </MudItem>
 
-    </MudGrid>
+                                <MudItem xs="12" sm="3">
+                                    <MudSelect T="int?"
+                                               @bind-Value="_sucursalModel.EmpresaClienteId"
+                                               Label="Empresa cliente"
+                                               Variant="Variant.Outlined"
+                                               Margin="Margin.Dense"
+                                               Clearable="true">
+                                        @foreach (var empresa in _empresasClienteActivas)
+                                        {
+                                            <MudSelectItem T="int?" Value="@((int?)empresa.Id)">
+                                                @empresa.NombreComercial
+                                            </MudSelectItem>
+                                        }
+                                    </MudSelect>
+                                </MudItem>
+
+                                <MudItem xs="12" sm="2" Class="d-flex align-center justify-end gap-2">
+                                    <MudButton Variant="Variant.Text"
+                                               Color="Color.Default"
+                                               StartIcon="@Icons.Material.Filled.Close"
+                                               OnClick="CancelarSucursal">
+                                        Cancelar
+                                    </MudButton>
+
+                                    <MudButton Variant="Variant.Filled"
+                                               Color="Color.Primary"
+                                               StartIcon="@Icons.Material.Filled.Save"
+                                               OnClick="GuardarSucursal">
+                                        Guardar
+                                    </MudButton>
+                                </MudItem>
+                            </MudGrid>
+                        </MudPaper>
+                    }
+
+                    <MudTable Items="_sucursales"
+                              Dense="true"
+                              Hover="true"
+                              Bordered="false"
+                              Striped="true">
+                        <HeaderContent>
+                            <MudTh>Nombre</MudTh>
+                            <MudTh>Empresa cliente</MudTh>
+                            <MudTh>Dirección</MudTh>
+                            <MudTh>Estado</MudTh>
+                            <MudTh Style="text-align:right">Acciones</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Nombre">@context.Nombre</MudTd>
+                            <MudTd DataLabel="Empresa cliente">@context.EmpresaCliente?.NombreComercial</MudTd>
+                            <MudTd DataLabel="Dirección">@context.Direccion</MudTd>
+                            <MudTd DataLabel="Estado">
+                                <MudChip T="string"
+                                         Size="Size.Small"
+                                         Color="@(context.Activo ? Color.Success : Color.Error)"
+                                         Variant="Variant.Outlined">
+                                    @(context.Activo ? "Activo" : "Inactivo")
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Acciones" Style="text-align:right">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                               Color="Color.Primary"
+                                               Size="Size.Small"
+                                               Disabled="@(!AuthState.TienePermiso(Permisos.ConfiguracionEditar))"
+                                               OnClick="@(() => EditarSucursal(context))" />
+
+                                <MudIconButton Icon="@(context.Activo ? Icons.Material.Filled.Block : Icons.Material.Filled.CheckCircle)"
+                                               Color="@(context.Activo ? Color.Error : Color.Success)"
+                                               Size="Size.Small"
+                                               Disabled="@(!AuthState.TienePermiso(Permisos.ConfiguracionEditar))"
+                                               OnClick="@(() => CambiarActivoSucursal(context.Id))" />
+                            </MudTd>
+                        </RowTemplate>
+                        <NoRecordsContent>
+                            <MudText Class="pa-4" Color="Color.Secondary">
+                                No hay sucursales registradas.
+                            </MudText>
+                        </NoRecordsContent>
+                    </MudTable>
+                </div>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Roles y permisos" Icon="@Icons.Material.Filled.AdminPanelSettings">
+                <div class="pa-4">
+                    <MudGrid Spacing="3">
+                        <MudItem xs="12" md="7">
+                            <MudStack Spacing="2">
+                                <MudText Typo="Typo.h6">Roles operativos</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                    La primera versión SaaS puede separar administración, comedor, caja y consulta.
+                                </MudText>
+
+                                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                                    Siguiente fase: convertir roles y permisos en configuración editable,
+                                    manteniendo permisos base para seguridad.
+                                </MudAlert>
+                            </MudStack>
+                        </MudItem>
+
+                        <MudItem xs="12" md="5">
+                            <MudPaper Class="pa-3 h-100" Elevation="0" Outlined="true">
+                                <MudText Typo="Typo.subtitle2" Class="mb-2">Roles iniciales sugeridos</MudText>
+                                <MudList T="string" Dense="true">
+                                    <MudListItem Icon="@Icons.Material.Filled.ManageAccounts">Administrador</MudListItem>
+                                    <MudListItem Icon="@Icons.Material.Filled.RestaurantMenu">Encargado de comedor</MudListItem>
+                                    <MudListItem Icon="@Icons.Material.Filled.PointOfSale">Cajero / Atención</MudListItem>
+                                    <MudListItem Icon="@Icons.Material.Filled.RequestQuote">Administración / Facturación</MudListItem>
+                                    <MudListItem Icon="@Icons.Material.Filled.Visibility">Auditor / Consulta</MudListItem>
+                                </MudList>
+                            </MudPaper>
+                        </MudItem>
+                    </MudGrid>
+                </div>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Facturación" Icon="@Icons.Material.Filled.ReceiptLong">
+                <div class="pa-4">
+                    <MudGrid Spacing="3">
+                        <MudItem xs="12" md="7">
+                            <MudStack Spacing="2">
+                                <MudText Typo="Typo.h6">Parámetros de facturación</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                    Esta sección concentrará reglas para cierres, totales a facturar y exportaciones.
+                                </MudText>
+
+                                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                                    Siguiente fase: definir numeración, periodicidad de cierres, moneda,
+                                    impuestos y formatos de reporte por empresa cliente.
+                                </MudAlert>
+                            </MudStack>
+                        </MudItem>
+
+                        <MudItem xs="12" md="5">
+                            <MudPaper Class="pa-3 h-100" Elevation="0" Outlined="true">
+                                <MudText Typo="Typo.subtitle2" Class="mb-2">Decisiones pendientes</MudText>
+                                <MudList T="string" Dense="true">
+                                    <MudListItem Icon="@Icons.Material.Filled.CalendarMonth">Cierre diario, semanal o mensual</MudListItem>
+                                    <MudListItem Icon="@Icons.Material.Filled.PriceCheck">IGV e impuestos</MudListItem>
+                                    <MudListItem Icon="@Icons.Material.Filled.FileDownload">Excel y reportes para cliente</MudListItem>
+                                    <MudListItem Icon="@Icons.Material.Filled.Storage">Compatibilidad futura con SQL Server</MudListItem>
+                                </MudList>
+                            </MudPaper>
+                        </MudItem>
+                    </MudGrid>
+                </div>
+            </MudTabPanel>
+        </MudTabs>
+    </MudPaper>
 
 </MudStack>
 
@@ -123,10 +540,26 @@
     private string _moneda = "PEN";
     private string _fechaActualizacion = string.Empty;
     private bool _saving;
+    private List<TipoEmpleado> _tiposEmpleado = new();
+    private TipoEmpleado _tipoEmpleadoModel = new();
+    private bool _showTipoEmpleadoForm;
+    private int _tipoEmpleadoEditingId;
+    private List<EmpresaCliente> _empresasCliente = new();
+    private List<EmpresaCliente> _empresasClienteActivas = new();
+    private EmpresaCliente _empresaModel = new();
+    private bool _showEmpresaForm;
+    private int _empresaEditingId;
+    private List<Sucursal> _sucursales = new();
+    private Sucursal _sucursalModel = new();
+    private bool _showSucursalForm;
+    private int _sucursalEditingId;
 
     protected override async Task OnInitializedAsync()
     {
         await CargarConfiguracion();
+        await CargarTiposEmpleado();
+        await CargarEmpresasCliente();
+        await CargarSucursales();
     }
 
     private async Task CargarConfiguracion()
@@ -136,6 +569,22 @@
         _precioMenu = config.PrecioMenu;
         _moneda = config.Moneda;
         _fechaActualizacion = config.FechaActualizacion.ToString("dd/MM/yyyy HH:mm");
+    }
+
+    private async Task CargarTiposEmpleado()
+    {
+        _tiposEmpleado = await TipoEmpleadoService.GetAllAsync();
+    }
+
+    private async Task CargarEmpresasCliente()
+    {
+        _empresasCliente = await EmpresaClienteService.GetAllAsync();
+        _empresasClienteActivas = await EmpresaClienteService.GetActivasAsync();
+    }
+
+    private async Task CargarSucursales()
+    {
+        _sucursales = await SucursalService.GetAllAsync();
     }
 
     private async Task Guardar()
@@ -163,5 +612,214 @@
         }
 
         _saving = false;
+    }
+
+    private void NuevoTipoEmpleado()
+    {
+        _tipoEmpleadoEditingId = 0;
+        _tipoEmpleadoModel = new TipoEmpleado
+        {
+            Activo = true,
+            FechaCreacion = DateTime.Now
+        };
+        _showTipoEmpleadoForm = true;
+    }
+
+    private void EditarTipoEmpleado(TipoEmpleado tipo)
+    {
+        _tipoEmpleadoEditingId = tipo.Id;
+        _tipoEmpleadoModel = new TipoEmpleado
+        {
+            Id = tipo.Id,
+            Nombre = tipo.Nombre,
+            Descripcion = tipo.Descripcion,
+            Activo = tipo.Activo,
+            FechaCreacion = tipo.FechaCreacion
+        };
+        _showTipoEmpleadoForm = true;
+    }
+
+    private async Task GuardarTipoEmpleado()
+    {
+        (bool Success, string Message) result;
+
+        if (_tipoEmpleadoEditingId == 0)
+            result = await TipoEmpleadoService.CreateAsync(_tipoEmpleadoModel);
+        else
+            result = await TipoEmpleadoService.UpdateAsync(_tipoEmpleadoModel);
+
+        if (result.Success)
+        {
+            Snackbar.Add(result.Message, Severity.Success);
+            _showTipoEmpleadoForm = false;
+            await CargarTiposEmpleado();
+        }
+        else
+        {
+            Snackbar.Add(result.Message, Severity.Warning);
+        }
+    }
+
+    private async Task CambiarActivoTipoEmpleado(int id)
+    {
+        var result = await TipoEmpleadoService.ToggleActivoAsync(id);
+
+        if (result.Success)
+        {
+            Snackbar.Add(result.Message, Severity.Success);
+            await CargarTiposEmpleado();
+        }
+        else
+        {
+            Snackbar.Add(result.Message, Severity.Warning);
+        }
+    }
+
+    private void CancelarTipoEmpleado()
+    {
+        _showTipoEmpleadoForm = false;
+        _tipoEmpleadoEditingId = 0;
+        _tipoEmpleadoModel = new TipoEmpleado();
+    }
+
+    private void NuevaEmpresaCliente()
+    {
+        _empresaEditingId = 0;
+        _empresaModel = new EmpresaCliente
+        {
+            Activo = true,
+            FechaCreacion = DateTime.Now
+        };
+        _showEmpresaForm = true;
+    }
+
+    private void EditarEmpresaCliente(EmpresaCliente empresa)
+    {
+        _empresaEditingId = empresa.Id;
+        _empresaModel = new EmpresaCliente
+        {
+            Id = empresa.Id,
+            NombreComercial = empresa.NombreComercial,
+            RazonSocial = empresa.RazonSocial,
+            Ruc = empresa.Ruc,
+            Activo = empresa.Activo,
+            FechaCreacion = empresa.FechaCreacion
+        };
+        _showEmpresaForm = true;
+    }
+
+    private async Task GuardarEmpresaCliente()
+    {
+        (bool Success, string Message) result;
+
+        if (_empresaEditingId == 0)
+            result = await EmpresaClienteService.CreateAsync(_empresaModel);
+        else
+            result = await EmpresaClienteService.UpdateAsync(_empresaModel);
+
+        if (result.Success)
+        {
+            Snackbar.Add(result.Message, Severity.Success);
+            _showEmpresaForm = false;
+            await CargarEmpresasCliente();
+            await CargarSucursales();
+        }
+        else
+        {
+            Snackbar.Add(result.Message, Severity.Warning);
+        }
+    }
+
+    private async Task CambiarActivoEmpresaCliente(int id)
+    {
+        var result = await EmpresaClienteService.ToggleActivoAsync(id);
+
+        if (result.Success)
+        {
+            Snackbar.Add(result.Message, Severity.Success);
+            await CargarEmpresasCliente();
+            await CargarSucursales();
+        }
+        else
+        {
+            Snackbar.Add(result.Message, Severity.Warning);
+        }
+    }
+
+    private void CancelarEmpresaCliente()
+    {
+        _showEmpresaForm = false;
+        _empresaEditingId = 0;
+        _empresaModel = new EmpresaCliente();
+    }
+
+    private void NuevaSucursal()
+    {
+        _sucursalEditingId = 0;
+        _sucursalModel = new Sucursal
+        {
+            EmpresaClienteId = _empresasClienteActivas.FirstOrDefault()?.Id,
+            Activo = true,
+            FechaCreacion = DateTime.Now
+        };
+        _showSucursalForm = true;
+    }
+
+    private void EditarSucursal(Sucursal sucursal)
+    {
+        _sucursalEditingId = sucursal.Id;
+        _sucursalModel = new Sucursal
+        {
+            Id = sucursal.Id,
+            Nombre = sucursal.Nombre,
+            Direccion = sucursal.Direccion,
+            EmpresaClienteId = sucursal.EmpresaClienteId,
+            Activo = sucursal.Activo,
+            FechaCreacion = sucursal.FechaCreacion
+        };
+        _showSucursalForm = true;
+    }
+
+    private async Task GuardarSucursal()
+    {
+        (bool Success, string Message) result;
+
+        if (_sucursalEditingId == 0)
+            result = await SucursalService.CreateAsync(_sucursalModel);
+        else
+            result = await SucursalService.UpdateAsync(_sucursalModel);
+
+        if (result.Success)
+        {
+            Snackbar.Add(result.Message, Severity.Success);
+            _showSucursalForm = false;
+            await CargarSucursales();
+        }
+        else
+        {
+            Snackbar.Add(result.Message, Severity.Warning);
+        }
+    }
+
+    private async Task CambiarActivoSucursal(int id)
+    {
+        var result = await SucursalService.ToggleActivoAsync(id);
+
+        if (result.Success)
+        {
+            Snackbar.Add(result.Message, Severity.Success);
+            await CargarSucursales();
+        }
+        else
+        {
+            Snackbar.Add(result.Message, Severity.Warning);
+        }
+    }
+
+    private void CancelarSucursal()
+    {
+        _showSucursalForm = false;
+        _sucursalEditingId = 0;
+        _sucursalModel = new Sucursal();
     }
 }

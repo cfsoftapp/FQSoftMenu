@@ -65,7 +65,7 @@ public partial class Cierres : ComponentBase
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error al cargar cierres proveedor: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Error al cargar cierres de facturación: {ex.Message}", Severity.Error);
             _historialProveedor = new List<CierreProveedorListadoDto>();
         }
         finally
@@ -195,7 +195,7 @@ public partial class Cierres : ComponentBase
             _abrirBorradorDesdeHistorial = false;
 
             if (!_borradorProveedor.Items.Any())
-                Snackbar.Add("No hay consumos de empresa o planilla para liquidar con proveedor.", Severity.Info);
+            Snackbar.Add("No hay consumos de empresa cliente o planilla para facturar.", Severity.Info);
             else if (_borradorProveedor.YaConfirmado)
                 Snackbar.Add("Se recupero una liquidacion ya confirmada para este rango.", Severity.Info);
             else

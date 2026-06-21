@@ -24,7 +24,7 @@
     <div>
         <MudText Typo="Typo.h4">Registro diario</MudText>
         <MudText Typo="Typo.body1" Color="Color.Secondary">
-                Registro de menú principal, menús extra y productos adicionales del trabajador.
+                Registro de menú principal, menús extra y productos adicionales del comensal.
         </MudText>
     </div>
 
@@ -34,6 +34,10 @@
             <MudItem xs="12" md="4">
                 <RegistroBuscadorTrabajador Dni="@_dni"
                                             DniChanged="@(value => _dni = value)"
+                                            TipoServicio="_tipoServicio"
+                                            TipoServicioChanged="@(value => _tipoServicio = value)"
+                                            RegistrarMenuAlEscanear="_registrarMenuAlEscanear"
+                                            RegistrarMenuAlEscanearChanged="@(value => _registrarMenuAlEscanear = value)"
                                             Empleado="_empleado"
                                             OnBuscar="BuscarEmpleado"
                                             ResultadosBusqueda="_resultadosBusqueda"
@@ -49,23 +53,23 @@
             </MudItem>
 
             <MudItem xs="12" md="8">
-                <MudPaper Class="pa-4" Elevation="1">
-                    <MudStack Spacing="3">
+                @if (_empleado is null)
+                {
+                    <RegistroComensalesRecientes Registros="_registrosRecientes"
+                                                 Actualizando="_cargandoRegistrosRecientes"
+                                                 OnActualizar="CargarRegistrosRecientes" />
+                }
+                else
+                {
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudStack Spacing="3">
 
                         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                             <div>
-                                <MudText Typo="Typo.h6">Consumo del día</MudText>
+                                <MudText Typo="Typo.h6">Registrar adicionales</MudText>
                                 <MudText Typo="Typo.body2" Color="Color.Secondary">
-                                    Fecha: @_fecha.ToString("dd/MM/yyyy")
+                                    @_empleado.NombreCompleto · @_fecha.ToString("dd/MM/yyyy")
                                 </MudText>
-
-                                <MudSelect T="TipoServicioMenu"
-                                           @bind-Value="_tipoServicio"
-                                           Label="Tipo de servicio"
-                                           Variant="Variant.Outlined">
-                                    <MudSelectItem Value="TipoServicioMenu.Almuerzo">Almuerzo</MudSelectItem>
-                                    <MudSelectItem Value="TipoServicioMenu.Cena">Cena</MudSelectItem>
-                                </MudSelect>
                             </div>
 
                             <MudButton Variant="Variant.Outlined"
@@ -76,52 +80,76 @@
                             </MudButton>
                         </MudStack>
 
-                        @if (_empleado is null)
-                        {
-                            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
-                                Ingresa el DNI del trabajador para iniciar el registro.
-                            </MudAlert>
-                        }
-                        else
-                        {
-                            <RegistroMenuPrincipal Empleado="_empleado"
-                                                   RegistraMenu="_registraMenu"
-                                                   RegistraMenuChanged="@(value => _registraMenu = value)"
-                                                   TipoPagoMenuSuspendido="_tipoPagoMenuSuspendido"
-                                                   TipoPagoMenuSuspendidoChanged="@(value => _tipoPagoMenuSuspendido = value)"
-                                                   FormaPagoDirectoMenu="_formaPagoDirectoMenu"
-                                                   FormaPagoDirectoMenuChanged="@(value => _formaPagoDirectoMenu = value)"
-                                                   TipoPagoTexto="@TipoPagoMenuTexto"
-                                                   PrecioTexto="@PrecioMenuTexto" />
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Selecciona el tipo de adicional y completa los datos.
+                        </MudText>
 
-                            <RegistroMenusExtra Items="_menusExtra"
-                                                OnAgregar="AgregarMenuExtra"
-                                                OnQuitar="QuitarMenuExtra" />
+                        <MudTabs Elevation="0"
+                                 Outlined="true"
+                                 Rounded="true"
+                                 Color="Color.Primary"
+                                 ActivePanelIndex="_activeAdditionalTab"
+                                 ActivePanelIndexChanged="CambiarTabAdicional">
+                            <MudTabPanel Text="@($"Menú extra ({_menusExtra.Count})")"
+                                         Icon="@Icons.Material.Filled.RestaurantMenu">
+                                <RegistroMenusExtra Items="_menusExtra"
+                                                    OnAgregar="AgregarMenuExtra"
+                                                    OnQuitar="QuitarMenuExtra"
+                                                    OnItemsChanged="ActualizarAdicionales" />
 
-                            <RegistroProductosAdicionales Items="_productosAdicionales"
-                                                          OnAgregar="AgregarProducto"
-                                                          OnQuitar="QuitarProducto" />
+                                @if (_menusExtra.Any())
+                                {
+                                    <RegistroTotales Culture="_culture"
+                                                     PagaEmpresa="CalcularPagaEmpresa(_menusExtra)"
+                                                     DescuentoPlanilla="0"
+                                                     CobraTrabajador="CalcularCobraComensal(_menusExtra)"
+                                                     Pagado="CalcularPagado(_menusExtra)"
+                                                     PendienteCredito="CalcularPendiente(_menusExtra)" />
 
-                            <RegistroTotales Culture="_culture"
-                                             PagaEmpresa="TotalPagaEmpresa"
-                                             DescuentoPlanilla="TotalDescuentoPlanilla"
-                                             CobraTrabajador="TotalCobraTrabajador"
-                                             Pagado="TotalPagadoMomento"
-                                             PendienteCredito="TotalPendienteCredito" />
+                                    <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-3">
+                                        <MudButton Variant="Variant.Filled"
+                                                   Color="Color.Primary"
+                                                   StartIcon="@Icons.Material.Filled.Save"
+                                                   OnClick="GuardarMenusExtra"
+                                                   Disabled="@(_saving || !AuthState.TienePermiso(Permisos.RegistroDiarioRegistrar))">
+                                            Guardar menús extra
+                                        </MudButton>
+                                    </MudStack>
+                                }
+                            </MudTabPanel>
 
-                            <MudStack Row="true" Justify="Justify.FlexEnd">
-                                <MudButton Variant="Variant.Filled"
-                                           Color="Color.Primary"
-                                           StartIcon="@Icons.Material.Filled.Save"
-                                           OnClick="Guardar"
-                                           Disabled="@(_saving || !AuthState.TienePermiso(Permisos.RegistroDiarioRegistrar))">
-                                    Guardar registro
-                                </MudButton>
-                            </MudStack>
-                        }
+                            <MudTabPanel Text="@($"Producto adicional ({_productosAdicionales.Count})")"
+                                         Icon="@Icons.Material.Filled.LocalDrink">
+                                <RegistroProductosAdicionales Items="_productosAdicionales"
+                                                              OnAgregar="AgregarProducto"
+                                                              OnQuitar="QuitarProducto"
+                                                              OnItemsChanged="ActualizarAdicionales" />
 
-                    </MudStack>
-                </MudPaper>
+                                @if (_productosAdicionales.Any())
+                                {
+                                    <RegistroTotales Culture="_culture"
+                                                     PagaEmpresa="CalcularPagaEmpresa(_productosAdicionales)"
+                                                     DescuentoPlanilla="0"
+                                                     CobraTrabajador="CalcularCobraComensal(_productosAdicionales)"
+                                                     Pagado="CalcularPagado(_productosAdicionales)"
+                                                     PendienteCredito="CalcularPendiente(_productosAdicionales)" />
+
+                                    <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-3">
+                                        <MudButton Variant="Variant.Filled"
+                                                   Color="Color.Primary"
+                                                   StartIcon="@Icons.Material.Filled.Save"
+                                                   OnClick="GuardarProductos"
+                                                   Disabled="@(_saving || !AuthState.TienePermiso(Permisos.RegistroDiarioRegistrar))">
+                                            Guardar productos
+                                        </MudButton>
+                                    </MudStack>
+                                }
+                            </MudTabPanel>
+                        </MudTabs>
+
+                        </MudStack>
+                    </MudPaper>
+                }
             </MudItem>
 
         </MudGrid>
@@ -141,12 +169,16 @@
     private bool _registraMenu = true;
     private bool _saving;
     private bool _buscandoTrabajador;
+    private bool _cargandoRegistrosRecientes;
+    private bool _registrarMenuAlEscanear = true;
+    private int _activeAdditionalTab;
 
     private decimal _precioMenu = 0m;
 
     private List<ConsumoAdicionalInputDto> _menusExtra = new();
     private List<ConsumoAdicionalInputDto> _productosAdicionales = new();
     private List<ConsumoDiaDto> _consumosDelDia = new();
+    private List<RegistroComensalRecienteDto> _registrosRecientes = new();
     private List<Empleado> _resultadosBusqueda = new();
    
     private string TipoPagoMenuTexto
@@ -157,13 +189,13 @@
                 return "No aplica";
 
             if (_empleado.Estado == EstadoEmpleado.Activo)
-                return "Empresa";
+                return "Empresa cliente";
 
             return _tipoPagoMenuSuspendido switch
             {
                 TipoPagoMenu.DescuentoPlanilla => "Descuento planilla",
                 TipoPagoMenu.PagoDirecto => $"Pago directo - {_formaPagoDirectoMenu}",
-                TipoPagoMenu.CreditoComedor => "Crédito comedor",
+                TipoPagoMenu.CreditoComedor => "Pendiente del comensal",
                 _ => "No aplica"
             };
         }
@@ -236,6 +268,7 @@
     protected override async Task OnInitializedAsync()
     {
         await CargarPrecioMenu();
+        await CargarRegistrosRecientes();
     }
 
     private async Task CargarPrecioMenu()
@@ -244,11 +277,26 @@
         _precioMenu = config.PrecioMenu;
     }
 
+    private async Task CargarRegistrosRecientes()
+    {
+        _cargandoRegistrosRecientes = true;
+
+        try
+        {
+            _registrosRecientes = await RegistroDiarioService
+                .GetRegistrosMenuRecientesAsync(_fecha);
+        }
+        finally
+        {
+            _cargandoRegistrosRecientes = false;
+        }
+    }
+
     private async Task BuscarEmpleado()
     {
         if (string.IsNullOrWhiteSpace(_dni))
         {
-            Snackbar.Add("Ingrese DNI o nombre del trabajador.", Severity.Warning);
+            Snackbar.Add("Ingrese DNI o nombre del comensal.", Severity.Warning);
             return;
         }
 
@@ -259,7 +307,7 @@
         if (!_resultadosBusqueda.Any())
         {
             _consumosDelDia.Clear();
-            Snackbar.Add("No se encontró un trabajador activo con ese dato.", Severity.Warning);
+            Snackbar.Add("No se encontró un comensal activo con ese dato.", Severity.Warning);
             return;
         }
 
@@ -272,7 +320,7 @@
             return;
         }
 
-        Snackbar.Add("Selecciona el trabajador en la lista de coincidencias.", Severity.Info);
+        Snackbar.Add("Selecciona el comensal en la lista de coincidencias.", Severity.Info);
     }
 
     private async Task SeleccionarEmpleado(Empleado empleado)
@@ -285,13 +333,94 @@
         _consumosDelDia = await RegistroDiarioService
             .GetConsumosDelDiaPorEmpleadoAsync(_empleado.Id, DateTime.Today);
 
-        Snackbar.Add($"Trabajador encontrado: {_empleado.NombreCompleto}", Severity.Success);
+        Snackbar.Add($"Comensal encontrado: {_empleado.NombreCompleto}", Severity.Success);
     }
 
     private async Task OnDniKeyDown(KeyboardEventArgs args)
     {
-        if (args.Key == "Enter")
+        if (args.Key != "Enter")
+            return;
+
+        if (_registrarMenuAlEscanear)
+            await RegistrarMenuRapido();
+        else
             await BuscarEmpleado();
+    }
+
+    private async Task RegistrarMenuRapido()
+    {
+        if (string.IsNullOrWhiteSpace(_dni))
+        {
+            Snackbar.Add("Ingrese DNI para registrar menú rápido.", Severity.Warning);
+            return;
+        }
+
+        if (!AuthState.EstaAutenticado || AuthState.UsuarioActual is null)
+        {
+            Snackbar.Add("Debe iniciar sesión para registrar consumos.", Severity.Warning);
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        _buscandoTrabajador = true;
+        var resultados = await RegistroDiarioService.BuscarEmpleadosActivosAsync(_dni);
+        _buscandoTrabajador = false;
+
+        var empleado = resultados
+            .FirstOrDefault(x => string.Equals(x.Dni, _dni.Trim(), StringComparison.OrdinalIgnoreCase));
+
+        if (empleado is null)
+        {
+            if (resultados.Count == 1)
+            {
+                empleado = resultados[0];
+            }
+            else if (resultados.Count > 1)
+            {
+                _resultadosBusqueda = resultados;
+                Snackbar.Add("Hay varias coincidencias. Use Buscar y seleccione el comensal.", Severity.Info);
+                return;
+            }
+        }
+
+        if (empleado is null)
+        {
+            Limpiar();
+            Snackbar.Add("No se encontró un comensal activo con ese DNI.", Severity.Warning);
+            return;
+        }
+
+        _saving = true;
+
+        var input = new RegistroDiarioInputDto
+        {
+            EmpleadoId = empleado.Id,
+            Fecha = _fecha,
+            TipoServicio = _tipoServicio,
+            RegistraMenu = true,
+            TipoPagoMenuSuspendido = empleado.Estado == EstadoEmpleado.Suspendido
+                ? _tipoPagoMenuSuspendido
+                : null,
+            FormaPagoDirectoMenu = empleado.Estado == EstadoEmpleado.Suspendido &&
+                                   _tipoPagoMenuSuspendido == TipoPagoMenu.PagoDirecto
+                ? _formaPagoDirectoMenu
+                : null,
+            UsuarioRegistroId = AuthState.UsuarioActual.Id,
+            UsuarioRegistroNombre = AuthState.UsuarioActual.NombreCompleto
+        };
+
+        var result = await RegistroDiarioService.RegistrarAsync(input);
+        _saving = false;
+
+        if (result.Success)
+        {
+            Snackbar.Add($"{empleado.NombreCompleto}: {result.Message}", Severity.Success);
+            await CargarRegistrosRecientes();
+        }
+        else
+            Snackbar.Add($"{empleado.NombreCompleto}: {result.Message}", Severity.Warning);
+
+        Limpiar();
     }
 
     private void AgregarMenuExtra()
@@ -328,31 +457,69 @@
         _productosAdicionales.Remove(item);
     }
 
-    private async Task Guardar()
+    private void ActualizarAdicionales()
+    {
+        StateHasChanged();
+    }
+
+    private void CambiarTabAdicional(int nuevoIndice)
+    {
+        var itemsAnteriores = _activeAdditionalTab == 0
+            ? _menusExtra
+            : _productosAdicionales;
+
+        var eliminados = itemsAnteriores.RemoveAll(EsBorradorVacio);
+        _activeAdditionalTab = nuevoIndice;
+
+        if (eliminados > 0)
+            Snackbar.Add("Se descartó un adicional vacío al cambiar de pestaña.", Severity.Info);
+    }
+
+    private static bool EsBorradorVacio(ConsumoAdicionalInputDto item)
+    {
+        var descripcionVacia = string.IsNullOrWhiteSpace(item.Descripcion) ||
+                               item.Descripcion == "Menú extra";
+
+        return descripcionVacia && item.Precio <= 0;
+    }
+
+    private Task GuardarMenusExtra()
+    {
+        return GuardarAdicionales(_menusExtra, "menús extra");
+    }
+
+    private Task GuardarProductos()
+    {
+        return GuardarAdicionales(_productosAdicionales, "productos");
+    }
+
+    private async Task GuardarAdicionales(
+        List<ConsumoAdicionalInputDto> items,
+        string tipoRegistro)
     {
         if (_empleado is null)
         {
-            Snackbar.Add("Primero busque un trabajador.", Severity.Warning);
+            Snackbar.Add("Primero busque un comensal.", Severity.Warning);
             return;
         }
 
-        if (!_registraMenu && !TodosLosAdicionales.Any())
+        if (!items.Any())
         {
-            Snackbar.Add("Debe registrar menú o al menos un adicional.", Severity.Warning);
+            Snackbar.Add($"Debe agregar al menos un elemento en {tipoRegistro}.", Severity.Warning);
             return;
         }
 
-        foreach (var adicional in TodosLosAdicionales)
+        foreach (var adicional in items)
         {
             if (string.IsNullOrWhiteSpace(adicional.Descripcion))
             {
-                Snackbar.Add("Todos los adicionales deben tener descripción.", Severity.Warning);
+                Snackbar.Add($"Complete la descripción de todos los {tipoRegistro}.", Severity.Warning);
                 return;
             }
 
             if (adicional.Precio <= 0)
             {
-                Snackbar.Add("Todos los adicionales deben tener precio mayor a cero.", Severity.Warning);
+                Snackbar.Add($"Todos los {tipoRegistro} deben tener precio mayor a cero.", Severity.Warning);
                 return;
             }
         }
@@ -371,15 +538,10 @@
             EmpleadoId = _empleado.Id,
             Fecha = _fecha,
             TipoServicio = _tipoServicio,
-            RegistraMenu = _registraMenu,
-            TipoPagoMenuSuspendido = _empleado.Estado == EstadoEmpleado.Suspendido
-                ? _tipoPagoMenuSuspendido
-                : null,
-            FormaPagoDirectoMenu = _empleado.Estado == EstadoEmpleado.Suspendido &&
-                           _tipoPagoMenuSuspendido == TipoPagoMenu.PagoDirecto
-                ? _formaPagoDirectoMenu
-                : null,
-            Adicionales = TodosLosAdicionales.ToList(),
+            RegistraMenu = false,
+            TipoPagoMenuSuspendido = null,
+            FormaPagoDirectoMenu = null,
+            Adicionales = items.ToList(),
             UsuarioRegistroId = AuthState.UsuarioActual.Id,
             UsuarioRegistroNombre = AuthState.UsuarioActual.NombreCompleto
         };
@@ -388,8 +550,11 @@
 
         if (result.Success)
         {
-            Snackbar.Add(result.Message, Severity.Success);
-            Limpiar();
+            Snackbar.Add($"{tipoRegistro}: {result.Message}", Severity.Success);
+            items.Clear();
+            _consumosDelDia = await RegistroDiarioService
+                .GetConsumosDelDiaPorEmpleadoAsync(_empleado.Id, _fecha);
+            await CargarRegistrosRecientes();
         }
         else
         {
@@ -398,6 +563,21 @@
 
         _saving = false;
     }
+
+    private static decimal CalcularPagaEmpresa(IEnumerable<ConsumoAdicionalInputDto> items) =>
+        items.Where(x => x.FormaCobro == FormaCobroAdicional.Empresa).Sum(x => x.Precio);
+
+    private static decimal CalcularCobraComensal(IEnumerable<ConsumoAdicionalInputDto> items) =>
+        items.Where(x => x.FormaCobro != FormaCobroAdicional.Empresa).Sum(x => x.Precio);
+
+    private static decimal CalcularPagado(IEnumerable<ConsumoAdicionalInputDto> items) =>
+        items.Where(x => x.FormaCobro is FormaCobroAdicional.Efectivo
+                                      or FormaCobroAdicional.Yape
+                                      or FormaCobroAdicional.Plin)
+            .Sum(x => x.Precio);
+
+    private static decimal CalcularPendiente(IEnumerable<ConsumoAdicionalInputDto> items) =>
+        items.Where(x => x.FormaCobro == FormaCobroAdicional.CreditoComedor).Sum(x => x.Precio);
 
     private void Limpiar()
     {
@@ -485,12 +665,12 @@
         return motivo switch
         {
             MotivoAnulacionConsumo.ErrorRegistro => "Error de registro",
-            MotivoAnulacionConsumo.TrabajadorEquivocado => "Trabajador equivocado",
+            MotivoAnulacionConsumo.TrabajadorEquivocado => "Comensal equivocado",
             MotivoAnulacionConsumo.TipoServicioEquivocado => "Tipo de servicio equivocado",
             MotivoAnulacionConsumo.FormaPagoEquivocada => "Forma de pago equivocada",
             MotivoAnulacionConsumo.ProductoEquivocado => "Producto equivocado",
             MotivoAnulacionConsumo.Duplicado => "Registro duplicado",
-            MotivoAnulacionConsumo.NoConsumio => "El trabajador no consumió",
+            MotivoAnulacionConsumo.NoConsumio => "El comensal no consumió",
             MotivoAnulacionConsumo.Otro => "Otro",
             _ => "Motivo no especificado"
         };

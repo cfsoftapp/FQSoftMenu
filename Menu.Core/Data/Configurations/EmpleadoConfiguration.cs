@@ -33,6 +33,12 @@ public class EmpleadoConfiguration : IEntityTypeConfiguration<Empleado>
             .HasConversion<int>()
             .IsRequired();
 
+        entity.Ignore(e => e.TipoEmpleadoNombre);
+
+        entity.Ignore(e => e.EmpresaClienteNombre);
+
+        entity.Ignore(e => e.SucursalNombre);
+
         entity.Property(e => e.Activo)
             .IsRequired();
 
@@ -41,5 +47,20 @@ public class EmpleadoConfiguration : IEntityTypeConfiguration<Empleado>
 
         entity.HasIndex(e => e.Dni)
             .IsUnique();
+
+        entity.HasOne(e => e.TipoEmpleado)
+            .WithMany(e => e.Empleados)
+            .HasForeignKey(e => e.TipoEmpleadoId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        entity.HasOne(e => e.EmpresaCliente)
+            .WithMany(e => e.Empleados)
+            .HasForeignKey(e => e.EmpresaClienteId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        entity.HasOne(e => e.Sucursal)
+            .WithMany(e => e.Empleados)
+            .HasForeignKey(e => e.SucursalId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

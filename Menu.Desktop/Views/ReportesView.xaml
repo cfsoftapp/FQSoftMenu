@@ -1,0 +1,624 @@
+<UserControl x:Class="Menu.Desktop.Views.ReportesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <Style x:Key="ReportHeaderText" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="ReportCellText" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        </Style>
+        <Style x:Key="SummaryCard" TargetType="Border">
+            <Setter Property="Padding" Value="14" />
+            <Setter Property="Margin" Value="0,0,10,0" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#E1E4EC" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+
+        <Style x:Key="ReportTabItemStyle" TargetType="TabItem">
+            <Setter Property="Foreground" Value="#444444" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Padding" Value="18,10" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Grid>
+                            <Border x:Name="TabSurface"
+                                    Padding="{TemplateBinding Padding}"
+                                    Background="Transparent">
+                                <ContentPresenter HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"
+                                                  ContentSource="Header" />
+                            </Border>
+                            <Border x:Name="SelectedLine"
+                                    Height="3"
+                                    VerticalAlignment="Bottom"
+                                    Background="#594AE2"
+                                    Visibility="Collapsed" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Foreground" Value="#594AE2" />
+                                <Setter TargetName="SelectedLine" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="TabSurface" Property="Background" Value="#F3F1FF" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="CompactDatePickerStyle" TargetType="DatePicker">
+            <Setter Property="Height" Value="38" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#B8BDC9" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+
+        <Style x:Key="NestedGridStyle" TargetType="DataGrid">
+            <Setter Property="AutoGenerateColumns" Value="False" />
+            <Setter Property="CanUserAddRows" Value="False" />
+            <Setter Property="CanUserResizeRows" Value="False" />
+            <Setter Property="ColumnHeaderHeight" Value="34" />
+            <Setter Property="GridLinesVisibility" Value="Horizontal" />
+            <Setter Property="HorizontalGridLinesBrush" Value="#E4E7EE" />
+            <Setter Property="VerticalGridLinesBrush" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="#E1E4EC" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="AlternatingRowBackground" Value="#FAFBFF" />
+            <Setter Property="IsReadOnly" Value="True" />
+            <Setter Property="RowHeaderWidth" Value="0" />
+            <Setter Property="RowHeight" Value="36" />
+            <Setter Property="ColumnHeaderStyle">
+                <Setter.Value>
+                    <Style TargetType="DataGridColumnHeader">
+                        <Setter Property="Background" Value="#F7F8FC" />
+                        <Setter Property="BorderBrush" Value="#E1E4EC" />
+                        <Setter Property="BorderThickness" Value="0,0,0,1" />
+                        <Setter Property="FontWeight" Value="SemiBold" />
+                        <Setter Property="HorizontalContentAlignment" Value="Center" />
+                    </Style>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="CellStyle">
+                <Setter.Value>
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="Padding" Value="8,0" />
+                        <Setter Property="VerticalContentAlignment" Value="Center" />
+                        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                    </Style>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="14" Background="#F6F7FB">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Padding="12,8"
+                Background="{Binding EstadoBackground}"
+                BorderBrush="{Binding EstadoBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="4">
+            <TextBlock Foreground="{Binding EstadoForeground}" Text="{Binding Estado}" />
+        </Border>
+
+        <Border Grid.Row="1" Margin="0,12,0,0" Padding="14" Background="White" BorderBrush="#E1E4EC" BorderThickness="1" CornerRadius="6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="105" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="230" />
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                    <TextBlock Margin="0,0,7,0" Foreground="#594AE2" FontSize="16" Text="▼" />
+                    <TextBlock FontWeight="SemiBold" Text="Filtros" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                    <TextBlock Margin="0,0,0,5" Text="Fecha inicio" />
+                    <DatePicker SelectedDate="{Binding FechaInicio}" Style="{StaticResource CompactDatePickerStyle}" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" Margin="12,0,0,0">
+                    <TextBlock Margin="0,0,0,5" Text="Fecha fin" />
+                    <DatePicker SelectedDate="{Binding FechaFin}" Style="{StaticResource CompactDatePickerStyle}" />
+                </StackPanel>
+                <Button Grid.Column="3" Height="40" Margin="12,21,0,0" Background="#594AE2" BorderBrush="#594AE2"
+                        Command="{Binding BuscarCommand}" Foreground="White" FontWeight="SemiBold" Content="CONSULTAR" />
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="2"
+              Margin="0,12,0,0"
+              Visibility="{Binding IsSummaryTab, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.05*" />
+                <ColumnDefinition Width="1.05*" />
+                <ColumnDefinition Width="1.05*" />
+                <ColumnDefinition Width="1.45*" />
+                <ColumnDefinition Width="1.45*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Style="{StaticResource SummaryCard}">
+                <StackPanel>
+                    <TextBlock Foreground="#594AE2" Text="Menus principales" />
+                    <TextBlock Margin="0,5,0,0" FontSize="23" FontWeight="SemiBold" Text="{Binding TotalMenusText}" />
+                    <TextBlock Margin="0,5,0,0" Foreground="#FF4081" FontSize="11" Text="Periodo consultado" />
+                </StackPanel>
+            </Border>
+            <Border Grid.Column="1" Style="{StaticResource SummaryCard}">
+                <StackPanel>
+                    <TextBlock Foreground="#00A86B" Text="Cargo a empresa cliente" />
+                    <TextBlock Margin="0,5,0,0" FontSize="23" FontWeight="SemiBold" Text="{Binding TotalEmpresaText}" />
+                    <TextBlock Margin="0,5,0,0" Foreground="#FF4081" FontSize="11" Text="Beneficio asumido" />
+                </StackPanel>
+            </Border>
+            <Border Grid.Column="2" Style="{StaticResource SummaryCard}">
+                <StackPanel>
+                    <TextBlock Foreground="#FF9800" Text="A planilla" />
+                    <TextBlock Margin="0,5,0,0" FontSize="23" FontWeight="SemiBold" Text="{Binding TotalPlanillaText}" />
+                    <TextBlock Margin="0,5,0,0" Foreground="#FF4081" FontSize="11" Text="Descuento comensal" />
+                </StackPanel>
+            </Border>
+            <Border Grid.Column="3" Style="{StaticResource SummaryCard}">
+                <StackPanel>
+                    <TextBlock Foreground="#2196F3" Text="Cobrado directo" />
+                    <TextBlock Margin="0,5,0,0" FontSize="23" FontWeight="SemiBold" Text="{Binding TotalCobradoText}" />
+                    <TextBlock Margin="0,5,0,0" Foreground="#FF4081" FontSize="11" Text="Efectivo, Yape, Plin y credito pagado" />
+                </StackPanel>
+            </Border>
+            <Border Grid.Column="4" Margin="0" Style="{StaticResource SummaryCard}">
+                <StackPanel>
+                    <TextBlock Foreground="#F44336" Text="Pendiente del comensal" />
+                    <TextBlock Margin="0,5,0,0" FontSize="23" FontWeight="SemiBold" Text="{Binding TotalPendienteText}" />
+                    <TextBlock Margin="0,5,0,0" Foreground="#FF4081" FontSize="11" Text="Consumos no cobrados" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <TabControl Grid.Row="3"
+                    Margin="0,12,0,0"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    ItemContainerStyle="{StaticResource ReportTabItemStyle}"
+                    SelectedIndex="{Binding SelectedTabIndex}">
+            <TabItem Header="RESUMEN GENERAL">
+                <Grid Margin="0,12,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <UniformGrid Columns="3">
+                        <Border Style="{StaticResource SummaryCard}">
+                            <StackPanel>
+                                <TextBlock FontSize="17" FontWeight="SemiBold" Text="Distribucion de menu principal" />
+                                <TextBlock Margin="0,3,0,10" Foreground="#FF4081" FontSize="11" Text="Clasificacion segun quien asume el pago." />
+                                <Grid Margin="0,4"><TextBlock Text="Empresa cliente" /><TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Text="{Binding TotalEmpresaText}" /></Grid>
+                                <Separator />
+                                <Grid Margin="0,4"><TextBlock Text="Planilla" /><TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Text="{Binding TotalPlanillaText}" /></Grid>
+                                <Separator />
+                                <Grid Margin="0,4"><TextBlock Text="Pago directo" /><TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Text="{Binding TotalMenuPagoDirectoText}" /></Grid>
+                                <Separator />
+                                <Grid Margin="0,4"><TextBlock Text="Pendiente del comensal" /><TextBlock HorizontalAlignment="Right" Foreground="#F44336" FontWeight="SemiBold" Text="{Binding TotalMenuCreditoPendienteText}" /></Grid>
+                                <Separator />
+                                <Grid Margin="0,4"><TextBlock Text="Credito pagado" /><TextBlock HorizontalAlignment="Right" Foreground="#00A86B" FontWeight="SemiBold" Text="{Binding TotalMenuCreditoPagadoText}" /></Grid>
+                                <Separator Margin="0,8" />
+                                <Grid><TextBlock Foreground="#FF4081" Text="Total clasificado" /><TextBlock HorizontalAlignment="Right" Foreground="#594AE2" FontSize="18" FontWeight="SemiBold" Text="{Binding TotalClasificadoText}" /></Grid>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource SummaryCard}">
+                            <StackPanel>
+                                <TextBlock FontSize="17" FontWeight="SemiBold" Text="Resumen de cobros directos" />
+                                <TextBlock Margin="0,3,0,10" Foreground="#FF4081" FontSize="11" Text="Pagos del comensal y creditos ya cancelados." />
+                                <Grid Margin="0,4"><TextBlock Text="Efectivo" /><TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Text="{Binding CobradoEfectivoText}" /></Grid>
+                                <Separator />
+                                <Grid Margin="0,4"><TextBlock Text="Yape" /><TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Text="{Binding CobradoYapeText}" /></Grid>
+                                <Separator />
+                                <Grid Margin="0,4"><TextBlock Text="Plin" /><TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Text="{Binding CobradoPlinText}" /></Grid>
+                                <Separator />
+                                <Grid Margin="0,4"><TextBlock Text="Credito pagado" /><TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Text="{Binding CreditoPagadoText}" /></Grid>
+                                <Separator Margin="0,8" />
+                                <Grid><TextBlock Foreground="#FF4081" Text="Total cobrado directo" /><TextBlock HorizontalAlignment="Right" Foreground="#2196F3" FontSize="18" FontWeight="SemiBold" Text="{Binding TotalCobradoText}" /></Grid>
+                            </StackPanel>
+                        </Border>
+                        <Border Margin="0" Style="{StaticResource SummaryCard}">
+                            <StackPanel>
+                                <TextBlock FontSize="17" FontWeight="SemiBold" Text="Pendiente del comensal" />
+                                <TextBlock Margin="0,3,0,10" Foreground="#FF4081" FontSize="11" Text="Consumos del periodo aun no cobrados." />
+                                <Grid Margin="0,4"><TextBlock Text="Menu principal" /><TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Text="{Binding PendienteMenuPrincipalText}" /></Grid>
+                                <Separator />
+                                <Grid Margin="0,4"><TextBlock Text="Menu extra" /><TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Text="{Binding PendienteMenuExtraText}" /></Grid>
+                                <Separator />
+                                <Grid Margin="0,4"><TextBlock Text="Producto adicional" /><TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Text="{Binding PendienteProductoText}" /></Grid>
+                                <Separator Margin="0,8" />
+                                <Grid><TextBlock Foreground="#FF4081" Text="Total pendiente del periodo" /><TextBlock HorizontalAlignment="Right" Foreground="#F44336" FontSize="18" FontWeight="SemiBold" Text="{Binding TotalPendienteText}" /></Grid>
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <Border Grid.Row="1" Margin="0,14,0,0" Padding="14" Background="White" BorderBrush="#E1E4EC" BorderThickness="1" CornerRadius="6">
+                        <StackPanel>
+                            <TextBlock FontSize="17" FontWeight="SemiBold" Text="Resumen operativo" />
+                            <TextBlock Margin="0,3,0,10" Foreground="#FF4081" FontSize="11" Text="Consumos y recuperos del periodo seleccionado." />
+                            <UniformGrid Columns="4">
+                                <Border Margin="0,0,8,0" Padding="12" BorderBrush="#E1E4EC" BorderThickness="1" CornerRadius="4">
+                                    <StackPanel><TextBlock Foreground="#FF4081" Text="Cargo a empresa cliente" /><TextBlock Margin="0,5,0,0" Foreground="#00A86B" FontSize="17" FontWeight="SemiBold" Text="{Binding TotalEmpresaText}" /></StackPanel>
+                                </Border>
+                                <Border Margin="0,0,8,0" Padding="12" BorderBrush="#E1E4EC" BorderThickness="1" CornerRadius="4">
+                                    <StackPanel><TextBlock Foreground="#FF4081" Text="A recuperar planilla" /><TextBlock Margin="0,5,0,0" Foreground="#FF9800" FontSize="17" FontWeight="SemiBold" Text="{Binding TotalPlanillaText}" /></StackPanel>
+                                </Border>
+                                <Border Margin="0,0,8,0" Padding="12" BorderBrush="#E1E4EC" BorderThickness="1" CornerRadius="4">
+                                    <StackPanel><TextBlock Foreground="#FF4081" Text="Cobrado directo" /><TextBlock Margin="0,5,0,0" Foreground="#00A86B" FontSize="17" FontWeight="SemiBold" Text="{Binding TotalCobradoText}" /></StackPanel>
+                                </Border>
+                                <Border Padding="12" BorderBrush="#E1E4EC" BorderThickness="1" CornerRadius="4">
+                                    <StackPanel><TextBlock Foreground="#FF4081" Text="Pendiente del comensal" /><TextBlock Margin="0,5,0,0" Foreground="#F44336" FontSize="17" FontWeight="SemiBold" Text="{Binding TotalPendienteText}" /></StackPanel>
+                                </Border>
+                            </UniformGrid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="DETALLE POR COMENSAL">
+                <Border Margin="0,12,0,0" Padding="12" Background="White" BorderBrush="#E1E4EC" BorderThickness="1" CornerRadius="6">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Grid Margin="4,2,4,0">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Width="28"
+                                        Height="28"
+                                        Margin="0,0,9,0"
+                                        Background="#F0EEFF"
+                                        CornerRadius="4">
+                                    <TextBlock HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               Foreground="#594AE2"
+                                               FontSize="16"
+                                               Text="●" />
+                                </Border>
+                                <TextBlock VerticalAlignment="Center"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           Text="Detalle por comensal" />
+                                <Border Margin="12,0,0,0" Padding="10,3" BorderBrush="#594AE2" BorderThickness="1" CornerRadius="12">
+                                    <TextBlock Foreground="#594AE2" Text="{Binding DetailEmployeeCount, StringFormat={}{0} comensal(es)}" />
+                                </Border>
+                            </StackPanel>
+                            <Border HorizontalAlignment="Right" Padding="10,3" BorderBrush="#B8BDC9" BorderThickness="1" CornerRadius="12">
+                                <TextBlock Text="{Binding DetailMenuCount, StringFormat={}{0} menu(s)}" />
+                            </Border>
+                        </Grid>
+
+                        <Grid Grid.Row="1" Margin="4,10,4,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="420" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock VerticalAlignment="Center"
+                                       Foreground="#777777"
+                                       Text="Consulta y expande un comensal para revisar el detalle por fecha." />
+
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Margin="0,0,0,4"
+                                           FontSize="12"
+                                           Foreground="#555555"
+                                           Text="Buscar por DNI o nombre" />
+                                <Border Height="38"
+                                        Background="White"
+                                        BorderBrush="#B8BDC9"
+                                        BorderThickness="1"
+                                        CornerRadius="4">
+                                    <Grid>
+                                        <TextBox Padding="38,6,10,6"
+                                                 Background="Transparent"
+                                                 BorderThickness="0"
+                                                 VerticalContentAlignment="Center"
+                                                 Text="{Binding DetailSearch, UpdateSourceTrigger=PropertyChanged}" />
+                                    <Path Width="15"
+                                          Height="15"
+                                          Margin="12,0,0,0"
+                                          HorizontalAlignment="Left"
+                                          VerticalAlignment="Center"
+                                          Data="M9.5,3 A6.5,6.5 0 1 0 9.5,16 A6.5,6.5 0 1 0 9.5,3 M14.2,14.2 L19,19"
+                                          Fill="Transparent"
+                                          Stroke="#777777"
+                                          StrokeThickness="2"
+                                          Stretch="Uniform"
+                                          IsHitTestVisible="False" />
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid Grid.Row="2" Height="40" Margin="4,0" Background="#F7F8FC">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="42" /><ColumnDefinition Width="90" /><ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="120" /><ColumnDefinition Width="105" /><ColumnDefinition Width="55" />
+                                <ColumnDefinition Width="55" /><ColumnDefinition Width="105" /><ColumnDefinition Width="95" />
+                                <ColumnDefinition Width="95" /><ColumnDefinition Width="95" /><ColumnDefinition Width="95" />
+                                <ColumnDefinition Width="100" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="1" Style="{StaticResource ReportHeaderText}" Text="DNI" />
+                            <TextBlock Grid.Column="2" Style="{StaticResource ReportHeaderText}" Text="Comensal" />
+                            <TextBlock Grid.Column="3" Style="{StaticResource ReportHeaderText}" Text="Tipo" />
+                            <TextBlock Grid.Column="4" Style="{StaticResource ReportHeaderText}" Text="Estado" />
+                            <TextBlock Grid.Column="5" Style="{StaticResource ReportHeaderText}" Text="Alm." />
+                            <TextBlock Grid.Column="6" Style="{StaticResource ReportHeaderText}" Text="Cena" />
+                            <TextBlock Grid.Column="7" Style="{StaticResource ReportHeaderText}" Text="Empresa" />
+                            <TextBlock Grid.Column="8" Style="{StaticResource ReportHeaderText}" Text="Planilla" />
+                            <TextBlock Grid.Column="9" Style="{StaticResource ReportHeaderText}" Text="Cobrado" />
+                            <TextBlock Grid.Column="10" Style="{StaticResource ReportHeaderText}" Text="Extras" />
+                            <TextBlock Grid.Column="11" Style="{StaticResource ReportHeaderText}" Text="Pendiente" />
+                            <TextBlock Grid.Column="12" Style="{StaticResource ReportHeaderText}" Text="Total" />
+                        </Grid>
+
+                        <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding Empleados}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="4,0"
+                                                Background="White"
+                                                BorderBrush="#E1E4EC"
+                                                BorderThickness="0,0,0,1">
+                                            <StackPanel>
+                                                <Grid MinHeight="48">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="42" /><ColumnDefinition Width="90" /><ColumnDefinition Width="2*" />
+                                                        <ColumnDefinition Width="120" /><ColumnDefinition Width="105" /><ColumnDefinition Width="55" />
+                                                        <ColumnDefinition Width="55" /><ColumnDefinition Width="105" /><ColumnDefinition Width="95" />
+                                                        <ColumnDefinition Width="95" /><ColumnDefinition Width="95" /><ColumnDefinition Width="95" />
+                                                        <ColumnDefinition Width="100" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Button Width="28"
+                                                            Height="28"
+                                                            Background="#F1F2F6"
+                                                            BorderBrush="#E1E4EC"
+                                                            BorderThickness="1"
+                                                            Command="{Binding ToggleExpandedCommand}"
+                                                            Content="{Binding ExpandIcon}"
+                                                            FontWeight="SemiBold" />
+                                                    <TextBlock Grid.Column="1" Style="{StaticResource ReportCellText}" Text="{Binding Dni}" />
+                                                    <TextBlock Grid.Column="2" Style="{StaticResource ReportCellText}" FontWeight="SemiBold" Text="{Binding Trabajador}" />
+                                                    <Border Grid.Column="3" Padding="8,2" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                            BorderBrush="#2196F3" BorderThickness="1" CornerRadius="10">
+                                                        <TextBlock Foreground="#1976D2" Text="{Binding Categoria}" />
+                                                    </Border>
+                                                    <Border Grid.Column="4" Padding="8,3" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                            Background="{Binding EstadoBackground}" CornerRadius="11">
+                                                        <TextBlock Foreground="White" FontWeight="SemiBold" Text="{Binding Estado}" />
+                                                    </Border>
+                                                    <TextBlock Grid.Column="5" Style="{StaticResource ReportCellText}" Text="{Binding TotalAlmuerzos}" />
+                                                    <TextBlock Grid.Column="6" Style="{StaticResource ReportCellText}" Text="{Binding TotalCenas}" />
+                                                    <TextBlock Grid.Column="7" Style="{StaticResource ReportCellText}" Text="{Binding TotalEmpresaText}" />
+                                                    <TextBlock Grid.Column="8" Style="{StaticResource ReportCellText}" Text="{Binding TotalPlanillaText}" />
+                                                    <TextBlock Grid.Column="9" Style="{StaticResource ReportCellText}" Foreground="#00A86B" Text="{Binding TotalCobradoText}" />
+                                                    <TextBlock Grid.Column="10" Style="{StaticResource ReportCellText}" Text="{Binding TotalExtrasText}" />
+                                                    <TextBlock Grid.Column="11" Style="{StaticResource ReportCellText}" Foreground="#F44336" Text="{Binding TotalPendienteText}" />
+                                                    <TextBlock Grid.Column="12" Style="{StaticResource ReportCellText}" FontWeight="SemiBold" Text="{Binding TotalGeneralText}" />
+                                                </Grid>
+
+                                                <Border Margin="14,4,14,12"
+                                                        Padding="12"
+                                                        Background="#FAFBFF"
+                                                        BorderBrush="#D8DDEA"
+                                                        BorderThickness="1"
+                                                        CornerRadius="6"
+                                                        Visibility="{Binding IsExpanded, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                    <StackPanel>
+                                                        <Grid Margin="2,0,2,10">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <Border Width="25" Height="25" Margin="0,0,8,0" Background="#EDEAFF" CornerRadius="4">
+                                                                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#594AE2" Text="▣" />
+                                                                </Border>
+                                                                <TextBlock VerticalAlignment="Center" FontWeight="SemiBold" Text="Detalle por fecha consumida" />
+                                                            </StackPanel>
+                                                            <TextBlock HorizontalAlignment="Right"
+                                                                       VerticalAlignment="Center"
+                                                                       Foreground="#777777"
+                                                                       FontSize="11"
+                                                                       Text="Desglose diario del consumo" />
+                                                        </Grid>
+
+                                                        <Grid Height="34" Background="#FAFAFC">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="40" /><ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="75" /><ColumnDefinition Width="1.3*" />
+                                                                <ColumnDefinition Width="*" /><ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="*" /><ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="*" /><ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="*" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Grid.Column="1" Style="{StaticResource ReportHeaderText}" Text="Fecha" />
+                                                            <TextBlock Grid.Column="2" Style="{StaticResource ReportHeaderText}" Text="Menu" />
+                                                            <TextBlock Grid.Column="3" Style="{StaticResource ReportHeaderText}" Text="Tipo pago" />
+                                                            <TextBlock Grid.Column="4" Style="{StaticResource ReportHeaderText}" Text="Medio" />
+                                                            <TextBlock Grid.Column="5" Style="{StaticResource ReportHeaderText}" Text="Empresa" />
+                                                            <TextBlock Grid.Column="6" Style="{StaticResource ReportHeaderText}" Text="Planilla" />
+                                                            <TextBlock Grid.Column="7" Style="{StaticResource ReportHeaderText}" Text="Cobrado" />
+                                                            <TextBlock Grid.Column="8" Style="{StaticResource ReportHeaderText}" Text="Pendiente" />
+                                                            <TextBlock Grid.Column="9" Style="{StaticResource ReportHeaderText}" Text="Menu extra" />
+                                                            <TextBlock Grid.Column="10" Style="{StaticResource ReportHeaderText}" Text="Productos" />
+                                                        </Grid>
+
+                                                        <ItemsControl ItemsSource="{Binding Detalles}">
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Border BorderBrush="#E1E4EC" BorderThickness="0,0,0,1">
+                                                                        <StackPanel>
+                                                                            <Grid MinHeight="38">
+                                                                                <Grid.ColumnDefinitions>
+                                                                                    <ColumnDefinition Width="40" /><ColumnDefinition Width="*" />
+                                                                                    <ColumnDefinition Width="75" /><ColumnDefinition Width="1.3*" />
+                                                                                    <ColumnDefinition Width="*" /><ColumnDefinition Width="*" />
+                                                                                    <ColumnDefinition Width="*" /><ColumnDefinition Width="*" />
+                                                                                    <ColumnDefinition Width="*" /><ColumnDefinition Width="*" />
+                                                                                    <ColumnDefinition Width="*" />
+                                                                                </Grid.ColumnDefinitions>
+                                                                                <Button Width="26" Height="26"
+                                                                                        Background="#F2F3F6"
+                                                                                        BorderThickness="0"
+                                                                                        Command="{Binding ToggleExpandedCommand}"
+                                                                                        Content="{Binding ExpandIcon}"
+                                                                                        IsEnabled="{Binding HasAdicionales}" />
+                                                                                <TextBlock Grid.Column="1" Style="{StaticResource ReportCellText}" Text="{Binding Fecha}" />
+                                                                                <Border Grid.Column="2" Padding="7,2" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                                        Background="{Binding MenuBackground}" CornerRadius="10">
+                                                                                    <TextBlock Foreground="White" FontWeight="SemiBold" Text="{Binding Menu}" />
+                                                                                </Border>
+                                                                                <TextBlock Grid.Column="3" Style="{StaticResource ReportCellText}" Text="{Binding TipoPago}" />
+                                                                                <TextBlock Grid.Column="4" Style="{StaticResource ReportCellText}" Text="{Binding MedioPago}" />
+                                                                                <TextBlock Grid.Column="5" Style="{StaticResource ReportCellText}" Text="{Binding EmpresaText}" />
+                                                                                <TextBlock Grid.Column="6" Style="{StaticResource ReportCellText}" Text="{Binding PlanillaText}" />
+                                                                                <TextBlock Grid.Column="7" Style="{StaticResource ReportCellText}" Text="{Binding CobradoText}" />
+                                                                                <TextBlock Grid.Column="8" Style="{StaticResource ReportCellText}" Text="{Binding PendienteText}" />
+                                                                                <TextBlock Grid.Column="9" Style="{StaticResource ReportCellText}" Text="{Binding MenuExtraText}" />
+                                                                                <TextBlock Grid.Column="10" Style="{StaticResource ReportCellText}" Text="{Binding ProductosText}" />
+                                                                            </Grid>
+
+                                                                            <Border Margin="12,8,12,12"
+                                                                                    Padding="12"
+                                                                                    Background="White"
+                                                                                    BorderBrush="#DDE2EA"
+                                                                                    BorderThickness="1"
+                                                                                    CornerRadius="6"
+                                                                                    Visibility="{Binding IsExpanded, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                                                <StackPanel>
+                                                                                    <Grid Margin="0,0,0,10">
+                                                                                        <Grid.ColumnDefinitions>
+                                                                                            <ColumnDefinition Width="Auto" />
+                                                                                            <ColumnDefinition Width="*" />
+                                                                                            <ColumnDefinition Width="Auto" />
+                                                                                        </Grid.ColumnDefinitions>
+
+                                                                                        <Border Width="30"
+                                                                                                Height="30"
+                                                                                                Background="#EAF4FF"
+                                                                                                CornerRadius="4">
+                                                                                            <Path Width="16"
+                                                                                                  Height="16"
+                                                                                                  Data="M2,4 L5,4 L7,11 L15,11 L17,6 L6,6 M8,14 A1,1 0 1 0 8,16 A1,1 0 1 0 8,14 M15,14 A1,1 0 1 0 15,16 A1,1 0 1 0 15,14"
+                                                                                                  Fill="Transparent"
+                                                                                                  Stroke="#2196F3"
+                                                                                                  StrokeThickness="1.7"
+                                                                                                  Stretch="Uniform" />
+                                                                                        </Border>
+
+                                                                                        <StackPanel Grid.Column="1"
+                                                                                                    Margin="10,0,0,0"
+                                                                                                    VerticalAlignment="Center">
+                                                                                            <TextBlock FontWeight="SemiBold"
+                                                                                                       Foreground="#333333"
+                                                                                                       Text="Detalle de adicionales" />
+                                                                                            <TextBlock Margin="0,2,0,0"
+                                                                                                       FontSize="11"
+                                                                                                       Foreground="#777777"
+                                                                                                       Text="Menús extra y productos consumidos en esta fecha." />
+                                                                                        </StackPanel>
+
+                                                                                        <Border Grid.Column="2"
+                                                                                                Padding="11,4"
+                                                                                                VerticalAlignment="Center"
+                                                                                                Background="#F7FBFF"
+                                                                                                BorderBrush="#2196F3"
+                                                                                                BorderThickness="1"
+                                                                                                CornerRadius="12">
+                                                                                            <TextBlock Foreground="#1976D2"
+                                                                                                       FontWeight="SemiBold"
+                                                                                                       Text="{Binding TotalAdicionalesText, StringFormat=Total: {0}}" />
+                                                                                        </Border>
+                                                                                    </Grid>
+
+                                                                                    <DataGrid Style="{StaticResource NestedGridStyle}"
+                                                                                              ItemsSource="{Binding Adicionales}"
+                                                                                              RowHeight="38">
+                                                                                        <DataGrid.Columns>
+                                                                                            <DataGridTextColumn Width="1.1*" Binding="{Binding Tipo}" ElementStyle="{StaticResource ReportCellText}" Header="Tipo" />
+                                                                                            <DataGridTextColumn Width="*" Binding="{Binding Categoria}" ElementStyle="{StaticResource ReportCellText}" Header="Categoria" />
+                                                                                            <DataGridTextColumn Width="1.5*" Binding="{Binding Descripcion}" ElementStyle="{StaticResource ReportCellText}" Header="Descripcion" />
+                                                                                            <DataGridTextColumn Width="1.2*" Binding="{Binding FormaCobro}" ElementStyle="{StaticResource ReportCellText}" Header="Forma cobro" />
+                                                                                            <DataGridTextColumn Width="*" Binding="{Binding Estado}" ElementStyle="{StaticResource ReportCellText}" Header="Estado" />
+                                                                                            <DataGridTextColumn Width="*" Binding="{Binding ImporteText}" ElementStyle="{StaticResource ReportCellText}" Header="Importe" />
+                                                                                        </DataGrid.Columns>
+                                                                                    </DataGrid>
+                                                                                </StackPanel>
+                                                                            </Border>
+                                                                        </StackPanel>
+                                                                    </Border>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </StackPanel>
+                                                </Border>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+
+                        <Grid Grid.Row="4" MinHeight="44" Margin="4,0" Background="#F7F8FC">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="42" /><ColumnDefinition Width="90" /><ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="120" /><ColumnDefinition Width="105" /><ColumnDefinition Width="55" />
+                                <ColumnDefinition Width="55" /><ColumnDefinition Width="105" /><ColumnDefinition Width="95" />
+                                <ColumnDefinition Width="95" /><ColumnDefinition Width="95" /><ColumnDefinition Width="95" />
+                                <ColumnDefinition Width="100" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="1" Grid.ColumnSpan="4" Margin="8,0" VerticalAlignment="Center" FontWeight="Bold" Text="TOTALES" />
+                            <TextBlock Grid.Column="5" Style="{StaticResource ReportHeaderText}" Text="{Binding TotalAlmuerzos}" />
+                            <TextBlock Grid.Column="6" Style="{StaticResource ReportHeaderText}" Text="{Binding TotalCenas}" />
+                            <TextBlock Grid.Column="7" Style="{StaticResource ReportHeaderText}" Text="{Binding DetailTotalEmpresaText}" />
+                            <TextBlock Grid.Column="8" Style="{StaticResource ReportHeaderText}" Text="{Binding DetailTotalPlanillaText}" />
+                            <TextBlock Grid.Column="9" Style="{StaticResource ReportHeaderText}" Foreground="#00A86B" Text="{Binding DetailTotalCobradoText}" />
+                            <TextBlock Grid.Column="10" Style="{StaticResource ReportHeaderText}" Text="{Binding DetailTotalExtrasText}" />
+                            <TextBlock Grid.Column="11" Style="{StaticResource ReportHeaderText}" Foreground="#F44336" Text="{Binding DetailTotalPendienteText}" />
+                            <TextBlock Grid.Column="12" Style="{StaticResource ReportHeaderText}" Text="{Binding DetailTotalGeneralText}" />
+                        </Grid>
+
+                        <Grid Grid.Row="5" Margin="0,10,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock VerticalAlignment="Center" Text="Filas:" />
+                                <ComboBox Width="70" Height="30" Margin="7,0,0,0" ItemsSource="{Binding PageSizes}" SelectedItem="{Binding PageSize}" />
+                                <TextBlock Margin="18,0,0,0" VerticalAlignment="Center" Text="{Binding RangeText}" />
+                                <TextBlock Margin="18,0,0,0" VerticalAlignment="Center" Text="{Binding PageText}" />
+                            </StackPanel>
+                            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                                <Button Width="38" Height="30" Command="{Binding AnteriorCommand}" Content="&lt;" />
+                                <Button Width="38" Height="30" Margin="6,0,0,0" Command="{Binding SiguienteCommand}" Content="&gt;" />
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </Border>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

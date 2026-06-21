@@ -26,6 +26,13 @@ public partial class App : Application
                     options.UseSqlite(context.Configuration.GetConnectionString("DefaultConnection")));
 
                 services.AddMenuCoreServices();
+                services.AddSingleton<LoginViewModel>();
+                services.AddSingleton<DashboardViewModel>();
+                services.AddSingleton<EmpleadosViewModel>();
+                services.AddSingleton<RegistroDiarioViewModel>();
+                services.AddSingleton<CuentasPorCobrarViewModel>();
+                services.AddSingleton<ReportesViewModel>();
+                services.AddSingleton<CierresViewModel>();
                 services.AddSingleton<MainViewModel>();
                 services.AddSingleton<MainWindow>();
             })

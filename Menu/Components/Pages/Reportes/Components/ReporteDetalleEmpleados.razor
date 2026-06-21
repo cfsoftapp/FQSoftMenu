@@ -1,4 +1,4 @@
-﻿@using Menu.DTOs.Reportes
+@using Menu.DTOs.Reportes
 
 <MudPaper Class="pa-3 report-panel" Elevation="1">
 
@@ -9,14 +9,14 @@
 
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
             <MudIcon Icon="@Icons.Material.Filled.Groups" Color="Color.Primary" />
-            <MudText Typo="Typo.h6">Detalle por empleado</MudText>
+            <MudText Typo="Typo.h6">Detalle por comensal</MudText>
         </MudStack>
 
         <MudChip T="string"
                  Color="Color.Primary"
                  Variant="Variant.Outlined"
                  Size="Size.Small">
-            @EmpleadosFiltrados.Count() trabajador(es)
+            @EmpleadosFiltrados.Count() comensal(es)
         </MudChip>
 
     </MudStack>
@@ -46,12 +46,12 @@
         <HeaderContent>
             <MudTh></MudTh>
             <MudTh>DNI</MudTh>
-            <MudTh>Trabajador</MudTh>
-            <MudTh>Tipo de personal</MudTh>
+            <MudTh>Comensal</MudTh>
+            <MudTh>Tipo de comensal</MudTh>
             <MudTh>Estado</MudTh>
             <MudTh Style="text-align:center">Alm.</MudTh>
             <MudTh Style="text-align:center">Cena</MudTh>
-            <MudTh Style="text-align:right">Empresa</MudTh>
+            <MudTh Style="text-align:right">Empresa cliente</MudTh>
             <MudTh Style="text-align:right">Planilla</MudTh>
             <MudTh Style="text-align:right">Cobrado</MudTh>
             <MudTh Style="text-align:right">Extras</MudTh>
@@ -68,13 +68,13 @@
 
             <MudTd DataLabel="DNI">@empleado.Dni</MudTd>
 
-            <MudTd DataLabel="Trabajador">
+            <MudTd DataLabel="Comensal">
                 <MudText Typo="Typo.body2" Class="fw-bold">
                     @empleado.Trabajador
                 </MudText>
             </MudTd>
 
-            <MudTd DataLabel="Tipo de personal">
+            <MudTd DataLabel="Tipo de comensal">
                 <MudChip T="string"
                          Size="Size.Small"
                          Color="Color.Info"
@@ -100,7 +100,7 @@
                 @MostrarCantidad(empleado.TotalCenas)
             </MudTd>
 
-            <MudTd DataLabel="Empresa" Style="text-align:right">
+            <MudTd DataLabel="Empresa cliente" Style="text-align:right">
                 @MostrarMonto(empleado.TotalEmpresa)
             </MudTd>
 

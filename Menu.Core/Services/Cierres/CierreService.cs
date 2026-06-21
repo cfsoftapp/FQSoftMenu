@@ -193,7 +193,7 @@ public class CierreService : ICierreService
             return MapearBorrador(cierreExistente);
 
         if (await ExisteCierreProveedorSolapadoAsync(desde, hasta))
-            throw new InvalidOperationException("Ya existe un cierre proveedor con fechas que se cruzan con este rango.");
+            throw new InvalidOperationException("Ya existe un cierre de facturación con fechas que se cruzan con este rango.");
 
         var items = await _context.ConsumosMenu
             .AsNoTracking()
@@ -284,7 +284,7 @@ public class CierreService : ICierreService
             return ResultadoOperacionDto.Fail("La liquidacion ya fue confirmada y no puede modificarse.");
 
         if (await ExisteCierreProveedorSolapadoAsync(desde, hasta, cierre.Id))
-            return ResultadoOperacionDto.Fail("Ya existe otro cierre proveedor con fechas que se cruzan con este rango.");
+            return ResultadoOperacionDto.Fail("Ya existe otro cierre de facturación con fechas que se cruzan con este rango.");
 
         var validacion = await ValidarItemsBorradorAsync(input, desde, hasta);
 
@@ -312,7 +312,7 @@ public class CierreService : ICierreService
             .FirstOrDefaultAsync(x => x.Id == cierreProveedorId);
 
         if (cierre is null)
-            return ResultadoOperacionDto.Fail("No se encontro el cierre proveedor.");
+            return ResultadoOperacionDto.Fail("No se encontro el cierre de facturación.");
 
         if (cierre.Estado != EstadoCierreProveedor.Borrador)
             return ResultadoOperacionDto.Fail("Solo se pueden eliminar cierres en borrador.");
@@ -331,7 +331,7 @@ public class CierreService : ICierreService
             .FirstOrDefaultAsync(x => x.Id == cierreProveedorId);
 
         if (cierre is null)
-            throw new InvalidOperationException("No se encontro el cierre proveedor.");
+            throw new InvalidOperationException("No se encontro el cierre de facturación.");
 
         return CrearExcelProveedor(cierre);
     }
@@ -379,7 +379,7 @@ public class CierreService : ICierreService
             return ResultadoOperacionDto.Fail("Debe iniciar sesion para confirmar el cierre.");
 
         if (!input.Items.Any())
-            return ResultadoOperacionDto.Fail("No hay consumos para liquidar con proveedor.");
+            return ResultadoOperacionDto.Fail("No hay consumos para facturar.");
 
         var cierre = await _context.CierresProveedor
             .Include(x => x.Detalles)
@@ -392,7 +392,7 @@ public class CierreService : ICierreService
             return ResultadoOperacionDto.Fail("La liquidacion ya fue confirmada.");
 
         if (await ExisteCierreProveedorSolapadoAsync(desde, hasta, cierre.Id))
-            return ResultadoOperacionDto.Fail("Ya existe otro cierre proveedor con fechas que se cruzan con este rango.");
+            return ResultadoOperacionDto.Fail("Ya existe otro cierre de facturación con fechas que se cruzan con este rango.");
 
         var validacion = await ValidarItemsBorradorAsync(input, desde, hasta);
 
@@ -411,7 +411,7 @@ public class CierreService : ICierreService
 
         await _context.SaveChangesAsync();
 
-        return ResultadoOperacionDto.Ok($"Liquidacion confirmada por S/ {cierre.TotalLiquidarProveedor:N2}.");
+        return ResultadoOperacionDto.Ok($"Facturación confirmada por S/ {cierre.TotalLiquidarProveedor:N2}.");
     }
 
     private async Task<ResultadoOperacionDto> ValidarItemsBorradorAsync(
@@ -623,7 +623,7 @@ public class CierreService : ICierreService
                     FreezeRows: 0,
                     CurrencyColumns: new[] { 2 },
                     TotalLabelColumn: 1,
-                    TotalText: "Total a liquidar proveedor",
+                    TotalText: "Total a facturar",
                     ColumnWidths: new double[] { 34, 22 })));
             AddEntry(archive, "xl/worksheets/sheet2.xml", BuildSheet(
                 GetResumenEmpleadoRows(cierre),
@@ -654,7 +654,7 @@ public class CierreService : ICierreService
     {
         return new List<object?[]>
         {
-            new object?[] { "Liquidacion proveedor", string.Empty },
+            new object?[] { "Liquidacion de facturacion", string.Empty },
             new object?[] { "Estado", cierre.Estado.ToString() },
             new object?[] { "Fecha desde", cierre.FechaDesde.ToString("dd/MM/yyyy") },
             new object?[] { "Fecha hasta", cierre.FechaHasta.ToString("dd/MM/yyyy") },
@@ -664,7 +664,7 @@ public class CierreService : ICierreService
             new object?[] { "Concepto", "Importe (S/)" },
             new object?[] { "Personal activo", cierre.TotalPersonalActivo },
             new object?[] { "Descuento planilla incluido", cierre.TotalPlanilla },
-            new object?[] { "Total a liquidar proveedor", cierre.TotalLiquidarProveedor },
+            new object?[] { "Total a facturar", cierre.TotalLiquidarProveedor },
             new object?[] { "Excepciones para revision/concesionario", cierre.TotalExcluidoRevision },
             new object?[] { string.Empty, string.Empty },
             new object?[] { "Cantidad menus activos", cierre.TotalMenusActivos },
@@ -682,12 +682,12 @@ public class CierreService : ICierreService
             new object?[]
             {
                 "DNI",
-                "Trabajador",
+                "Comensal",
                 "Menus activo",
-                "Adicionales empresa",
+                "Adicionales empresa cliente",
                 "Menus planilla",
                 "Excepciones",
-                "Total proveedor (S/)",
+                "Total a facturar (S/)",
                 "Total revision (S/)"
             }
         };
@@ -730,10 +730,10 @@ public class CierreService : ICierreService
             {
                 "Fecha",
                 "DNI",
-                "Trabajador",
+                "Comensal",
                 "Concepto",
                 "Tipo pago",
-                "Incluido proveedor",
+                "Incluido en facturacion",
                 "Revision/concesionario",
                 "Motivo excepcion",
                 "Importe (S/)"
@@ -750,7 +750,7 @@ public class CierreService : ICierreService
                 x.EmpleadoNombre,
                 string.IsNullOrWhiteSpace(x.Concepto) ? x.TipoServicio.ToString() : x.Concepto,
                 x.ConsumoAdicionalId.HasValue
-                    ? "Empresa adicional"
+                    ? "Empresa cliente adicional"
                     : x.TipoPagoMenu == TipoPagoMenu.Empresa ? "Personal activo" : "Descuento planilla",
                 x.IncluidoProveedor ? "Si" : "No",
                 x.ExcluidoPorPagoDirecto ? "Si" : "No",
@@ -956,13 +956,13 @@ public class CierreService : ICierreService
         {
             new() { Fecha = cierre.Fecha, Tipo = "Menu", Concepto = "Almuerzos", Cantidad = cierre.TotalAlmuerzos },
             new() { Fecha = cierre.Fecha, Tipo = "Menu", Concepto = "Cenas", Cantidad = cierre.TotalCenas },
-            new() { Fecha = cierre.Fecha, Tipo = "Proveedor", Concepto = "Pago empresa", Importe = cierre.TotalEmpresa },
+            new() { Fecha = cierre.Fecha, Tipo = "Proveedor", Concepto = "Cargo a empresa cliente", Importe = cierre.TotalEmpresa },
             new() { Fecha = cierre.Fecha, Tipo = "Proveedor", Concepto = "Descuento planilla", Importe = cierre.TotalPlanilla },
             new() { Fecha = cierre.Fecha, Tipo = "Caja", Concepto = "Efectivo", Importe = cierre.CobradoEfectivo },
             new() { Fecha = cierre.Fecha, Tipo = "Caja", Concepto = "Yape", Importe = cierre.CobradoYape },
             new() { Fecha = cierre.Fecha, Tipo = "Caja", Concepto = "Plin", Importe = cierre.CobradoPlin },
             new() { Fecha = cierre.Fecha, Tipo = "Credito", Concepto = "Credito pagado", Importe = cierre.TotalCreditoPagado },
-            new() { Fecha = cierre.Fecha, Tipo = "Credito", Concepto = "Credito pendiente", Importe = cierre.TotalCreditoPendiente },
+            new() { Fecha = cierre.Fecha, Tipo = "Credito", Concepto = "Pendiente del comensal", Importe = cierre.TotalCreditoPendiente },
             new() { Fecha = cierre.Fecha, Tipo = "Control", Concepto = "Adicionales registrados", Cantidad = cierre.TotalAdicionales },
             new() { Fecha = cierre.Fecha, Tipo = "Control", Concepto = "Consumos anulados", Cantidad = cierre.TotalAnulados }
         };

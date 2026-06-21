@@ -28,6 +28,8 @@ public class RegistroDiarioService
             return null;
 
         return await _context.Empleados
+            .Include(e => e.EmpresaCliente)
+            .Include(e => e.Sucursal)
             .FirstOrDefaultAsync(e => e.Dni == dni && e.Activo);
     }
 
@@ -42,11 +44,15 @@ public class RegistroDiarioService
 
         return await _context.Empleados
             .AsNoTracking()
+            .Include(e => e.EmpresaCliente)
+            .Include(e => e.Sucursal)
             .Where(e => e.Activo &&
                         (EF.Functions.Like(e.Dni, patron) ||
                          EF.Functions.Like(e.Nombres, patron) ||
                          EF.Functions.Like(e.Apellidos, patron) ||
-                         EF.Functions.Like(e.Nombres + " " + e.Apellidos, patron)))
+                         EF.Functions.Like(e.Nombres + " " + e.Apellidos, patron) ||
+                         (e.EmpresaCliente != null && EF.Functions.Like(e.EmpresaCliente.NombreComercial, patron)) ||
+                         (e.Sucursal != null && EF.Functions.Like(e.Sucursal.Nombre, patron))))
             .OrderBy(e => e.Dni == termino ? 0 : 1)
             .ThenBy(e => e.Apellidos)
             .ThenBy(e => e.Nombres)
@@ -61,16 +67,19 @@ public class RegistroDiarioService
         return await _context.ConsumosMenu
             .AnyAsync(c => c.EmpleadoId == empleadoId &&
                            c.Fecha.Date == fechaSolo &&
-                           c.TipoServicio == tipoServicio);
+                           c.TipoServicio == tipoServicio &&
+                           !c.Anulado);
     }
 
     public async Task<ResultadoOperacionDto> RegistrarAsync(RegistroDiarioInputDto input)
     {
         var empleado = await _context.Empleados
+            .Include(e => e.EmpresaCliente)
+            .Include(e => e.Sucursal)
             .FirstOrDefaultAsync(e => e.Id == input.EmpleadoId && e.Activo);
 
         if (empleado is null)
-            return ResultadoOperacionDto.Fail("El empleado no existe o está inactivo.");
+            return ResultadoOperacionDto.Fail("El comensal no existe o está inactivo.");
 
         var fechaSolo = input.Fecha.Date;
 
@@ -92,7 +101,7 @@ public class RegistroDiarioService
 
                 if (yaExiste)
                     return ResultadoOperacionDto.Fail(
-                        $"El empleado ya tiene registrado {input.TipoServicio} para esta fecha.");
+                        $"El comensal ya tiene registrado {input.TipoServicio} para esta fecha.");
 
                 var config = await _configuracionMenuService.GetActualAsync();
 
@@ -108,12 +117,12 @@ public class RegistroDiarioService
                 else
                 {
                     if (input.TipoPagoMenuSuspendido is null)
-                        return ResultadoOperacionDto.Fail("Debe seleccionar cómo pagará el menú el trabajador suspendido.");
+                        return ResultadoOperacionDto.Fail("Debe seleccionar cómo pagará el menú el comensal suspendido.");
 
                     tipoPagoMenu = input.TipoPagoMenuSuspendido.Value;
 
                     if (tipoPagoMenu == TipoPagoMenu.Empresa)
-                        return ResultadoOperacionDto.Fail("Un trabajador suspendido no puede registrar menú con pago empresa.");
+                        return ResultadoOperacionDto.Fail("Un comensal suspendido no puede registrar menú con cargo a empresa cliente.");
 
                     if (tipoPagoMenu == TipoPagoMenu.PagoDirecto)
                     {
@@ -263,6 +272,48 @@ public class RegistroDiarioService
             .Concat(adicionales)
             .OrderByDescending(x => x.FechaRegistro)
             .ToList();
+    }
+
+    public async Task<List<RegistroComensalRecienteDto>> GetRegistrosMenuRecientesAsync(
+        DateTime fecha,
+        int limite = 12)
+    {
+        var desde = fecha.Date;
+        var hasta = desde.AddDays(1);
+
+        return await _context.ConsumosMenu
+            .AsNoTracking()
+            .Where(x => x.Fecha >= desde && x.Fecha < hasta)
+            .OrderByDescending(x => x.FechaRegistro)
+            .Take(limite)
+            .Select(x => new RegistroComensalRecienteDto
+            {
+                ConsumoMenuId = x.Id,
+                Dni = x.Empleado.Dni,
+                NombreCompleto = x.Empleado.Nombres + " " + x.Empleado.Apellidos,
+                EmpresaCliente = x.Empleado.EmpresaCliente != null
+                    ? x.Empleado.EmpresaCliente.NombreComercial
+                    : "Sin empresa",
+                Sucursal = x.Empleado.Sucursal != null
+                    ? x.Empleado.Sucursal.Nombre
+                    : "Sin sucursal",
+                TipoServicio = x.TipoServicio.ToString(),
+                EstadoComensal = x.Empleado.Estado == EstadoEmpleado.Activo
+                    ? "Activo"
+                    : "Suspendido",
+                FormaCobro = x.TipoPagoMenu == TipoPagoMenu.Empresa
+                    ? "Empresa cliente"
+                    : x.TipoPagoMenu == TipoPagoMenu.DescuentoPlanilla
+                        ? "Descuento planilla"
+                        : x.TipoPagoMenu == TipoPagoMenu.CreditoComedor
+                            ? "Pendiente del comensal"
+                            : x.FormaPagoDirecto.HasValue
+                                ? x.FormaPagoDirecto.Value.ToString()
+                                : "Pago directo",
+                FechaRegistro = x.FechaRegistro,
+                Anulado = x.Anulado
+            })
+            .ToListAsync();
     }
 
     public async Task<(bool Success, string Message)> AnularConsumoDiaAsync(

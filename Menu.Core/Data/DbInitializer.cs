@@ -17,12 +17,114 @@ public static class DbInitializer
 
         await context.Database.MigrateAsync();
 
+        await SeedTiposEmpleadoAsync(context);
+        await SeedEmpresasClienteAsync(context);
         await SeedConfiguracionMenuAsync(context);
         if (seedDemoData)
             await SeedEmpleadosDemoAsync(context);
 
         await SeedRolesPermisosAsync(context);
         await SeedUsuarioAdminAsync(context, scope.ServiceProvider);
+    }
+
+    private static async Task SeedEmpresasClienteAsync(AppDbContext context)
+    {
+        var empresa = await context.EmpresasCliente
+            .FirstOrDefaultAsync(x => x.NombreComercial == "Empresa cliente general");
+
+        if (empresa is null)
+        {
+            empresa = new EmpresaCliente
+            {
+                NombreComercial = "Empresa cliente general",
+                RazonSocial = "Empresa cliente general",
+                Activo = true,
+                FechaCreacion = DateTime.Now
+            };
+
+            context.EmpresasCliente.Add(empresa);
+            await context.SaveChangesAsync();
+        }
+
+        var existeSucursal = await context.Sucursales
+            .AnyAsync(x => x.Nombre == "Sucursal principal");
+
+        if (!existeSucursal)
+        {
+            context.Sucursales.Add(new Sucursal
+            {
+                Nombre = "Sucursal principal",
+                EmpresaClienteId = empresa.Id,
+                Activo = true,
+                FechaCreacion = DateTime.Now
+            });
+
+            await context.SaveChangesAsync();
+        }
+
+        var sucursal = await context.Sucursales
+            .FirstOrDefaultAsync(x => x.Nombre == "Sucursal principal");
+
+        var empleadosSinEmpresa = await context.Empleados
+            .Where(x => x.EmpresaClienteId == null)
+            .ToListAsync();
+
+        foreach (var empleado in empleadosSinEmpresa)
+        {
+            empleado.EmpresaClienteId = empresa.Id;
+            empleado.SucursalId ??= sucursal?.Id;
+        }
+
+        if (empleadosSinEmpresa.Count > 0)
+            await context.SaveChangesAsync();
+    }
+
+    private static async Task SeedTiposEmpleadoAsync(AppDbContext context)
+    {
+        var tiposBase = new[]
+        {
+            "Empleado",
+            "Obrero",
+            "Tercero",
+            "Practicante",
+            "Visitante",
+            "Gerencia",
+            "Otro"
+        };
+
+        foreach (var nombre in tiposBase)
+        {
+            var existe = await context.TiposEmpleado
+                .AnyAsync(x => x.Nombre == nombre);
+
+            if (!existe)
+            {
+                context.TiposEmpleado.Add(new TipoEmpleado
+                {
+                    Nombre = nombre,
+                    Activo = true,
+                    FechaCreacion = DateTime.Now
+                });
+            }
+        }
+
+        await context.SaveChangesAsync();
+
+        var tipos = await context.TiposEmpleado.ToDictionaryAsync(x => x.Nombre);
+        var empleadosSinTipo = await context.Empleados
+            .Where(x => x.TipoEmpleadoId == null)
+            .ToListAsync();
+
+        foreach (var empleado in empleadosSinTipo)
+        {
+            var nombreTipo = empleado.Categoria.ToString();
+            empleado.TipoEmpleadoId = tipos.TryGetValue(nombreTipo, out var tipo)
+                ? tipo.Id
+                : tipos["Obrero"].Id;
+        }
+
+        if (empleadosSinTipo.Count > 0)
+            await context.SaveChangesAsync();
     }
 
     private static async Task SeedConfiguracionMenuAsync(AppDbContext context)
@@ -55,6 +157,9 @@ public static class DbInitializer
                 Dni = "12345678",
                 Nombres = "Juan",
                 Apellidos = "Pérez",
+                TipoEmpleadoId = await GetTipoEmpleadoIdAsync(context, "Obrero"),
+                EmpresaClienteId = await GetEmpresaClienteIdAsync(context, "Empresa cliente general"),
+                SucursalId = await GetSucursalIdAsync(context, "Sucursal principal"),
                 Estado = EstadoEmpleado.Activo,
                 Activo = true,
                 FechaCreacion = DateTime.Now
@@ -64,6 +169,9 @@ public static class DbInitializer
                 Dni = "87654321",
                 Nombres = "María",
                 Apellidos = "López",
+                TipoEmpleadoId = await GetTipoEmpleadoIdAsync(context, "Obrero"),
+                EmpresaClienteId = await GetEmpresaClienteIdAsync(context, "Empresa cliente general"),
+                SucursalId = await GetSucursalIdAsync(context, "Sucursal principal"),
                 Estado = EstadoEmpleado.Suspendido,
                 Activo = true,
                 FechaCreacion = DateTime.Now
@@ -73,15 +181,39 @@ public static class DbInitializer
         await context.SaveChangesAsync();
     }
 
+    private static async Task<int?> GetTipoEmpleadoIdAsync(AppDbContext context, string nombre)
+    {
+        return await context.TiposEmpleado
+            .Where(x => x.Nombre == nombre)
+            .Select(x => (int?)x.Id)
+            .FirstOrDefaultAsync();
+    }
+
+    private static async Task<int?> GetEmpresaClienteIdAsync(AppDbContext context, string nombre)
+    {
+        return await context.EmpresasCliente
+            .Where(x => x.NombreComercial == nombre)
+            .Select(x => (int?)x.Id)
+            .FirstOrDefaultAsync();
+    }
+
+    private static async Task<int?> GetSucursalIdAsync(AppDbContext context, string nombre)
+    {
+        return await context.Sucursales
+            .Where(x => x.Nombre == nombre)
+            .Select(x => (int?)x.Id)
+            .FirstOrDefaultAsync();
+    }
+
     private static async Task SeedRolesPermisosAsync(AppDbContext context)
     {
         var permisosBase = new List<PermisoSistema>
     {
         new() { Codigo = Permisos.DashboardVer, Nombre = "Ver dashboard", Modulo = "Inicio" },
 
-        new() { Codigo = Permisos.EmpleadosVer, Nombre = "Ver empleados", Modulo = "Empleados" },
-        new() { Codigo = Permisos.EmpleadosCrear, Nombre = "Crear empleados", Modulo = "Empleados" },
-        new() { Codigo = Permisos.EmpleadosEditar, Nombre = "Editar empleados", Modulo = "Empleados" },
+        new() { Codigo = Permisos.EmpleadosVer, Nombre = "Ver comensales", Modulo = "Comensales" },
+        new() { Codigo = Permisos.EmpleadosCrear, Nombre = "Crear comensales", Modulo = "Comensales" },
+        new() { Codigo = Permisos.EmpleadosEditar, Nombre = "Editar comensales", Modulo = "Comensales" },
 
         new() { Codigo = Permisos.RegistroDiarioVer, Nombre = "Ver registro diario", Modulo = "Registro diario" },
         new() { Codigo = Permisos.RegistroDiarioRegistrar, Nombre = "Registrar consumos", Modulo = "Registro diario" },

@@ -2,7 +2,27 @@
 <MudPaper Class="pa-4" Elevation="1">
     <MudStack Spacing="3">
 
-        <MudText Typo="Typo.h6">Buscar trabajador</MudText>
+        <MudText Typo="Typo.h6">Modo de registro</MudText>
+        <MudText Typo="Typo.caption" Color="Color.Secondary">
+            @(RegistrarMenuAlEscanear
+                ? "Enter registra inmediatamente el menú principal."
+                : "Enter selecciona al comensal para registrar adicionales.")
+        </MudText>
+
+        <MudSelect T="TipoServicioMenu"
+                   Value="@TipoServicio"
+                   ValueChanged="TipoServicioChanged"
+                   Label="Tipo de servicio"
+                   Variant="Variant.Outlined">
+            <MudSelectItem Value="TipoServicioMenu.Almuerzo">Almuerzo</MudSelectItem>
+            <MudSelectItem Value="TipoServicioMenu.Cena">Cena</MudSelectItem>
+        </MudSelect>
+
+        <MudCheckBox T="bool"
+                     Value="@RegistrarMenuAlEscanear"
+                     ValueChanged="RegistrarMenuAlEscanearChanged"
+                     Label="Registrar menú principal al escanear"
+                     Color="Color.Primary" />
 
         <MudTextField Value="@Dni"
                       ValueChanged="DniChanged"
@@ -19,7 +39,7 @@
                    OnClick="OnBuscar"
                    Disabled="@Buscando"
                    FullWidth="true">
-            Buscar
+            Buscar para adicionales
         </MudButton>
 
         @if (ResultadosBusqueda.Any())
@@ -27,7 +47,7 @@
             <MudPaper Class="pa-2" Elevation="0" Outlined="true">
                 <MudStack Spacing="1">
                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                        Selecciona un trabajador
+                        Selecciona un comensal
                     </MudText>
 
                     @foreach (var trabajador in ResultadosBusqueda)
@@ -44,6 +64,9 @@
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">
                                     DNI: @trabajador.Dni - @trabajador.Estado
                                 </MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    @trabajador.EmpresaClienteNombre / @trabajador.SucursalNombre
+                                </MudText>
                             </MudStack>
                         </MudButton>
                     }
@@ -58,7 +81,7 @@
             <MudCard Elevation="0" Class="pa-2">
                 <MudCardContent>
                     <MudText Typo="Typo.subtitle2" Color="Color.Secondary">
-                        Trabajador
+                        Comensal
                     </MudText>
 
                     <MudText Typo="Typo.h6">
@@ -67,6 +90,14 @@
 
                     <MudText Typo="Typo.body2">
                         DNI: @Empleado.Dni
+                    </MudText>
+
+                    <MudText Typo="Typo.body2">
+                        Empresa cliente: @Empleado.EmpresaClienteNombre
+                    </MudText>
+
+                    <MudText Typo="Typo.body2">
+                        Sucursal: @Empleado.SucursalNombre
                     </MudText>
 
                     <MudChip T="string"
@@ -88,6 +119,18 @@
 @code {
     [Parameter]
     public string Dni { get; set; } = string.Empty;
+
+    [Parameter]
+    public TipoServicioMenu TipoServicio { get; set; }
+
+    [Parameter]
+    public EventCallback<TipoServicioMenu> TipoServicioChanged { get; set; }
+
+    [Parameter]
+    public bool RegistrarMenuAlEscanear { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> RegistrarMenuAlEscanearChanged { get; set; }
 
     [Parameter]
     public EventCallback<string> DniChanged { get; set; }

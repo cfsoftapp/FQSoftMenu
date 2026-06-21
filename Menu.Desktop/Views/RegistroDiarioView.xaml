@@ -1,0 +1,821 @@
+<UserControl x:Class="Menu.Desktop.Views.RegistroDiarioView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Loaded="RegistroDiarioView_Loaded">
+    <Grid Background="White">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <DockPanel Margin="10,2,10,10">
+            <Border DockPanel.Dock="Right"
+                    MaxWidth="520"
+                    Padding="10,7"
+                    Background="{Binding EstadoBackground}"
+                    BorderBrush="{Binding EstadoBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="4">
+                <TextBlock FontSize="13"
+                           Foreground="{Binding EstadoForeground}"
+                           Text="{Binding Estado}"
+                           TextTrimming="CharacterEllipsis" />
+            </Border>
+        </DockPanel>
+
+        <ScrollViewer Grid.Row="1"
+                      Focusable="False"
+                      FocusVisualStyle="{x:Null}"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto">
+            <Grid Margin="10,0,10,14">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="0.34*" MinWidth="360" />
+                    <ColumnDefinition Width="0.66*" MinWidth="560" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0"
+                            Margin="0,0,14,0">
+                    <Border Padding="18"
+                            Background="#FFFFFF"
+                            BorderBrush="#E1E4EC"
+                            BorderThickness="1"
+                            CornerRadius="6">
+                        <StackPanel>
+                            <TextBlock FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="#333333"
+                                       Text="Modo de registro" />
+
+                            <TextBlock Margin="0,6,0,0"
+                                       FontSize="12"
+                                       Foreground="#777777"
+                                       Text="{Binding ModoEscaneoTexto}" />
+
+                            <TextBlock Margin="0,16,0,6"
+                                       Foreground="#333333"
+                                       Text="Tipo de servicio" />
+
+                            <ComboBox Height="38"
+                                      DisplayMemberPath="Text"
+                                      ItemsSource="{Binding TiposServicio}"
+                                      SelectedValue="{Binding TipoServicio}"
+                                      SelectedValuePath="Value" />
+
+                            <CheckBox Margin="0,14,0,0"
+                                      Content="Registrar menu principal al escanear"
+                                      IsChecked="{Binding RegistrarMenuAlEscanear}" />
+
+                            <TextBlock Margin="0,16,0,6"
+                                       Foreground="#333333"
+                                       Text="DNI o nombre" />
+
+                            <TextBox x:Name="BusquedaTextBox"
+                                     Height="38"
+                                     Padding="10,7"
+                                     FontSize="14"
+                                     KeyDown="BusquedaTextBox_KeyDown"
+                                     Text="{Binding TerminoBusqueda, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <Button Margin="0,14,0,0"
+                                    Height="38"
+                                    Background="#594AE2"
+                                    BorderBrush="#594AE2"
+                                    Command="{Binding BuscarCommand}"
+                                    Foreground="White"
+                                    FontWeight="SemiBold">
+                                <StackPanel HorizontalAlignment="Center"
+                                            Orientation="Horizontal">
+                                    <Path Width="15"
+                                          Height="15"
+                                          Margin="0,0,8,0"
+                                          Data="M7,1 A6,6 0 1 0 7,13 A6,6 0 1 0 7,1 M11,11 L15,15"
+                                          Stroke="White"
+                                          StrokeThickness="2"
+                                          Stretch="Uniform" />
+                                    <TextBlock Text="BUSCAR PARA ADICIONALES" />
+                                </StackPanel>
+                            </Button>
+
+                            <Border Margin="0,14,0,0"
+                                    Padding="8"
+                                    Background="#FAFBFF"
+                                    BorderBrush="#E1E4EC"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Visibility="{Binding HasResultadosBusqueda, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <ListBox MaxHeight="150"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         ItemsSource="{Binding ResultadosBusqueda}"
+                                         SelectedItem="{Binding ResultadoSeleccionado, Mode=TwoWay}"
+                                         SelectionChanged="ResultadosBusqueda_SelectionChanged">
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem">
+                                            <Setter Property="Margin" Value="0,0,0,6" />
+                                            <Setter Property="Padding" Value="0" />
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="ListBoxItem">
+                                                        <Border x:Name="ItemBorder"
+                                                                Padding="10"
+                                                                Background="White"
+                                                                BorderBrush="#E1E4EC"
+                                                                BorderThickness="1"
+                                                                CornerRadius="6">
+                                                            <ContentPresenter />
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsSelected" Value="True">
+                                                                <Setter TargetName="ItemBorder" Property="Background" Value="#F2F0FF" />
+                                                                <Setter TargetName="ItemBorder" Property="BorderBrush" Value="#594AE2" />
+                                                            </Trigger>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter TargetName="ItemBorder" Property="BorderBrush" Value="#90CAF9" />
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <StackPanel>
+                                                    <TextBlock FontSize="14"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="#333333"
+                                                               Text="{Binding NombreCompleto}"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Margin="0,5,0,0"
+                                                               FontSize="12"
+                                                               Foreground="#555555"
+                                                               Text="{Binding Dni, StringFormat=DNI: {0}}" />
+                                                    <TextBlock Margin="0,4,0,0"
+                                                               FontSize="11"
+                                                               Foreground="#777777"
+                                                               Text="{Binding EmpresaCliente}"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Margin="0,2,0,0"
+                                                               FontSize="11"
+                                                               Foreground="#777777"
+                                                               Text="{Binding Sucursal}"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                </StackPanel>
+
+                                                <Border Grid.Column="1"
+                                                        Margin="10,0,0,0"
+                                                        Padding="8,3"
+                                                        VerticalAlignment="Center"
+                                                        BorderBrush="#594AE2"
+                                                        BorderThickness="1"
+                                                        CornerRadius="10">
+                                                    <TextBlock FontSize="11"
+                                                               Foreground="#594AE2"
+                                                               Text="{Binding Estado}" />
+                                                </Border>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Margin="0,16,0,0"
+                            Padding="18"
+                            Background="#FFFFFF"
+                            BorderBrush="#E1E4EC"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Visibility="{Binding IsEmpleadoSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <DockPanel>
+                            <StackPanel>
+                                <TextBlock Foreground="#FF4081"
+                                           Text="Comensal" />
+                                <TextBlock Margin="0,6,0,0"
+                                           FontSize="17"
+                                           FontWeight="SemiBold"
+                                           Foreground="#333333"
+                                           Text="{Binding EmpleadoNombre}" />
+                                <TextBlock Margin="0,6,0,0"
+                                           Foreground="#333333"
+                                           Text="{Binding EmpleadoDni, StringFormat=DNI: {0}}" />
+                                <TextBlock Margin="0,6,0,0"
+                                           Foreground="#333333"
+                                           Text="{Binding EmpleadoEmpresaCliente, StringFormat=Empresa cliente: {0}}" />
+                                <TextBlock Margin="0,6,0,0"
+                                           Foreground="#333333"
+                                           Text="{Binding EmpleadoSucursal, StringFormat=Sucursal: {0}}" />
+                                <TextBlock Margin="0,6,0,0"
+                                           Foreground="#333333"
+                                           Text="{Binding EmpleadoEstadoTexto, StringFormat=Estado: {0}}" />
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+
+                    <Border Margin="0,16,0,0"
+                            Padding="18"
+                            Background="#FFFFFF"
+                            BorderBrush="#E1E4EC"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Visibility="{Binding IsEmpleadoSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock FontSize="16"
+                                           FontWeight="SemiBold"
+                                           Foreground="#333333"
+                                           Text="Historial del dia" />
+                                <Border Margin="14,0,0,0"
+                                        Padding="10,3"
+                                        MinWidth="120"
+                                        BorderBrush="#594AE2"
+                                        BorderThickness="1"
+                                        CornerRadius="10">
+                                    <TextBlock FontSize="12"
+                                               HorizontalAlignment="Center"
+                                               Foreground="#594AE2"
+                                               Text="{Binding ConsumosDelDia.Count, StringFormat={}{0} registro(s)}" />
+                                </Border>
+                            </StackPanel>
+
+                            <ScrollViewer Margin="0,12,0,0"
+                                          MinHeight="230"
+                                          MaxHeight="420"
+                                          VerticalScrollBarVisibility="Auto">
+                                <ItemsControl ItemsSource="{Binding ConsumosDelDia}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,0,0,8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="24" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <Grid>
+                                                    <Border Width="2"
+                                                            HorizontalAlignment="Center"
+                                                            Background="#D8DCE8" />
+                                                    <Ellipse Width="11"
+                                                             Height="11"
+                                                             Margin="0,10,0,0"
+                                                             VerticalAlignment="Top"
+                                                             Fill="{Binding MarkerBrush}"
+                                                             Stroke="White"
+                                                             StrokeThickness="2" />
+                                                </Grid>
+
+                                                <Border Grid.Column="1"
+                                                        Padding="10"
+                                                        Background="{Binding CardBackground}"
+                                                        BorderBrush="#E1E4EC"
+                                                        BorderThickness="1"
+                                                        CornerRadius="6">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="54" />
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="72" />
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <TextBlock VerticalAlignment="Top"
+                                                                   Foreground="#FF4081"
+                                                                   FontSize="12"
+                                                                   Text="{Binding FechaRegistro}" />
+
+                                                        <StackPanel Grid.Column="1">
+                                                            <Border HorizontalAlignment="Left"
+                                                                    Padding="7,2"
+                                                                    Background="{Binding BadgeBackground}"
+                                                                    BorderBrush="{Binding BadgeBorderBrush}"
+                                                                    BorderThickness="1"
+                                                                    CornerRadius="9">
+                                                                <TextBlock FontSize="11"
+                                                                           Foreground="{Binding BadgeForeground}"
+                                                                           Text="{Binding Tipo}" />
+                                                            </Border>
+                                                            <TextBlock Margin="0,5,0,0"
+                                                                       Foreground="{Binding PrimaryForeground}"
+                                                                       Text="{Binding Descripcion}"
+                                                                       TextWrapping="Wrap" />
+                                                            <TextBlock Margin="0,3,0,0"
+                                                                       FontSize="12"
+                                                                       Foreground="#FF4081"
+                                                                       Text="{Binding PagoTexto}"
+                                                                       TextWrapping="Wrap" />
+                                                            <TextBlock Margin="0,3,0,0"
+                                                                       FontSize="12"
+                                                                       Foreground="#FF6F80"
+                                                                       Text="{Binding MotivoTexto}"
+                                                                       TextWrapping="Wrap"
+                                                                       Visibility="{Binding HasMotivo, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                        </StackPanel>
+
+                                                        <StackPanel Grid.Column="2"
+                                                                    HorizontalAlignment="Right">
+                                                            <TextBlock HorizontalAlignment="Right"
+                                                                       FontWeight="SemiBold"
+                                                                       Foreground="{Binding AmountForeground}"
+                                                                       Text="{Binding Importe}" />
+
+                                                            <Button Width="24"
+                                                                    Height="24"
+                                                                    Margin="0,8,0,0"
+                                                                    HorizontalAlignment="Right"
+                                                                    Background="Transparent"
+                                                                    BorderBrush="Transparent"
+                                                                    Click="AnularConsumo_Click"
+                                                                    Foreground="#C62828"
+                                                                    IsEnabled="{Binding PuedeAnular}"
+                                                                    ToolTip="Anular registro"
+                                                                    Visibility="{Binding PuedeAnular, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                                <Path Width="14"
+                                                                      Height="16"
+                                                                      Stretch="Uniform"
+                                                                      Fill="#F44336"
+                                                                      Data="M6,2 L10,2 L11,3 L15,3 L15,5 L1,5 L1,3 L5,3 Z M3,6 L13,6 L12,16 L4,16 Z M6,8 L7,8 L7,14 L6,14 Z M9,8 L10,8 L10,14 L9,14 Z" />
+                                                            </Button>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <Border Grid.Column="1"
+                        Padding="18"
+                        Background="#FFFFFF"
+                        BorderBrush="#E1E4EC"
+                        BorderThickness="1"
+                        CornerRadius="6">
+                    <StackPanel>
+                        <Border Visibility="{Binding IsEmpleadoSelected, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock FontSize="18"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#333333"
+                                                   Text="Ultimos menus registrados" />
+                                        <TextBlock Margin="0,5,0,0"
+                                                   FontSize="12"
+                                                   Foreground="#777777"
+                                                   Text="Control de lecturas realizadas hoy." />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1"
+                                                Margin="16,0,0,0"
+                                                VerticalAlignment="Center"
+                                                Orientation="Horizontal">
+                                        <Border Padding="10,4"
+                                                VerticalAlignment="Center"
+                                                BorderBrush="#594AE2"
+                                                BorderThickness="1"
+                                                CornerRadius="12">
+                                            <TextBlock Foreground="#594AE2"
+                                                       Text="{Binding RegistrosRecientes.Count, StringFormat={}{0} registro(s)}" />
+                                        </Border>
+
+                                        <Button Width="34"
+                                                Height="30"
+                                                Margin="8,0,0,0"
+                                                Command="{Binding ActualizarRegistrosCommand}"
+                                                ToolTip="Actualizar historial">
+                                            <Path Width="15"
+                                                  Height="15"
+                                                  Data="M13,4 L13,1 L16,4 L13,7 L13,5 A6,6 0 1 0 14,11"
+                                                  Stroke="#594AE2"
+                                                  StrokeThickness="1.8"
+                                                  Stretch="Uniform" />
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Border Padding="12"
+                                        Background="#EEF6FF"
+                                        BorderBrush="#90CAF9"
+                                        BorderThickness="1"
+                                        CornerRadius="4"
+                                        Visibility="{Binding HasRegistrosRecientes, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                                    <TextBlock Foreground="#1565C0"
+                                               Text="Todavia no hay menus registrados hoy." />
+                                </Border>
+
+                                <ScrollViewer MaxHeight="520"
+                                              VerticalScrollBarVisibility="Auto"
+                                              Visibility="{Binding HasRegistrosRecientes, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <ItemsControl ItemsSource="{Binding RegistrosRecientes}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Margin="0,0,0,8"
+                                                        Padding="12"
+                                                        Background="#FAFBFF"
+                                                        BorderBrush="#E1E4EC"
+                                                        BorderThickness="1"
+                                                        CornerRadius="6">
+                                                    <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="70" />
+                                                        <ColumnDefinition Width="110" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="110" />
+                                                        <ColumnDefinition Width="180" />
+                                                        <ColumnDefinition Width="90" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <TextBlock VerticalAlignment="Center"
+                                                               Foreground="#FF4081"
+                                                               Text="{Binding FechaRegistro, StringFormat={}{0:HH:mm}}" />
+                                                    <TextBlock Grid.Column="1"
+                                                               VerticalAlignment="Center"
+                                                               Text="{Binding Dni}" />
+                                                    <TextBlock Grid.Column="2"
+                                                               VerticalAlignment="Center"
+                                                               TextTrimming="CharacterEllipsis">
+                                                        <TextBlock.Inlines>
+                                                            <Run FontWeight="SemiBold" Text="{Binding NombreCompleto}" />
+                                                            <LineBreak />
+                                                            <Run FontSize="11" Foreground="#777777" Text="{Binding EstadoComensal}" />
+                                                        </TextBlock.Inlines>
+                                                    </TextBlock>
+                                                    <Border Grid.Column="3"
+                                                            Padding="8,3"
+                                                            HorizontalAlignment="Left"
+                                                            VerticalAlignment="Center"
+                                                            BorderBrush="#00C853"
+                                                            BorderThickness="1"
+                                                            CornerRadius="10">
+                                                        <TextBlock FontSize="11"
+                                                                   Foreground="#00A844"
+                                                                   Text="{Binding TipoServicio}" />
+                                                    </Border>
+                                                    <StackPanel Grid.Column="4"
+                                                                VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding EmpresaCliente}"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Margin="0,3,0,0"
+                                                                   FontSize="11"
+                                                                   Foreground="#777777"
+                                                                   Text="{Binding Sucursal}"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Margin="0,3,0,0"
+                                                                   FontSize="11"
+                                                                   Foreground="#594AE2"
+                                                                   Text="{Binding FormaCobro}"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
+                                                    <TextBlock Grid.Column="5"
+                                                               HorizontalAlignment="Right"
+                                                               VerticalAlignment="Center">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="#00A844" />
+                                                                <Setter Property="Text" Value="Registrado" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Anulado}" Value="True">
+                                                                        <Setter Property="Foreground" Value="#F44336" />
+                                                                        <Setter Property="Text" Value="Anulado" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </StackPanel>
+                        </Border>
+
+                        <DockPanel Visibility="{Binding IsEmpleadoSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <StackPanel>
+                                <TextBlock FontSize="18"
+                                           FontWeight="SemiBold"
+                                           Foreground="#333333"
+                                           Text="Registrar adicionales" />
+                                <TextBlock Margin="0,6,0,0"
+                                           Foreground="#FF4081"
+                                           Text="{Binding Fecha, StringFormat=Fecha: {0:dd/MM/yyyy}}" />
+                            </StackPanel>
+
+                            <Button DockPanel.Dock="Right"
+                                    Width="110"
+                                    Height="34"
+                                    Command="{Binding NuevoTrabajadorCommand}"
+                                    ToolTip="Nuevo registro">
+                                <StackPanel HorizontalAlignment="Center"
+                                            Orientation="Horizontal">
+                                    <Path Width="14"
+                                          Height="14"
+                                          Margin="0,0,8,0"
+                                          Data="M8,1 A7,7 0 1 0 8,15 A7,7 0 1 0 8,1 M8,4 L8,12 M4,8 L12,8"
+                                          Stroke="#333333"
+                                          StrokeThickness="1.7"
+                                          Stretch="Uniform" />
+                                    <TextBlock Text="NUEVO" />
+                                </StackPanel>
+                            </Button>
+                        </DockPanel>
+
+                        <TextBlock Margin="0,14,0,8"
+                                   Foreground="#777777"
+                                   Text="Selecciona el tipo de adicional y completa los datos."
+                                   Visibility="{Binding IsEmpleadoSelected, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+                        <TabControl x:Name="AdditionalTabs"
+                                    Margin="0,0,0,0"
+                                    SelectionChanged="AdditionalTabs_SelectionChanged"
+                                    Visibility="{Binding IsEmpleadoSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <TabItem>
+                                <TabItem.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Menu extra" />
+                                        <TextBlock Margin="6,0,0,0"
+                                                   Foreground="#594AE2"
+                                                   Text="{Binding MenusExtraCount, StringFormat=({0})}" />
+                                    </StackPanel>
+                                </TabItem.Header>
+                        <Border Padding="14"
+                                BorderBrush="#E1E4EC"
+                                BorderThickness="1"
+                                CornerRadius="4">
+                            <StackPanel>
+                                <DockPanel>
+                                    <StackPanel>
+                                        <TextBlock
+                                                   Foreground="#FF4081"
+                                                   Text="Segundo menu, menu a la carta o racion adicional." />
+                                    </StackPanel>
+
+                                    <Button DockPanel.Dock="Right"
+                                            Width="160"
+                                            Height="32"
+                                            Command="{Binding AgregarMenuExtraCommand}"
+                                            ToolTip="Agregar menu extra">
+                                        <StackPanel HorizontalAlignment="Center"
+                                                    Orientation="Horizontal">
+                                            <Path Width="12"
+                                                  Height="12"
+                                                  Margin="0,0,8,0"
+                                                  Data="M6,0 L6,12 M0,6 L12,6"
+                                                  Stroke="#333333"
+                                                  StrokeThickness="2"
+                                                  Stretch="Uniform" />
+                                            <TextBlock Text="AGREGAR MENU EXTRA" />
+                                        </StackPanel>
+                                    </Button>
+                                </DockPanel>
+
+                                <ItemsControl Margin="0,10,0,0"
+                                              ItemsSource="{Binding MenusExtra}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="0,0,0,8"
+                                                    Padding="8"
+                                                    Background="#FAFBFF"
+                                                    BorderBrush="#E1E4EC"
+                                                    BorderThickness="1"
+                                                    CornerRadius="6">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="150" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="110" />
+                                                        <ColumnDefinition Width="150" />
+                                                        <ColumnDefinition Width="80" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <ComboBox Height="30"
+                                                              VerticalAlignment="Center"
+                                                              DisplayMemberPath="Text"
+                                                              ItemsSource="{Binding DataContext.CategoriasMenuExtra, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                              SelectedValue="{Binding Categoria, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                              SelectedValuePath="Value" />
+
+                                                    <TextBox Grid.Column="1"
+                                                             Height="30"
+                                                             Margin="10,0,0,0"
+                                                             Padding="8,5"
+                                                             VerticalAlignment="Center"
+                                                             Text="{Binding Descripcion, UpdateSourceTrigger=PropertyChanged}" />
+
+                                                    <TextBox Grid.Column="2"
+                                                             Height="30"
+                                                             Margin="10,0,0,0"
+                                                             Padding="8,5"
+                                                             ToolTip="Formato: 1250.50 o 1,250.50"
+                                                             VerticalAlignment="Center"
+                                                             Text="{Binding PrecioTexto, UpdateSourceTrigger=PropertyChanged}" />
+
+                                                    <ComboBox Grid.Column="3"
+                                                              Height="30"
+                                                              Margin="10,0,0,0"
+                                                              VerticalAlignment="Center"
+                                                              DisplayMemberPath="Text"
+                                                              ItemsSource="{Binding DataContext.FormasCobroAdicional, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                              SelectedValue="{Binding FormaCobro, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                              SelectedValuePath="Value" />
+
+                                                    <Button Grid.Column="4"
+                                                            Width="68"
+                                                            Height="30"
+                                                            Margin="10,0,0,0"
+                                                            VerticalAlignment="Center"
+                                                            Command="{Binding DataContext.QuitarAdicionalCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}"
+                                                            Content="QUITAR" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <Grid Margin="0,10,0,0"
+                                      Visibility="{Binding HasMenusExtra, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Foreground="#777777" Text="Total menus extra" />
+                                        <TextBlock Margin="0,4,0,0"
+                                                   FontSize="18"
+                                                   FontWeight="SemiBold"
+                                                   Text="{Binding MenusExtraTotalTexto}" />
+                                    </StackPanel>
+
+                                    <Button Grid.Column="1"
+                                            Width="180"
+                                            Height="36"
+                                            Background="#594AE2"
+                                            BorderBrush="#594AE2"
+                                            Command="{Binding GuardarMenusExtraCommand}"
+                                            Foreground="White"
+                                            FontWeight="SemiBold"
+                                            Content="GUARDAR MENUS EXTRA" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                            </TabItem>
+
+                            <TabItem>
+                                <TabItem.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Producto adicional" />
+                                        <TextBlock Margin="6,0,0,0"
+                                                   Foreground="#594AE2"
+                                                   Text="{Binding ProductosAdicionalesCount, StringFormat=({0})}" />
+                                    </StackPanel>
+                                </TabItem.Header>
+                        <Border Padding="14"
+                                BorderBrush="#E1E4EC"
+                                BorderThickness="1"
+                                CornerRadius="4">
+                            <StackPanel>
+                                <DockPanel>
+                                    <StackPanel>
+                                        <TextBlock
+                                                   Foreground="#FF4081"
+                                                   Text="Bebidas, galletas, postres, snacks u otros productos." />
+                                    </StackPanel>
+
+                                    <Button DockPanel.Dock="Right"
+                                            Width="150"
+                                            Height="32"
+                                            Command="{Binding AgregarProductoCommand}"
+                                            ToolTip="Agregar producto">
+                                        <StackPanel HorizontalAlignment="Center"
+                                                    Orientation="Horizontal">
+                                            <Path Width="12"
+                                                  Height="12"
+                                                  Margin="0,0,8,0"
+                                                  Data="M6,0 L6,12 M0,6 L12,6"
+                                                  Stroke="#333333"
+                                                  StrokeThickness="2"
+                                                  Stretch="Uniform" />
+                                            <TextBlock Text="AGREGAR PRODUCTO" />
+                                        </StackPanel>
+                                    </Button>
+                                </DockPanel>
+
+                                <ItemsControl Margin="0,10,0,0"
+                                              ItemsSource="{Binding ProductosAdicionales}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="0,0,0,8"
+                                                    Padding="8"
+                                                    Background="#FAFBFF"
+                                                    BorderBrush="#E1E4EC"
+                                                    BorderThickness="1"
+                                                    CornerRadius="6">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="150" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="110" />
+                                                        <ColumnDefinition Width="150" />
+                                                        <ColumnDefinition Width="80" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <ComboBox Height="30"
+                                                              VerticalAlignment="Center"
+                                                              DisplayMemberPath="Text"
+                                                              ItemsSource="{Binding DataContext.CategoriasProducto, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                              SelectedValue="{Binding Categoria, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                              SelectedValuePath="Value" />
+
+                                                    <TextBox Grid.Column="1"
+                                                             Height="30"
+                                                             Margin="10,0,0,0"
+                                                             Padding="8,5"
+                                                             VerticalAlignment="Center"
+                                                             Text="{Binding Descripcion, UpdateSourceTrigger=PropertyChanged}" />
+
+                                                    <TextBox Grid.Column="2"
+                                                             Height="30"
+                                                             Margin="10,0,0,0"
+                                                             Padding="8,5"
+                                                             ToolTip="Formato: 1250.50 o 1,250.50"
+                                                             VerticalAlignment="Center"
+                                                             Text="{Binding PrecioTexto, UpdateSourceTrigger=PropertyChanged}" />
+
+                                                    <ComboBox Grid.Column="3"
+                                                              Height="30"
+                                                              Margin="10,0,0,0"
+                                                              VerticalAlignment="Center"
+                                                              DisplayMemberPath="Text"
+                                                              ItemsSource="{Binding DataContext.FormasCobroAdicional, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                              SelectedValue="{Binding FormaCobro, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                              SelectedValuePath="Value" />
+
+                                                    <Button Grid.Column="4"
+                                                            Width="68"
+                                                            Height="30"
+                                                            Margin="10,0,0,0"
+                                                            VerticalAlignment="Center"
+                                                            Command="{Binding DataContext.QuitarAdicionalCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}"
+                                                            Content="QUITAR" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <Grid Margin="0,10,0,0"
+                                      Visibility="{Binding HasProductosAdicionales, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Foreground="#777777" Text="Total productos" />
+                                        <TextBlock Margin="0,4,0,0"
+                                                   FontSize="18"
+                                                   FontWeight="SemiBold"
+                                                   Text="{Binding ProductosAdicionalesTotalTexto}" />
+                                    </StackPanel>
+
+                                    <Button Grid.Column="1"
+                                            Width="170"
+                                            Height="36"
+                                            Background="#594AE2"
+                                            BorderBrush="#594AE2"
+                                            Command="{Binding GuardarProductosCommand}"
+                                            Foreground="White"
+                                            FontWeight="SemiBold"
+                                            Content="GUARDAR PRODUCTOS" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                            </TabItem>
+                        </TabControl>
+
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

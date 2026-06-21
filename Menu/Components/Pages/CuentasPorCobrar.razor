@@ -20,7 +20,7 @@
     <div>
         <MudText Typo="Typo.h4">Cuentas por cobrar</MudText>
         <MudText Typo="Typo.body1" Color="Color.Secondary">
-                Control de consumos pendientes por crédito comedor.
+                Control de consumos pendientes del comensal.
         </MudText>
     </div>
 
@@ -43,7 +43,7 @@
 
             <MudItem xs="12" md="4">
                 <MudTextField @bind-Value="_search"
-                              Label="Buscar trabajador / DNI"
+                              Label="Buscar comensal / DNI"
                               Variant="Variant.Outlined"
                               Adornment="Adornment.Start"
                               AdornmentIcon="@Icons.Material.Filled.Search"
@@ -89,7 +89,7 @@
             <MudPaper Class="pa-4" Elevation="1">
                 <MudStack Spacing="1">
                     <MudIcon Icon="@Icons.Material.Filled.People" Color="Color.Info" />
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">Trabajadores</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Comensales</MudText>
                     <MudText Typo="Typo.h5">@TotalTrabajadores</MudText>
                 </MudStack>
             </MudPaper>
@@ -114,7 +114,7 @@
                 <div>
                     <MudText Typo="Typo.h6">Pendientes encontrados</MudText>
                     <MudText Typo="Typo.body2" Color="Color.Secondary">
-                        Selecciona consumos de un mismo trabajador para registrar el pago.
+                        Selecciona consumos de un mismo comensal para registrar el pago.
                     </MudText>
                 </div>
 
@@ -137,7 +137,7 @@
                         <MudTh></MudTh>
                         <MudTh>Fecha</MudTh>
                         <MudTh>DNI</MudTh>
-                        <MudTh>Trabajador</MudTh>
+                        <MudTh>Comensal</MudTh>
                         <MudTh>Concepto</MudTh>
                         <MudTh>Categoría</MudTh>
                         <MudTh>Descripción</MudTh>
@@ -156,7 +156,7 @@
 
                         <MudTd DataLabel="Fecha">@context.Fecha.ToString("dd/MM/yyyy")</MudTd>
                         <MudTd DataLabel="DNI">@context.Dni</MudTd>
-                        <MudTd DataLabel="Trabajador">@context.EmpleadoNombre</MudTd>
+                        <MudTd DataLabel="Comensal">@context.EmpleadoNombre</MudTd>
 
                         <MudTd DataLabel="Concepto">
                             <MudChip T="string"
@@ -205,7 +205,7 @@
                 <MudText Typo="Typo.h6">Registrar pago</MudText>
 
                 <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
-                    Trabajador: <b>@TrabajadorSeleccionadoNombre</b><br />
+                    Comensal: <b>@TrabajadorSeleccionadoNombre</b><br />
                     Total a cobrar: <b>@TotalSeleccionado.ToString("C2", _culture)</b>
                 </MudAlert>
 
@@ -365,7 +365,7 @@
             if (Seleccionados.Any(x => x.EmpleadoId != item.EmpleadoId))
             {
                 item.Seleccionado = false;
-                Snackbar.Add("Solo puedes seleccionar consumos de un mismo trabajador.", Severity.Warning);
+                Snackbar.Add("Solo puedes seleccionar consumos de un mismo comensal.", Severity.Warning);
                 StateHasChanged();
                 return;
             }
@@ -387,7 +387,7 @@
     {
         if (!PuedeRegistrarPago)
         {
-            Snackbar.Add("Selecciona pendientes de un mismo trabajador para registrar el pago.", Severity.Warning);
+            Snackbar.Add("Selecciona pendientes de un mismo comensal para registrar el pago.", Severity.Warning);
             return;
         }
 
@@ -407,7 +407,7 @@
     {
         if (!PuedeRegistrarPago)
         {
-            Snackbar.Add("Selecciona consumos pendientes de un mismo trabajador.", Severity.Warning);
+            Snackbar.Add("Selecciona consumos pendientes de un mismo comensal.", Severity.Warning);
             return;
         }
 

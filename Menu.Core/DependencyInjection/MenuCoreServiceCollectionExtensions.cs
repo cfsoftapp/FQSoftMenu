@@ -10,6 +10,9 @@ public static class MenuCoreServiceCollectionExtensions
     public static IServiceCollection AddMenuCoreServices(this IServiceCollection services)
     {
         services.AddScoped<EmpleadoService>();
+        services.AddScoped<TipoEmpleadoService>();
+        services.AddScoped<EmpresaClienteService>();
+        services.AddScoped<SucursalService>();
         services.AddScoped<ConfiguracionMenuService>();
         services.AddScoped<RegistroDiarioService>();
         services.AddScoped<CuentaPorCobrarService>();

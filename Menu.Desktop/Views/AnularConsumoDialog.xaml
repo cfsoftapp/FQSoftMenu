@@ -1,0 +1,97 @@
+<Window x:Class="Menu.Desktop.Views.AnularConsumoDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Anular consumo"
+        Width="460"
+        Height="455"
+        MinHeight="455"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner">
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Border Padding="12"
+                Background="#FFF8E1"
+                BorderBrush="#FFB74D"
+                BorderThickness="1"
+                CornerRadius="4">
+            <TextBlock Foreground="#EF6C00"
+                       Text="Esta acción anulará el consumo seleccionado. El registro quedará guardado para trazabilidad."
+                       TextWrapping="Wrap" />
+        </Border>
+
+        <Border Grid.Row="1"
+                Margin="0,14,0,0"
+                Padding="12"
+                Background="#FAFBFF"
+                BorderBrush="#E1E4EC"
+                BorderThickness="1"
+                CornerRadius="4">
+            <StackPanel>
+                <TextBlock x:Name="TipoText"
+                           FontWeight="SemiBold"
+                           Foreground="#333333" />
+                <TextBlock x:Name="DescripcionText"
+                           Margin="0,5,0,0"
+                           Foreground="#333333"
+                           TextWrapping="Wrap" />
+                <TextBlock x:Name="ImporteText"
+                           Margin="0,7,0,0"
+                           FontWeight="SemiBold"
+                           Foreground="#333333" />
+                <TextBlock x:Name="HoraText"
+                           Margin="0,5,0,0"
+                           FontSize="12"
+                           Foreground="#777777" />
+            </StackPanel>
+        </Border>
+
+        <StackPanel Grid.Row="2"
+                    Margin="0,16,0,0">
+            <TextBlock Margin="0,0,0,6"
+                       Text="Motivo de anulación" />
+            <ComboBox x:Name="MotivoCombo"
+                      Height="34"
+                      DisplayMemberPath="Text"
+                      SelectedValuePath="Value"
+                      SelectionChanged="MotivoCombo_SelectionChanged" />
+
+            <TextBlock Margin="0,14,0,6"
+                       Text="Observación" />
+            <TextBox x:Name="ObservacionText"
+                     Height="34"
+                     MaxLength="150"
+                     Padding="8"
+                     AcceptsReturn="False"
+                     TextChanged="ObservacionText_TextChanged"
+                     TextWrapping="NoWrap"
+                     VerticalScrollBarVisibility="Disabled" />
+        </StackPanel>
+
+        <DockPanel Grid.Row="3"
+                   Margin="0,18,0,0"
+                   LastChildFill="False">
+            <Button DockPanel.Dock="Right"
+                    Width="132"
+                    Height="36"
+                    Background="#D32F2F"
+                    BorderBrush="#D32F2F"
+                    Click="Confirmar_Click"
+                    Content="ANULAR"
+                    Foreground="White"
+                    FontWeight="SemiBold"
+                    x:Name="ConfirmarButton" />
+            <Button DockPanel.Dock="Right"
+                    Width="110"
+                    Height="36"
+                    Margin="0,0,10,0"
+                    Click="Cancelar_Click"
+                    Content="CANCELAR" />
+        </DockPanel>
+    </Grid>
+</Window>

@@ -11,6 +11,9 @@ namespace Menu.Data
         }
 
         public DbSet<Empleado> Empleados => Set<Empleado>();
+        public DbSet<TipoEmpleado> TiposEmpleado => Set<TipoEmpleado>();
+        public DbSet<EmpresaCliente> EmpresasCliente => Set<EmpresaCliente>();
+        public DbSet<Sucursal> Sucursales => Set<Sucursal>();
         public DbSet<ConfiguracionMenu> ConfiguracionesMenu => Set<ConfiguracionMenu>();
         public DbSet<ConsumoMenu> ConsumosMenu => Set<ConsumoMenu>();
         public DbSet<ConsumoAdicional> ConsumosAdicionales => Set<ConsumoAdicional>();

@@ -291,6 +291,122 @@ h1:focus {
     text-overflow: ellipsis;
 }
 
+.registro-recientes-lista {
+    display: grid;
+    gap: 8px;
+    width: 100%;
+    max-height: 520px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.registro-reciente-fila {
+    display: grid;
+    grid-template-columns: 58px 88px minmax(145px, 1.25fr) 92px minmax(155px, 1fr) 92px;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+    min-height: 76px;
+    padding: 12px 14px;
+    box-sizing: border-box;
+    background: #fafbff;
+    border: 1px solid #e1e4ec;
+    border-radius: 6px;
+}
+
+.registro-reciente-fila:hover {
+    border-color: #b8b1f4;
+    background: #f8f7ff;
+}
+
+.registro-reciente-hora {
+    color: #ff4081;
+    font-weight: 500;
+}
+
+.registro-reciente-dni {
+    color: #333;
+}
+
+.registro-reciente-comensal,
+.registro-reciente-ubicacion {
+    min-width: 0;
+}
+
+.registro-reciente-fila > div {
+    min-width: 0;
+}
+
+.registro-reciente-comensal .mud-typography,
+.registro-reciente-ubicacion .mud-typography {
+    display: block;
+    max-width: 100%;
+    overflow-wrap: normal;
+    word-break: normal;
+}
+
+.registro-reciente-comensal .mud-typography {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.registro-reciente-servicio,
+.registro-reciente-estado {
+    justify-self: start;
+}
+
+.registro-reciente-estado {
+    justify-self: end;
+}
+
+.registro-reciente-anulado {
+    opacity: .72;
+    background: #fff8f8;
+}
+
+@media (max-width: 1200px) {
+    .registro-reciente-fila {
+        grid-template-columns: 54px 84px minmax(135px, 1.15fr) 88px minmax(145px, 1fr) 86px;
+        gap: 8px;
+        padding-inline: 10px;
+    }
+}
+
+@media (max-width: 900px) {
+    .registro-reciente-fila {
+        grid-template-columns: 64px 1fr auto;
+        gap: 8px 12px;
+    }
+
+    .registro-reciente-dni {
+        grid-column: 1;
+        grid-row: 2;
+    }
+
+    .registro-reciente-comensal {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+    }
+
+    .registro-reciente-servicio {
+        grid-column: 3;
+        grid-row: 1;
+    }
+
+    .registro-reciente-ubicacion {
+        grid-column: 1 / span 2;
+        grid-row: 3;
+    }
+
+    .registro-reciente-estado {
+        grid-column: 3;
+        grid-row: 2 / span 2;
+        align-self: center;
+    }
+}
+
 .cierre-modal-backdrop {
     position: fixed;
     inset: 0;

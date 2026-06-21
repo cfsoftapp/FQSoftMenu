@@ -12,13 +12,13 @@
 
 <RequirePermission Permisos="new[] { Permisos.CierresVer }">
 
-<PageTitle>Cierres al proveedor</PageTitle>
+<PageTitle>Cierres de facturación</PageTitle>
 
 <MudStack Spacing="3">
     <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
             <MudIcon Icon="@Icons.Material.Filled.RequestQuote" Color="Color.Primary" />
-            <MudText Typo="Typo.h4">Cierres al proveedor</MudText>
+            <MudText Typo="Typo.h4">Cierres de facturación</MudText>
         </MudStack>
 
         <MudButton Variant="Variant.Filled"
@@ -167,7 +167,7 @@
                 <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                         <MudIcon Icon="@Icons.Material.Filled.RequestQuote" Color="Color.Primary" />
-                        <MudText Typo="Typo.h6">Nuevo cierre al proveedor</MudText>
+                        <MudText Typo="Typo.h6">Nuevo cierre de facturación</MudText>
                     </MudStack>
 
                     <MudIconButton Icon="@Icons.Material.Filled.Close"
@@ -240,7 +240,7 @@
 
                         <MudItem xs="12" sm="6" md="3">
                             <MudPaper Class="pa-3 h-100 cierre-summary-card cierre-total-card" Elevation="0">
-                                <MudText Typo="Typo.body2" Color="Color.Secondary">Total proveedor</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Total a facturar</MudText>
                                 <MudText Typo="Typo.h6">@_borradorProveedor.TotalLiquidarProveedor.ToString("C", _culture)</MudText>
                                 <MudText Typo="Typo.caption">A liquidar</MudText>
                             </MudPaper>
@@ -248,7 +248,7 @@
                     </MudGrid>
 
                     <MudTextField @bind-Value="_buscarEmpleadoCierre"
-                                  Label="Buscar empleado"
+                                  Label="Buscar comensal"
                                   Variant="Variant.Outlined"
                                   Margin="Margin.Dense"
                                   Immediate="true"
@@ -258,7 +258,7 @@
                     <MudPaper Class="pa-3 cierre-review-section" Elevation="0">
                         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                             <div>
-                                <MudText Typo="Typo.subtitle1" Class="fw-bold">Empresa (activos y autorizados)</MudText>
+                                <MudText Typo="Typo.subtitle1" Class="fw-bold">Empresa cliente (activos y autorizados)</MudText>
                                 <MudText Typo="Typo.body2" Color="Color.Secondary">
                                     Se incluyen automaticamente. Revisa activos, extras o productos autorizados por gerencia.
                                 </MudText>
@@ -277,9 +277,9 @@
                             <MudTable Items="GruposActivos" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm" Class="mt-2">
                                 <HeaderContent>
                                     <MudTh></MudTh>
-                                    <MudTh>Empleado</MudTh>
+                                    <MudTh>Comensal</MudTh>
                                     <MudTh Style="text-align:center">Items</MudTh>
-                                    <MudTh Style="text-align:right">Proveedor</MudTh>
+                                    <MudTh Style="text-align:right">A facturar</MudTh>
                                     <MudTh Style="text-align:right">Revision</MudTh>
                                 </HeaderContent>
                                 <RowTemplate>
@@ -288,9 +288,9 @@
                                                        Size="Size.Small"
                                                        OnClick="@(() => ToggleEmpleado(context.EmpleadoId))" />
                                     </MudTd>
-                                    <MudTd DataLabel="Empleado">@context.Dni - @context.EmpleadoNombre</MudTd>
+                                    <MudTd DataLabel="Comensal">@context.Dni - @context.EmpleadoNombre</MudTd>
                                     <MudTd DataLabel="Items" Style="text-align:center">@context.CantidadItems</MudTd>
-                                    <MudTd DataLabel="Proveedor" Style="text-align:right">@context.TotalProveedor.ToString("C", _culture)</MudTd>
+                                    <MudTd DataLabel="A facturar" Style="text-align:right">@context.TotalProveedor.ToString("C", _culture)</MudTd>
                                     <MudTd DataLabel="Revision" Style="text-align:right">@context.TotalRevision.ToString("C", _culture)</MudTd>
                                 </RowTemplate>
                                 <ChildRowContent>
@@ -337,16 +337,16 @@
                     <MudPaper Class="pa-3 cierre-review-section" Elevation="0">
                         <MudText Typo="Typo.subtitle1" Class="fw-bold">Descuento planilla (suspendidos)</MudText>
                         <MudText Typo="Typo.body2" Color="Color.Secondary">
-                            Revisa por empleado. Lo incluido pasa al proveedor y se recupera via planilla.
+                            Revisa por comensal. Lo incluido pasa a facturación y se recupera via planilla.
                         </MudText>
 
                         <MudTable Items="GruposPlanilla" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm" Class="mt-2">
                             <HeaderContent>
                                 <MudTh></MudTh>
-                                <MudTh>Empleado</MudTh>
+                                <MudTh>Comensal</MudTh>
                                 <MudTh Style="text-align:center">Items</MudTh>
                                 <MudTh Style="text-align:center">Excepciones</MudTh>
-                                <MudTh Style="text-align:right">Proveedor</MudTh>
+                                <MudTh Style="text-align:right">A facturar</MudTh>
                                 <MudTh Style="text-align:right">Revision</MudTh>
                             </HeaderContent>
                             <RowTemplate>
@@ -355,10 +355,10 @@
                                                    Size="Size.Small"
                                                    OnClick="@(() => ToggleEmpleado(context.EmpleadoId))" />
                                 </MudTd>
-                                <MudTd DataLabel="Empleado">@context.Dni - @context.EmpleadoNombre</MudTd>
+                                <MudTd DataLabel="Comensal">@context.Dni - @context.EmpleadoNombre</MudTd>
                                 <MudTd DataLabel="Items" Style="text-align:center">@context.CantidadItems</MudTd>
                                 <MudTd DataLabel="Excepciones" Style="text-align:center">@context.CantidadExcepciones</MudTd>
-                                <MudTd DataLabel="Proveedor" Style="text-align:right">@context.TotalProveedor.ToString("C", _culture)</MudTd>
+                                <MudTd DataLabel="A facturar" Style="text-align:right">@context.TotalProveedor.ToString("C", _culture)</MudTd>
                                 <MudTd DataLabel="Revision" Style="text-align:right">@context.TotalRevision.ToString("C", _culture)</MudTd>
                             </RowTemplate>
                             <ChildRowContent>

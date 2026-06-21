@@ -9,15 +9,20 @@ namespace Menu.Services;
 public class EmpleadoService
 {
     private readonly AppDbContext _context;
+    private readonly TipoEmpleadoService _tipoEmpleadoService;
 
-    public EmpleadoService(AppDbContext context)
+    public EmpleadoService(AppDbContext context, TipoEmpleadoService tipoEmpleadoService)
     {
         _context = context;
+        _tipoEmpleadoService = tipoEmpleadoService;
     }
 
     public async Task<List<Empleado>> GetAllAsync()
     {
         return await _context.Empleados
+            .Include(e => e.TipoEmpleado)
+            .Include(e => e.EmpresaCliente)
+            .Include(e => e.Sucursal)
             .OrderBy(e => e.Nombres)
             .ThenBy(e => e.Apellidos)
             .ToListAsync();
@@ -26,6 +31,9 @@ public class EmpleadoService
     public async Task<Empleado?> GetByIdAsync(int id)
     {
         return await _context.Empleados
+            .Include(e => e.TipoEmpleado)
+            .Include(e => e.EmpresaCliente)
+            .Include(e => e.Sucursal)
             .FirstOrDefaultAsync(e => e.Id == id);
     }
 
@@ -34,6 +42,9 @@ public class EmpleadoService
         dni = dni.Trim();
 
         return await _context.Empleados
+            .Include(e => e.TipoEmpleado)
+            .Include(e => e.EmpresaCliente)
+            .Include(e => e.Sucursal)
             .FirstOrDefaultAsync(e => e.Dni == dni);
     }
 
@@ -62,7 +73,26 @@ public class EmpleadoService
             return (false, "Los apellidos son obligatorios.");
 
         if (await ExistsDniAsync(empleado.Dni))
-            return (false, "Ya existe un empleado con ese DNI.");
+            return (false, "Ya existe un comensal con ese DNI.");
+
+        if (empleado.TipoEmpleadoId is null or <= 0)
+        {
+            var defaultTipo = await _tipoEmpleadoService.GetDefaultAsync();
+
+            if (defaultTipo is null)
+                return (false, "Debe registrar al menos un tipo de empleado activo.");
+
+            empleado.TipoEmpleadoId = defaultTipo.Id;
+        }
+        else if (!await _context.TiposEmpleado.AnyAsync(x => x.Id == empleado.TipoEmpleadoId && x.Activo))
+        {
+            return (false, "El tipo de empleado seleccionado no existe o está inactivo.");
+        }
+
+        var validacionEmpresaSucursal = await ValidarEmpresaSucursalAsync(empleado);
+
+        if (!validacionEmpresaSucursal.Success)
+            return validacionEmpresaSucursal;
 
         empleado.FechaCreacion = DateTime.Now;
         empleado.Activo = true;
@@ -78,7 +108,7 @@ public class EmpleadoService
         var dbEmpleado = await _context.Empleados.FindAsync(empleado.Id);
 
         if (dbEmpleado is null)
-            return (false, "El empleado no existe.");
+            return (false, "El comensal no existe.");
 
         empleado.Dni = empleado.Dni.Trim();
         empleado.Nombres = empleado.Nombres.Trim();
@@ -94,13 +124,27 @@ public class EmpleadoService
             return (false, "Los apellidos son obligatorios.");
 
         if (await ExistsDniAsync(empleado.Dni, empleado.Id))
-            return (false, "Ya existe otro empleado con ese DNI.");
+            return (false, "Ya existe otro comensal con ese DNI.");
+
+        if (empleado.TipoEmpleadoId is null or <= 0)
+            return (false, "Debe seleccionar un tipo de empleado.");
+
+        if (!await _context.TiposEmpleado.AnyAsync(x => x.Id == empleado.TipoEmpleadoId && x.Activo))
+            return (false, "El tipo de empleado seleccionado no existe o está inactivo.");
+
+        var validacionEmpresaSucursal = await ValidarEmpresaSucursalAsync(empleado);
+
+        if (!validacionEmpresaSucursal.Success)
+            return validacionEmpresaSucursal;
 
         dbEmpleado.Dni = empleado.Dni;
         dbEmpleado.Nombres = empleado.Nombres;
         dbEmpleado.Apellidos = empleado.Apellidos;
         dbEmpleado.Estado = empleado.Estado;
         dbEmpleado.Categoria = empleado.Categoria;
+        dbEmpleado.TipoEmpleadoId = empleado.TipoEmpleadoId;
+        dbEmpleado.EmpresaClienteId = empleado.EmpresaClienteId;
+        dbEmpleado.SucursalId = empleado.SucursalId;
         dbEmpleado.Activo = empleado.Activo;
 
         await _context.SaveChangesAsync();
@@ -113,13 +157,13 @@ public class EmpleadoService
         var empleado = await _context.Empleados.FindAsync(id);
 
         if (empleado is null)
-            return (false, "El empleado no existe.");
+            return (false, "El comensal no existe.");
 
         empleado.Activo = !empleado.Activo;
 
         await _context.SaveChangesAsync();
 
-        return (true, empleado.Activo ? "Empleado activado." : "Empleado desactivado.");
+        return (true, empleado.Activo ? "Comensal activado." : "Comensal desactivado.");
     }
 
     public async Task<(bool Success, string Message)> ToggleEstadoBeneficioAsync(int id)
@@ -127,7 +171,7 @@ public class EmpleadoService
         var empleado = await _context.Empleados.FindAsync(id);
 
         if (empleado is null)
-            return (false, "El empleado no existe.");
+            return (false, "El comensal no existe.");
 
         empleado.Estado = empleado.Estado == EstadoEmpleado.Activo
             ? EstadoEmpleado.Suspendido
@@ -172,6 +216,9 @@ public class EmpleadoService
             .ToHashSet();
 
         var empleadosExistentes = await _context.Empleados
+            .Include(x => x.TipoEmpleado)
+            .Include(x => x.EmpresaCliente)
+            .Include(x => x.Sucursal)
             .Where(x => dnisArchivo.Contains(x.Dni))
             .ToDictionaryAsync(x => x.Dni);
 
@@ -219,18 +266,13 @@ public class EmpleadoService
             {
                 resultado.Trabajador = existente.NombreCompleto;
                 resultado.Estado = "Ya registrado";
-                resultado.Mensaje = $"Beneficio: {existente.Estado}. Empleado: {(existente.Activo ? "Activo" : "Inactivo")}.";
+                resultado.Mensaje = $"Beneficio: {existente.Estado}. Comensal: {(existente.Activo ? "Activo" : "Inactivo")}.";
                 resumen.Resultados.Add(resultado);
                 continue;
             }
 
-            if (!TryParseTipoPersonal(fila.TipoPersonalTexto, out var tipoPersonal))
-            {
-                resultado.Estado = "Observado";
-                resultado.Mensaje = "Tipo de personal invalido. Use Empleado, Obrero, Practicante, Tercero, Visitante, Gerencia u Otro.";
-                resumen.Resultados.Add(resultado);
-                continue;
-            }
+            var tipoPersonalNombre = NormalizarTexto(fila.TipoPersonalTexto);
+            var tipoPersonal = await _tipoEmpleadoService.GetOrCreateAsync(tipoPersonalNombre);
 
             if (!TryParseEstado(fila.EstadoTexto, out var estado))
             {
@@ -247,7 +289,10 @@ public class EmpleadoService
                 Dni = dni,
                 Nombres = nombres,
                 Apellidos = apellidos,
-                Categoria = tipoPersonal,
+                Categoria = TryParseTipoPersonal(tipoPersonal.Nombre, out var categoriaLegacy)
+                    ? categoriaLegacy
+                    : CategoriaEmpleado.Otro,
+                TipoEmpleadoId = tipoPersonal.Id,
                 Estado = estado,
                 Activo = activo,
                 FechaCreacion = DateTime.Now
@@ -255,7 +300,7 @@ public class EmpleadoService
 
             resultado.Estado = guardar ? "Importado" : "Pendiente";
             resultado.Mensaje = guardar
-                ? "Empleado registrado correctamente."
+                ? "Comensal registrado correctamente."
                 : "Listo para importar.";
             resultado.Importado = guardar;
             resumen.Resultados.Add(resultado);
@@ -274,6 +319,43 @@ public class EmpleadoService
     private static string Normalizar(string? value)
     {
         return (value ?? string.Empty).Trim();
+    }
+
+    private async Task<(bool Success, string Message)> ValidarEmpresaSucursalAsync(Empleado empleado)
+    {
+        if (empleado.EmpresaClienteId is <= 0)
+            empleado.EmpresaClienteId = null;
+
+        if (empleado.SucursalId is <= 0)
+            empleado.SucursalId = null;
+
+        if (empleado.EmpresaClienteId.HasValue &&
+            !await _context.EmpresasCliente.AnyAsync(x => x.Id == empleado.EmpresaClienteId.Value && x.Activo))
+        {
+            return (false, "La empresa cliente seleccionada no existe o está inactiva.");
+        }
+
+        if (empleado.SucursalId.HasValue)
+        {
+            var sucursal = await _context.Sucursales
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == empleado.SucursalId.Value && x.Activo);
+
+            if (sucursal is null)
+                return (false, "La sucursal seleccionada no existe o está inactiva.");
+
+            if (empleado.EmpresaClienteId.HasValue &&
+                sucursal.EmpresaClienteId.HasValue &&
+                sucursal.EmpresaClienteId != empleado.EmpresaClienteId)
+            {
+                return (false, "La sucursal seleccionada pertenece a otra empresa cliente.");
+            }
+
+            if (!empleado.EmpresaClienteId.HasValue && sucursal.EmpresaClienteId.HasValue)
+                empleado.EmpresaClienteId = sucursal.EmpresaClienteId;
+        }
+
+        return (true, string.Empty);
     }
 
     private static string NormalizarTexto(string? value)

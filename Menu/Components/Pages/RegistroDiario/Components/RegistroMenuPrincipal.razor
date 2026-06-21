@@ -1,7 +1,7 @@
 ﻿<MudPaper Class="pa-3" Elevation="0" Outlined="true">
     <MudStack Spacing="2">
 
-        <MudText Typo="Typo.subtitle1">Menú del trabajador</MudText>
+        <MudText Typo="Typo.subtitle1">Menú del comensal</MudText>
 
         <MudGrid Spacing="2">
 
@@ -9,7 +9,7 @@
                 <MudCheckBox T="bool"
                              Value="@RegistraMenu"
                              ValueChanged="RegistraMenuChanged"
-                             Label="El trabajador consumió menú principal"
+                             Label="El comensal consumió menú principal"
                              Color="Color.Primary" />
             </MudItem>
 
@@ -26,7 +26,7 @@
                                Margin="Margin.Dense">
                         <MudSelectItem Value="TipoPagoMenu.DescuentoPlanilla">Descuento planilla</MudSelectItem>
                         <MudSelectItem Value="TipoPagoMenu.PagoDirecto">Pago directo</MudSelectItem>
-                        <MudSelectItem Value="TipoPagoMenu.CreditoComedor">Crédito comedor</MudSelectItem>
+                        <MudSelectItem Value="TipoPagoMenu.CreditoComedor">Pendiente del comensal</MudSelectItem>
                     </MudSelect>
                 </MudItem>
 

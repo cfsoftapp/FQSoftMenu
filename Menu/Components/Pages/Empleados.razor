@@ -1,4 +1,4 @@
-﻿@page "/empleados"
+@page "/empleados"
 
 @using Menu.Components.Shared
 @using Menu.DTOs.Empleados
@@ -9,13 +9,16 @@
 @using System.Text
 
 @inject EmpleadoService EmpleadoService
+@inject TipoEmpleadoService TipoEmpleadoService
+@inject EmpresaClienteService EmpresaClienteService
+@inject SucursalService SucursalService
 @inject AuthStateService AuthState
 @inject ISnackbar Snackbar
 
 
 <RequirePermission Permisos="new[] { Permisos.EmpleadosVer }">
 
-<PageTitle>Empleados</PageTitle>
+<PageTitle>Comensales</PageTitle>
 
 <MudStack Spacing="3">
 
@@ -26,11 +29,11 @@
 
             <div>
                 <MudText Typo="Typo.h4">
-                    Empleados
+                    Comensales
                 </MudText>
 
                 <MudText Typo="Typo.body2" Color="Color.Secondary">
-                    Mantenimiento de trabajadores y estado del beneficio de menú.
+                    Mantenimiento de comensales y estado del beneficio de menú.
                 </MudText>
             </div>
         @if (AuthState.TienePermiso(Permisos.EmpleadosCrear))
@@ -39,7 +42,7 @@
                        Color="Color.Primary"
                        StartIcon="@Icons.Material.Filled.Add"
                        OnClick="NuevoEmpleado">
-                Nuevo empleado
+                Nuevo comensal
             </MudButton>
         }
     </MudStack>
@@ -52,7 +55,7 @@
                           Justify="Justify.SpaceBetween"
                           Spacing="2">
                     <MudTextField @bind-Value="_search"
-                                  Label="Buscar por DNI o nombre"
+                                  Label="Buscar por DNI o nombre del comensal"
                                   Variant="Variant.Outlined"
                                   Margin="Margin.Dense"
                                   Immediate="true"
@@ -80,7 +83,7 @@
                         <MudStack Spacing="2">
                             <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                 <div>
-                                    <MudText Typo="Typo.subtitle2" Class="fw-bold">Carga masiva</MudText>
+                    <MudText Typo="Typo.subtitle2" Class="fw-bold">Carga masiva de comensales</MudText>
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
                                         Usa el formato CSV. Primero se revisa; luego confirma para guardar los registros válidos.
                                     </MudText>
@@ -126,14 +129,14 @@
                                     <HeaderContent>
                                         <MudTh>Fila</MudTh>
                                         <MudTh>DNI</MudTh>
-                                        <MudTh>Trabajador</MudTh>
+                                        <MudTh>Comensal</MudTh>
                                         <MudTh>Estado</MudTh>
                                         <MudTh>Mensaje</MudTh>
                                     </HeaderContent>
                                     <RowTemplate>
                                         <MudTd DataLabel="Fila">@context.NumeroFila</MudTd>
                                         <MudTd DataLabel="DNI">@context.Dni</MudTd>
-                                        <MudTd DataLabel="Trabajador">@context.Trabajador</MudTd>
+                                        <MudTd DataLabel="Comensal">@context.Trabajador</MudTd>
                                         <MudTd DataLabel="Estado">
                                             <MudChip T="string"
                                                      Size="Size.Small"
@@ -165,7 +168,9 @@
             <HeaderContent>
                 <MudTh>DNI</MudTh>
                 <MudTh>Nombres y Apellidos</MudTh>
-                <MudTh>Tipo de personal</MudTh>
+                <MudTh>Empresa cliente</MudTh>
+                <MudTh>Sucursal</MudTh>
+                <MudTh>Tipo de comensal</MudTh>
                 <MudTh>Estado</MudTh>
                 <MudTh>Activo</MudTh>
                 <MudTh>Fecha creación</MudTh>
@@ -176,12 +181,16 @@
                 <MudTd DataLabel="DNI">@context.Dni</MudTd>
                 <MudTd DataLabel="Nombre">@context.NombreCompleto</MudTd>
 
-                <MudTd DataLabel="Tipo de personal">
+                <MudTd DataLabel="Empresa cliente">@context.EmpresaClienteNombre</MudTd>
+
+                <MudTd DataLabel="Sucursal">@context.SucursalNombre</MudTd>
+
+                <MudTd DataLabel="Tipo de comensal">
                     <MudChip T="string"
                              Size="Size.Small"
                              Color="Color.Info"
                              Variant="Variant.Outlined">
-                        @context.Categoria
+                        @context.TipoEmpleadoNombre
                     </MudChip>
                 </MudTd>
 
@@ -211,7 +220,7 @@
                         <MudIconButton Icon="@Icons.Material.Filled.Edit"
                                        Color="Color.Primary"
                                        Size="Size.Small"
-                                       aria-label="Editar empleado"
+                                       aria-label="Editar comensal"
                                        OnClick="@(() => EditarEmpleado(context))" />
 
                         <MudIconButton Icon="@(context.Estado == EstadoEmpleado.Activo ? Icons.Material.Filled.PauseCircle : Icons.Material.Filled.PlayCircle)"
@@ -223,14 +232,14 @@
                         <MudIconButton Icon="@(context.Activo ? Icons.Material.Filled.Block : Icons.Material.Filled.CheckCircle)"
                                        Color="@(context.Activo ? Color.Error : Color.Success)"
                                        Size="Size.Small"
-                                       aria-label="@(context.Activo ? "Desactivar empleado" : "Activar empleado")"
+                                       aria-label="@(context.Activo ? "Desactivar comensal" : "Activar comensal")"
                                        OnClick="@(() => CambiarActivo(context.Id))" />
                     </MudTd>
             </RowTemplate>
 
             <NoRecordsContent>
                 <MudText Class="pa-4" Color="Color.Secondary">
-                    No se encontraron empleados.
+                    No se encontraron comensales.
                 </MudText>
             </NoRecordsContent>
 
@@ -256,11 +265,11 @@
 
                         <div>
                             <MudText Typo="Typo.h6">
-                                @(_editingId == 0 ? "Nuevo empleado" : "Editar empleado")
+                                @(_editingId == 0 ? "Nuevo comensal" : "Editar comensal")
                             </MudText>
 
                             <MudText Typo="Typo.body2" Color="Color.Secondary">
-                                Completa los datos del trabajador y su estado del beneficio de menú.
+                                Completa los datos del comensal y su estado del beneficio de menú.
                             </MudText>
                         </div>
                     </MudStack>
@@ -319,15 +328,47 @@
                         </MudItem>
 
                         <MudItem xs="12" sm="6" md="2">
-                            <MudSelect T="CategoriaEmpleado"
-                                       @bind-Value="_model.Categoria"
-                                       Label="Tipo de personal"
+                            <MudSelect T="int?"
+                                       @bind-Value="_model.TipoEmpleadoId"
+                                       Label="Tipo de comensal"
                                        Variant="Variant.Outlined"
                                        Margin="Margin.Dense">
-                                @foreach (var categoria in Enum.GetValues<CategoriaEmpleado>())
+                                @foreach (var tipo in _tiposEmpleadoActivos)
                                 {
-                                    <MudSelectItem Value="@categoria">
-                                        @GetCategoriaTexto(categoria)
+                                    <MudSelectItem Value="@((int?)tipo.Id)">
+                                        @tipo.Nombre
+                                    </MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudSelect T="int?"
+                                       @bind-Value="_model.EmpresaClienteId"
+                                       Label="Empresa cliente"
+                                       Variant="Variant.Outlined"
+                                       Margin="Margin.Dense"
+                                       Clearable="true">
+                                @foreach (var empresa in _empresasClienteActivas)
+                                {
+                                    <MudSelectItem Value="@((int?)empresa.Id)">
+                                        @empresa.NombreComercial
+                                    </MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudSelect T="int?"
+                                       @bind-Value="_model.SucursalId"
+                                       Label="Sucursal"
+                                       Variant="Variant.Outlined"
+                                       Margin="Margin.Dense"
+                                       Clearable="true">
+                                @foreach (var sucursal in SucursalesDisponibles)
+                                {
+                                    <MudSelectItem Value="@((int?)sucursal.Id)">
+                                        @sucursal.Nombre
                                     </MudSelectItem>
                                 }
                             </MudSelect>
@@ -385,6 +426,9 @@
 
 @code {
     private List<Empleado> _empleados = new();
+    private List<TipoEmpleado> _tiposEmpleadoActivos = new();
+    private List<EmpresaCliente> _empresasClienteActivas = new();
+    private List<Sucursal> _sucursales = new();
     private Empleado _model = new();
     private MudForm? _form;
 
@@ -407,13 +451,30 @@
 
             return _empleados.Where(e =>
                 e.Dni.ToLower().Contains(term) ||
-                e.NombreCompleto.ToLower().Contains(term));
+                e.NombreCompleto.ToLower().Contains(term) ||
+                e.EmpresaClienteNombre.ToLower().Contains(term) ||
+                e.SucursalNombre.ToLower().Contains(term));
         }
     }
 
+    private IEnumerable<Sucursal> SucursalesDisponibles =>
+        _sucursales
+            .Where(x => x.Activo)
+            .Where(x => !_model.EmpresaClienteId.HasValue ||
+                        !x.EmpresaClienteId.HasValue ||
+                        x.EmpresaClienteId == _model.EmpresaClienteId)
+            .OrderBy(x => x.Nombre);
+
     protected override async Task OnInitializedAsync()
     {
+        await LoadTiposEmpleado();
+        await LoadEmpresasSucursales();
         await LoadEmpleados();
+    }
+
+    private async Task LoadTiposEmpleado()
+    {
+        _tiposEmpleadoActivos = await TipoEmpleadoService.GetActivosAsync();
     }
 
     private async Task LoadEmpleados()
@@ -423,6 +484,12 @@
         _loading = false;
     }
 
+    private async Task LoadEmpresasSucursales()
+    {
+        _empresasClienteActivas = await EmpresaClienteService.GetActivasAsync();
+        _sucursales = await SucursalService.GetAllAsync();
+    }
+
     private void NuevoEmpleado()
     {
         _editingId = 0;
@@ -430,6 +497,10 @@
         {
             Estado = EstadoEmpleado.Activo,
             Categoria = CategoriaEmpleado.Obrero,
+            TipoEmpleadoId = _tiposEmpleadoActivos.FirstOrDefault(x => x.Nombre == "Obrero")?.Id ??
+                             _tiposEmpleadoActivos.FirstOrDefault()?.Id,
+            EmpresaClienteId = _empresasClienteActivas.FirstOrDefault()?.Id,
+            SucursalId = _sucursales.FirstOrDefault(x => x.Activo)?.Id,
             Activo = true,
             FechaCreacion = DateTime.Now
         };
@@ -449,6 +520,9 @@
             Apellidos = empleado.Apellidos,
             Estado = empleado.Estado,
             Categoria = empleado.Categoria,
+            TipoEmpleadoId = empleado.TipoEmpleadoId,
+            EmpresaClienteId = empleado.EmpresaClienteId,
+            SucursalId = empleado.SucursalId,
             Activo = empleado.Activo,
             FechaCreacion = empleado.FechaCreacion
         };
@@ -522,26 +596,11 @@
         }
     }
 
-    private static string GetCategoriaTexto(CategoriaEmpleado categoria)
-    {
-        return categoria switch
-        {
-            CategoriaEmpleado.Empleado => "Empleado",
-            CategoriaEmpleado.Obrero => "Obrero",
-            CategoriaEmpleado.Tercero => "Tercero",
-            CategoriaEmpleado.Practicante => "Practicante",
-            CategoriaEmpleado.Visitante => "Visitante",
-            CategoriaEmpleado.Gerencia => "Gerencia",
-            CategoriaEmpleado.Otro => "Otro",
-            _ => categoria.ToString()
-        };
-    }
-
     private async Task PrevisualizarCargaMasiva(InputFileChangeEventArgs args)
     {
         if (!AuthState.TienePermiso(Permisos.EmpleadosCrear))
         {
-            Snackbar.Add("No tiene permiso para crear empleados.", Severity.Warning);
+            Snackbar.Add("No tiene permiso para crear comensales.", Severity.Warning);
             return;
         }
 

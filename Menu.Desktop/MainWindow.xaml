@@ -5,56 +5,326 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="{Binding Title}"
-        Height="520"
+        Height="640"
         Width="920"
-        MinHeight="420"
+        MinHeight="560"
         MinWidth="720">
     <Grid Background="#F6F7FB">
         <Grid.RowDefinitions>
-            <RowDefinition Height="72" />
+            <RowDefinition Height="58" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Border Background="#594AE2">
-            <DockPanel Margin="24,0">
-                <TextBlock VerticalAlignment="Center"
-                           Foreground="White"
-                           FontSize="22"
-                           FontWeight="SemiBold"
-                           Text="{Binding AppName}" />
+        <Border Background="#594AE2"
+                BorderBrush="#4938D5"
+                BorderThickness="0,0,0,1">
+            <DockPanel Margin="18,0">
+                <StackPanel VerticalAlignment="Center"
+                            Orientation="Horizontal">
+                    <Button Width="38"
+                            Height="38"
+                            Margin="0,0,12,0"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            Command="{Binding ToggleNavigationCommand}"
+                            ToolTip="Contraer/expandir menu">
+                        <Border Width="38"
+                                Height="38"
+                                Background="#4E40D6"
+                                CornerRadius="19">
+                            <Path Width="20"
+                                  Height="20"
+                                  Data="M2,4 L18,4 M2,10 L18,10 M2,16 L18,16"
+                                  Stroke="White"
+                                  StrokeThickness="2.2"
+                                  Stretch="Uniform" />
+                        </Border>
+                    </Button>
 
-                <TextBlock DockPanel.Dock="Right"
-                           VerticalAlignment="Center"
-                           Foreground="#D8D3FF"
-                           FontSize="14"
-                           Text="{Binding ShellStatus}" />
+                    <Border Width="30"
+                            Height="30"
+                            Margin="0,0,10,0"
+                            Background="White"
+                            CornerRadius="7">
+                        <TextBlock HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Foreground="#594AE2"
+                                   FontSize="13"
+                                   FontWeight="Bold"
+                                   Text="FQ" />
+                    </Border>
+
+                    <TextBlock Foreground="White"
+                               FontSize="20"
+                               FontWeight="SemiBold"
+                               Text="{Binding AppName}" />
+
+                    <TextBlock Margin="10,3,0,0"
+                               Foreground="#D8D3FF"
+                               FontSize="13"
+                               Text="Desktop WPF"
+                               Visibility="{Binding IsAuthenticated, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                </StackPanel>
+
+                <StackPanel DockPanel.Dock="Right"
+                            VerticalAlignment="Center"
+                            Orientation="Horizontal"
+                            Visibility="{Binding IsAuthenticated, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Path Width="16"
+                          Height="16"
+                          Margin="0,0,12,0"
+                          Data="M8,1 A7,7 0 1 0 8,15 A7,7 0 1 0 8,1 M8,4 L8,8 L11,10"
+                          Stroke="#D8D3FF"
+                          StrokeThickness="1.7"
+                          Stretch="Uniform" />
+
+                    <StackPanel Margin="0,0,12,0">
+                        <TextBlock Foreground="White"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Text="{Binding UsuarioActual}" />
+                        <TextBlock Foreground="#D8D3FF"
+                                   FontSize="11"
+                                   Text="Sesion activa" />
+                    </StackPanel>
+
+                    <Button Width="32"
+                            Height="32"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            Command="{Binding LogoutCommand}"
+                            ToolTip="Salir">
+                        <Path Width="16"
+                              Height="16"
+                              Data="M2,2 L8,2 L8,4 L4,4 L4,12 L8,12 L8,14 L2,14 Z M9,5 L13,8 L9,11 L9,9 L6,9 L6,7 L9,7 Z"
+                              Fill="White"
+                              Stretch="Uniform" />
+                    </Button>
+                </StackPanel>
+
+                <StackPanel Margin="28,0,0,0"
+                            VerticalAlignment="Center"
+                            Orientation="Horizontal"
+                            Visibility="{Binding IsAuthenticated, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Path Width="18"
+                          Height="18"
+                          Margin="0,0,10,0"
+                          Data="M2,2 L14,2 L14,14 L2,14 Z M4,5 L12,5 M4,8 L12,8 M4,11 L9,11"
+                          Stroke="#D8D3FF"
+                          StrokeThickness="1.7"
+                          Stretch="Uniform" />
+
+                    <StackPanel>
+                        <TextBlock Foreground="White"
+                                   FontSize="21"
+                                   FontWeight="SemiBold"
+                                   Text="{Binding CurrentViewTitle}" />
+                        <TextBlock Foreground="#D8D3FF"
+                                   FontSize="12"
+                                   Text="{Binding CurrentViewSubtitle}" />
+                    </StackPanel>
+                </StackPanel>
             </DockPanel>
         </Border>
 
-        <Grid Grid.Row="1" Margin="32">
-            <Border Padding="28"
-                    Background="White"
+        <ContentControl Grid.Row="1"
+                        Content="{Binding Login}"
+                        Visibility="{Binding IsAuthenticated, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+
+        <Grid Grid.Row="1"
+              Visibility="{Binding IsAuthenticated, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="{Binding NavigationWidth}" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Background="#FFFFFF"
                     BorderBrush="#E1E4EC"
-                    BorderThickness="1"
-                    CornerRadius="6">
-                <StackPanel>
-                    <TextBlock FontSize="28"
-                               FontWeight="SemiBold"
-                               Foreground="#333333"
-                               Text="{Binding WelcomeTitle}" />
+                    BorderThickness="0,0,1,0">
+                <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                              VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="0,18">
+                        <Button Height="42"
+                                Margin="0,0,0,6"
+                                Padding="0"
+                                Background="{Binding DashboardNavBackground}"
+                                BorderBrush="Transparent"
+                                Command="{Binding ShowDashboardCommand}"
+                                Foreground="{Binding DashboardNavForeground}"
+                                HorizontalContentAlignment="Left">
+                            <StackPanel Margin="14,0,0,0"
+                                        Orientation="Horizontal">
+                                <Path Width="20"
+                                      Height="20"
+                                      Data="M2,2 L9,2 L9,9 L2,9 Z M11,2 L18,2 L18,9 L11,9 Z M2,11 L9,11 L9,18 L2,18 Z M11,11 L18,11 L18,18 L11,18 Z"
+                                      Fill="{Binding DashboardNavForeground}"
+                                      Stretch="Uniform" />
+                                <TextBlock Margin="10,0,0,0"
+                                           VerticalAlignment="Center"
+                                           Text="Inicio"
+                                           Visibility="{Binding IsNavigationExpanded, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            </StackPanel>
+                        </Button>
 
-                    <TextBlock Margin="0,10,0,0"
-                               FontSize="16"
-                               Foreground="#FF4081"
-                               Text="{Binding WelcomeMessage}" />
+                        <Button Height="42"
+                                Margin="0,0,0,6"
+                                Padding="0"
+                                Background="{Binding EmpleadosNavBackground}"
+                                BorderBrush="Transparent"
+                                Command="{Binding ShowEmpleadosCommand}"
+                                Foreground="{Binding EmpleadosNavForeground}"
+                                HorizontalContentAlignment="Left">
+                            <StackPanel Margin="14,0,0,0"
+                                        Orientation="Horizontal">
+                                <Path Width="20"
+                                      Height="20"
+                                      Data="M7,9 A4,4 0 1 0 7,1 A4,4 0 1 0 7,9 M15,8 A3.5,3.5 0 1 0 15,1 A3.5,3.5 0 1 0 15,8 M0,19 C0,14.5 14,14.5 14,19 Z M12,19 C12,16 20,16 20,19 Z"
+                                      Fill="{Binding EmpleadosNavForeground}"
+                                      Stretch="Uniform" />
+                                <TextBlock Margin="10,0,0,0"
+                                           VerticalAlignment="Center"
+                                           Text="Comensales"
+                                           Visibility="{Binding IsNavigationExpanded, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            </StackPanel>
+                        </Button>
 
-                    <Separator Margin="0,24" />
+                        <Button Height="42"
+                                Margin="0,0,0,6"
+                                Padding="0"
+                                Background="{Binding RegistroNavBackground}"
+                                BorderBrush="Transparent"
+                                Command="{Binding ShowRegistroDiarioCommand}"
+                                Foreground="{Binding RegistroNavForeground}"
+                                HorizontalContentAlignment="Left">
+                            <StackPanel Margin="14,0,0,0"
+                                        Orientation="Horizontal">
+                                <Path Width="20"
+                                      Height="20"
+                                      Data="M4,1 L16,1 L16,5 L4,5 Z M3,6 L17,6 L17,9 L3,9 Z M4,10 L16,10 L16,19 L4,19 Z M6,12 L8,12 L8,14 L6,14 Z M9,12 L11,12 L11,14 L9,14 Z M12,12 L14,12 L14,14 L12,14 Z M6,15 L8,15 L8,17 L6,17 Z M9,15 L11,15 L11,17 L9,17 Z M12,15 L14,15 L14,17 L12,17 Z"
+                                      Fill="{Binding RegistroNavForeground}"
+                                      Stretch="Uniform" />
+                                <TextBlock Margin="10,0,0,0"
+                                           VerticalAlignment="Center"
+                                           Text="Registro diario"
+                                           Visibility="{Binding IsNavigationExpanded, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            </StackPanel>
+                        </Button>
 
-                    <TextBlock FontSize="15"
-                               Foreground="#555555"
-                               Text="{Binding CoreStatus}" />
-                </StackPanel>
+                        <Button Height="42"
+                                Margin="0,0,0,6"
+                                Padding="0"
+                                Background="{Binding CuentasNavBackground}"
+                                BorderBrush="Transparent"
+                                Command="{Binding ShowCuentasPorCobrarCommand}"
+                                Foreground="{Binding CuentasNavForeground}"
+                                HorizontalContentAlignment="Left">
+                            <StackPanel Margin="14,0,0,0"
+                                        Orientation="Horizontal">
+                                <Path Width="20"
+                                      Height="20"
+                                      Data="M3,5 L17,5 L17,15 L3,15 Z M5,7 A2,2 0 1 0 5,11 A2,2 0 1 0 5,7 M11,8 L15,8 M11,11 L15,11 M1,3 L15,3 L15,5 L3,5 L3,13 L1,13 Z"
+                                      Fill="{Binding CuentasNavForeground}"
+                                      Stretch="Uniform" />
+                                <TextBlock Margin="10,0,0,0"
+                                           VerticalAlignment="Center"
+                                           Text="Cuentas por cobrar"
+                                           Visibility="{Binding IsNavigationExpanded, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Height="42"
+                                Margin="0,0,0,6"
+                                Padding="0"
+                                Background="{Binding ReportesNavBackground}"
+                                BorderBrush="Transparent"
+                                Command="{Binding ShowReportesCommand}"
+                                Foreground="{Binding ReportesNavForeground}"
+                                HorizontalContentAlignment="Left">
+                            <StackPanel Margin="14,0,0,0"
+                                        Orientation="Horizontal">
+                                <Path Width="20"
+                                      Height="20"
+                                      Data="M3,3 L17,3 L17,17 L3,17 Z M6,14 L8,14 L8,8 L6,8 Z M9,14 L11,14 L11,5 L9,5 Z M12,14 L14,14 L14,10 L12,10 Z"
+                                      Fill="{Binding ReportesNavForeground}"
+                                      Stretch="Uniform" />
+                                <TextBlock Margin="10,0,0,0"
+                                           VerticalAlignment="Center"
+                                           Text="Reportes"
+                                           Visibility="{Binding IsNavigationExpanded, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Height="42"
+                                Margin="0,0,0,6"
+                                Padding="0"
+                                Background="{Binding CierresNavBackground}"
+                                BorderBrush="Transparent"
+                                Command="{Binding ShowCierresCommand}"
+                                Foreground="{Binding CierresNavForeground}"
+                                HorizontalContentAlignment="Left">
+                            <StackPanel Margin="14,0,0,0"
+                                        Orientation="Horizontal">
+                                <Path Width="20"
+                                      Height="20"
+                                      Data="M5,2 L5,5 M15,2 L15,5 M3,4 L17,4 L17,18 L3,18 Z M3,8 L17,8 M6,11 L8,11 L8,13 L6,13 Z M10,11 L12,11 L12,13 L10,13 Z M14,11 L16,11 L16,13 L14,13 Z"
+                                      Fill="{Binding CierresNavForeground}"
+                                      Stretch="Uniform" />
+                                <TextBlock Margin="10,0,0,0"
+                                           VerticalAlignment="Center"
+                                           Text="Cierres"
+                                           Visibility="{Binding IsNavigationExpanded, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Height="42"
+                                Margin="0,0,0,6"
+                                Padding="0"
+                                Background="{Binding UsuariosNavBackground}"
+                                BorderBrush="Transparent"
+                                Command="{Binding ShowUsuariosCommand}"
+                                Foreground="{Binding UsuariosNavForeground}"
+                                HorizontalContentAlignment="Left">
+                            <StackPanel Margin="14,0,0,0"
+                                        Orientation="Horizontal">
+                                <Path Width="20"
+                                      Height="20"
+                                      Data="M7,9 A4,4 0 1 0 7,1 A4,4 0 1 0 7,9 M0,19 C0,14.5 14,14.5 14,19 Z M15,9 L17,9 L17,11 L19,11 L19,13 L17,13 L17,15 L15,15 L15,13 L13,13 L13,11 L15,11 Z"
+                                      Fill="{Binding UsuariosNavForeground}"
+                                      Stretch="Uniform" />
+                                <TextBlock Margin="10,0,0,0"
+                                           VerticalAlignment="Center"
+                                           Text="Usuarios"
+                                           Visibility="{Binding IsNavigationExpanded, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Height="42"
+                                Margin="0,0,0,6"
+                                Padding="0"
+                                Background="{Binding ConfiguracionNavBackground}"
+                                BorderBrush="Transparent"
+                                Command="{Binding ShowConfiguracionCommand}"
+                                Foreground="{Binding ConfiguracionNavForeground}"
+                                HorizontalContentAlignment="Left">
+                            <StackPanel Margin="14,0,0,0"
+                                        Orientation="Horizontal">
+                                <Path Width="20"
+                                      Height="20"
+                                      Data="M10,1 L12,1 L12.8,3.4 L15,2.2 L16.4,3.6 L15.2,5.8 L17.6,6.6 L17.6,8.6 L15.2,9.4 L16.4,11.6 L15,13 L12.8,11.8 L12,14.2 L10,14.2 L9.2,11.8 L7,13 L5.6,11.6 L6.8,9.4 L4.4,8.6 L4.4,6.6 L6.8,5.8 L5.6,3.6 L7,2.2 L9.2,3.4 Z M11,5.5 A2.5,2.5 0 1 0 11,10.5 A2.5,2.5 0 1 0 11,5.5"
+                                      Fill="{Binding ConfiguracionNavForeground}"
+                                      Stretch="Uniform" />
+                                <TextBlock Margin="10,0,0,0"
+                                           VerticalAlignment="Center"
+                                           Text="Configuracion"
+                                           Visibility="{Binding IsNavigationExpanded, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </ScrollViewer>
             </Border>
+
+            <ContentControl Grid.Column="1"
+                            Content="{Binding CurrentPage}" />
         </Grid>
     </Grid>
 </Window>

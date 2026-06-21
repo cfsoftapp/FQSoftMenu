@@ -1,0 +1,299 @@
+<UserControl x:Class="Menu.Desktop.Views.CuentasPorCobrarView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <Style x:Key="FilterTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Height" Value="40" />
+            <Setter Property="Padding" Value="12,7" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#B8BDC9" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Style.Triggers>
+                <Trigger Property="IsKeyboardFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="#594AE2" />
+                    <Setter Property="BorderThickness" Value="1.5" />
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="#8176EA" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="FilterDatePickerStyle" TargetType="DatePicker">
+            <Setter Property="Height" Value="40" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#B8BDC9" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Style.Triggers>
+                <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                    <Setter Property="BorderBrush" Value="#594AE2" />
+                    <Setter Property="BorderThickness" Value="1.5" />
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="#8176EA" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="CenteredGridTextStyle" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextAlignment" Value="Center" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="14" Background="#F6F7FB">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Border Padding="12,8"
+                Background="{Binding EstadoBackground}"
+                BorderBrush="{Binding EstadoBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="4">
+            <TextBlock Foreground="{Binding EstadoForeground}" Text="{Binding Estado}" />
+        </Border>
+
+        <Border Grid.Row="1"
+                Margin="0,12,0,0"
+                Padding="14"
+                Background="White"
+                BorderBrush="#E1E4EC"
+                BorderThickness="1"
+                CornerRadius="6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="170" />
+                    <ColumnDefinition Width="170" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="130" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel>
+                    <TextBlock Margin="0,0,0,5" Text="Fecha inicio" />
+                    <DatePicker SelectedDate="{Binding FechaInicio}"
+                                Style="{StaticResource FilterDatePickerStyle}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                    <TextBlock Margin="0,0,0,5" Text="Fecha fin" />
+                    <DatePicker SelectedDate="{Binding FechaFin}"
+                                Style="{StaticResource FilterDatePickerStyle}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Margin="12,0,0,0">
+                    <TextBlock Margin="0,0,0,5" Text="DNI o comensal" />
+                    <TextBox Style="{StaticResource FilterTextBoxStyle}"
+                             Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+
+                <Button Grid.Column="3"
+                        Height="40"
+                        Margin="12,21,0,0"
+                        Background="#594AE2"
+                        BorderBrush="#594AE2"
+                        Command="{Binding BuscarCommand}"
+                        Foreground="White"
+                        FontWeight="SemiBold"
+                        Content="BUSCAR" />
+            </Grid>
+        </Border>
+
+        <UniformGrid Grid.Row="2" Margin="0,12,0,12" Columns="4">
+            <Border Margin="0,0,8,0" Padding="12" Background="White" BorderBrush="#E1E4EC" BorderThickness="1" CornerRadius="6">
+                <StackPanel>
+                    <TextBlock Foreground="#FF4081" Text="Total pendiente" />
+                    <TextBlock Margin="0,7,0,0" FontSize="20" FontWeight="SemiBold" Text="{Binding TotalPendienteText}" />
+                </StackPanel>
+            </Border>
+            <Border Margin="0,0,8,0" Padding="12" Background="White" BorderBrush="#E1E4EC" BorderThickness="1" CornerRadius="6">
+                <StackPanel>
+                    <TextBlock Foreground="#FF4081" Text="Seleccionado" />
+                    <TextBlock Margin="0,7,0,0" FontSize="20" FontWeight="SemiBold" Text="{Binding TotalSeleccionadoText}" />
+                </StackPanel>
+            </Border>
+            <Border Margin="0,0,8,0" Padding="12" Background="White" BorderBrush="#E1E4EC" BorderThickness="1" CornerRadius="6">
+                <StackPanel>
+                    <TextBlock Foreground="#FF4081" Text="Comensales" />
+                    <TextBlock Margin="0,7,0,0" FontSize="20" FontWeight="SemiBold" Text="{Binding TotalComensales}" />
+                </StackPanel>
+            </Border>
+            <Border Padding="12" Background="White" BorderBrush="#E1E4EC" BorderThickness="1" CornerRadius="6">
+                <StackPanel>
+                    <TextBlock Foreground="#FF4081" Text="Pendientes" />
+                    <TextBlock Margin="0,7,0,0" FontSize="20" FontWeight="SemiBold" Text="{Binding TotalRegistros}" />
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+
+        <Border Grid.Row="3"
+                Background="White"
+                BorderBrush="#E1E4EC"
+                BorderThickness="1"
+                CornerRadius="6">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Grid Margin="16,14,16,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel>
+                        <TextBlock FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="#333333"
+                                   Text="Pendientes encontrados" />
+                        <TextBlock Margin="0,4,0,0"
+                                   Foreground="#FF4081"
+                                   Text="Selecciona consumos de un mismo comensal para registrar el pago." />
+                    </StackPanel>
+
+                    <Button Grid.Column="1"
+                            Width="156"
+                            Height="36"
+                            Background="#00A86B"
+                            BorderBrush="#00A86B"
+                            Click="RegistrarPago_Click"
+                            Foreground="White"
+                            FontWeight="SemiBold"
+                            IsEnabled="{Binding CanRegisterPayment}">
+                        <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                            <Path Width="16"
+                                  Height="14"
+                                  Margin="0,0,8,0"
+                                  Data="M2,3 L14,3 L14,12 L2,12 Z M4,5 A2,2 0 1 0 4,9 A2,2 0 1 0 4,5 M10,6 L13,6 M10,9 L13,9 M1,1 L12,1 L12,3 L2,3 L2,10 L1,10 Z"
+                                  Fill="White"
+                                  Stretch="Uniform" />
+                            <TextBlock Text="REGISTRAR PAGO" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+
+                <DataGrid Grid.Row="1"
+                          Margin="16,0"
+                          AlternatingRowBackground="#FAFBFF"
+                          AutoGenerateColumns="False"
+                          Background="White"
+                          BorderBrush="#E1E4EC"
+                          BorderThickness="1"
+                          CanUserAddRows="False"
+                          CanUserDeleteRows="False"
+                          CanUserResizeRows="False"
+                          ColumnHeaderHeight="40"
+                          GridLinesVisibility="Horizontal"
+                          HeadersVisibility="Column"
+                          HorizontalGridLinesBrush="#E1E4EC"
+                          IsReadOnly="False"
+                          ItemsSource="{Binding Pendientes}"
+                          RowBackground="White"
+                          RowHeaderWidth="0"
+                          RowHeight="44"
+                          SelectionMode="Single"
+                          VerticalGridLinesBrush="Transparent">
+                    <DataGrid.ColumnHeaderStyle>
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Background" Value="#FAFAFC" />
+                            <Setter Property="BorderBrush" Value="#E1E4EC" />
+                            <Setter Property="BorderThickness" Value="0,0,0,1" />
+                            <Setter Property="FontWeight" Value="SemiBold" />
+                            <Setter Property="HorizontalContentAlignment" Value="Center" />
+                            <Setter Property="Padding" Value="8,0" />
+                        </Style>
+                    </DataGrid.ColumnHeaderStyle>
+                    <DataGrid.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="BorderThickness" Value="0" />
+                            <Setter Property="Padding" Value="7,0" />
+                            <Setter Property="HorizontalContentAlignment" Value="Center" />
+                            <Setter Property="VerticalContentAlignment" Value="Center" />
+                            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                        </Style>
+                    </DataGrid.CellStyle>
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="BorderBrush" Value="#E1E4EC" />
+                            <Setter Property="BorderThickness" Value="0,0,0,1" />
+                            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#F6F4FF" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Width="45">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Width="90" Binding="{Binding Fecha, StringFormat=dd/MM/yyyy}" ElementStyle="{StaticResource CenteredGridTextStyle}" Header="Fecha" IsReadOnly="True" />
+                        <DataGridTextColumn Width="95" Binding="{Binding Dni}" ElementStyle="{StaticResource CenteredGridTextStyle}" Header="DNI" IsReadOnly="True" />
+                        <DataGridTextColumn Width="*" MinWidth="190" Binding="{Binding EmpleadoNombre}" ElementStyle="{StaticResource CenteredGridTextStyle}" Header="Comensal" IsReadOnly="True" />
+                        <DataGridTemplateColumn Width="135" Header="Concepto">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Border Padding="8,2"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            BorderBrush="{Binding ConceptoBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="10">
+                                        <TextBlock FontSize="12"
+                                                   Foreground="{Binding ConceptoBrush}"
+                                                   Text="{Binding Concepto}" />
+                                    </Border>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Width="110" Binding="{Binding Categoria}" ElementStyle="{StaticResource CenteredGridTextStyle}" Header="Categoria" IsReadOnly="True" />
+                        <DataGridTextColumn Width="*" MinWidth="150" Binding="{Binding Detalle}" ElementStyle="{StaticResource CenteredGridTextStyle}" Header="Descripcion" IsReadOnly="True" />
+                        <DataGridTextColumn Width="90" Binding="{Binding Precio, StringFormat=S/ {0:N2}}" ElementStyle="{StaticResource CenteredGridTextStyle}" Header="Importe" IsReadOnly="True" />
+                        <DataGridTextColumn Width="140" Binding="{Binding UsuarioRegistro}" ElementStyle="{StaticResource CenteredGridTextStyle}" Header="Registrado por" IsReadOnly="True" />
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <Grid Grid.Row="2" Margin="16,10,16,14">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                        <TextBlock VerticalAlignment="Center" Text="Filas:" />
+                        <ComboBox Width="70"
+                                  Height="30"
+                                  Margin="7,0,0,0"
+                                  ItemsSource="{Binding PageSizes}"
+                                  SelectedItem="{Binding PageSize}" />
+                        <TextBlock Margin="18,0,0,0" VerticalAlignment="Center" Text="{Binding RangeText}" />
+                        <TextBlock Margin="18,0,0,0" VerticalAlignment="Center" Text="{Binding PageText}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Button Width="38" Height="30" Command="{Binding AnteriorCommand}" Content="&lt;" />
+                        <Button Width="38" Height="30" Margin="6,0,0,0" Command="{Binding SiguienteCommand}" Content="&gt;" />
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

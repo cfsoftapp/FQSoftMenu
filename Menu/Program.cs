@@ -87,13 +87,13 @@ app.MapGet("/cierres/proveedor/{id:int}/excel", async (int id, Menu.Services.Cie
 
 app.MapGet("/empleados/formato-carga.csv", () =>
 {
-    const string contenido = "DNI,Nombres,Apellidos,TipoPersonal,Estado,Activo\r\n" +
+    const string contenido = "DNI,Nombres,Apellidos,TipoComensal,Estado,Activo\r\n" +
                              "00000000,Nombres,Apellidos,Obrero,Activo,SI\r\n";
 
     return Results.File(
         Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(contenido)).ToArray(),
         "text/csv; charset=utf-8",
-        "formato-carga-empleados.csv");
+        "formato-carga-comensales.csv");
 })
 .RequireAuthorization(Permisos.EmpleadosCrear);
 
@@ -113,7 +113,8 @@ app.MapPost("/auth/login", async (
 
     var returnUrl = EsReturnUrlLocal(input.ReturnUrl) ? input.ReturnUrl : "/";
     return Results.Redirect(returnUrl);
-});
+})
+.DisableAntiforgery();
 
 app.MapPost("/auth/logout", async (HttpContext httpContext) =>
 {

@@ -1,4 +1,4 @@
-﻿using Menu.Data;
+using Menu.Data;
 using Menu.DTOs;
 using Menu.Enums;
 using Menu.Models;
@@ -102,7 +102,7 @@ public class CuentaPorCobrarService
     public async Task<ResultadoOperacionDto> RegistrarPagoAsync(PagoCreditoInputDto input)
     {
         if (input.EmpleadoId <= 0)
-            return ResultadoOperacionDto.Fail("Debe seleccionar un trabajador.");
+            return ResultadoOperacionDto.Fail("Debe seleccionar un comensal.");
 
         if (input.ConsumoMenuIds.Count == 0 && input.ConsumoAdicionalIds.Count == 0)
             return ResultadoOperacionDto.Fail("Debe seleccionar al menos un consumo pendiente.");
@@ -126,10 +126,10 @@ public class CuentaPorCobrarService
             .ToListAsync();
 
         if (menusPendientes.Count != input.ConsumoMenuIds.Count)
-            return ResultadoOperacionDto.Fail("Algunos menús seleccionados ya no están pendientes o no pertenecen al trabajador.");
+            return ResultadoOperacionDto.Fail("Algunos menús seleccionados ya no están pendientes o no pertenecen al comensal.");
 
         if (adicionalesPendientes.Count != input.ConsumoAdicionalIds.Count)
-            return ResultadoOperacionDto.Fail("Algunos adicionales seleccionados ya no están pendientes o no pertenecen al trabajador.");
+            return ResultadoOperacionDto.Fail("Algunos adicionales seleccionados ya no están pendientes o no pertenecen al comensal.");
 
         var totalMenus = menusPendientes.Sum(x => x.PrecioMenu);
         var totalAdicionales = adicionalesPendientes.Sum(x => x.Precio);

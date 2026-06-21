@@ -365,6 +365,9 @@ namespace Menu.Migrations
                         .HasMaxLength(15)
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("EmpresaClienteId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("Estado")
                         .HasColumnType("INTEGER");
 
@@ -376,12 +379,60 @@ namespace Menu.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("SucursalId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("TipoEmpleadoId")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Dni")
                         .IsUnique();
 
+                    b.HasIndex("EmpresaClienteId");
+
+                    b.HasIndex("SucursalId");
+
+                    b.HasIndex("TipoEmpleadoId");
+
                     b.ToTable("Empleados", (string)null);
+                });
+
+            modelBuilder.Entity("Menu.Models.EmpresaCliente", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NombreComercial")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RazonSocial")
+                        .HasMaxLength(160)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Ruc")
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NombreComercial")
+                        .IsUnique();
+
+                    b.HasIndex("Ruc")
+                        .IsUnique();
+
+                    b.ToTable("EmpresasCliente", (string)null);
                 });
 
             modelBuilder.Entity("Menu.Models.PagoConsumoAdicional", b =>
@@ -531,6 +582,69 @@ namespace Menu.Migrations
                     b.ToTable("RolesSistema", (string)null);
                 });
 
+            modelBuilder.Entity("Menu.Models.Sucursal", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Direccion")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("EmpresaClienteId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmpresaClienteId");
+
+                    b.HasIndex("Nombre", "EmpresaClienteId")
+                        .IsUnique();
+
+                    b.ToTable("Sucursales", (string)null);
+                });
+
+            modelBuilder.Entity("Menu.Models.TipoEmpleado", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Descripcion")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Nombre")
+                        .IsUnique();
+
+                    b.ToTable("TiposEmpleado", (string)null);
+                });
+
             modelBuilder.Entity("Menu.Models.UsuarioSistema", b =>
                 {
                     b.Property<int>("Id")
@@ -611,6 +725,30 @@ namespace Menu.Migrations
                     b.Navigation("Empleado");
                 });
 
+            modelBuilder.Entity("Menu.Models.Empleado", b =>
+                {
+                    b.HasOne("Menu.Models.EmpresaCliente", "EmpresaCliente")
+                        .WithMany("Empleados")
+                        .HasForeignKey("EmpresaClienteId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Menu.Models.Sucursal", "Sucursal")
+                        .WithMany("Empleados")
+                        .HasForeignKey("SucursalId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Menu.Models.TipoEmpleado", "TipoEmpleado")
+                        .WithMany("Empleados")
+                        .HasForeignKey("TipoEmpleadoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("EmpresaCliente");
+
+                    b.Navigation("Sucursal");
+
+                    b.Navigation("TipoEmpleado");
+                });
+
             modelBuilder.Entity("Menu.Models.PagoConsumoAdicional", b =>
                 {
                     b.HasOne("Menu.Models.Empleado", "Empleado")
@@ -660,6 +798,16 @@ namespace Menu.Migrations
                     b.Navigation("RolSistema");
                 });
 
+            modelBuilder.Entity("Menu.Models.Sucursal", b =>
+                {
+                    b.HasOne("Menu.Models.EmpresaCliente", "EmpresaCliente")
+                        .WithMany("Sucursales")
+                        .HasForeignKey("EmpresaClienteId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("EmpresaCliente");
+                });
+
             modelBuilder.Entity("Menu.Models.UsuarioSistema", b =>
                 {
                     b.HasOne("Menu.Models.RolSistema", "RolSistema")
@@ -695,6 +843,13 @@ namespace Menu.Migrations
                     b.Navigation("PagosAdicionales");
                 });
 
+            modelBuilder.Entity("Menu.Models.EmpresaCliente", b =>
+                {
+                    b.Navigation("Empleados");
+
+                    b.Navigation("Sucursales");
+                });
+
             modelBuilder.Entity("Menu.Models.PagoConsumoAdicional", b =>
                 {
                     b.Navigation("Detalles");
@@ -710,6 +865,16 @@ namespace Menu.Migrations
                     b.Navigation("RolPermisos");
 
                     b.Navigation("Usuarios");
+                });
+
+            modelBuilder.Entity("Menu.Models.Sucursal", b =>
+                {
+                    b.Navigation("Empleados");
+                });
+
+            modelBuilder.Entity("Menu.Models.TipoEmpleado", b =>
+                {
+                    b.Navigation("Empleados");
                 });
 #pragma warning restore 612, 618
         }
