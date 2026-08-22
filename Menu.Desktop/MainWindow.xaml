@@ -150,6 +150,7 @@
                                 Background="{Binding DashboardNavBackground}"
                                 BorderBrush="Transparent"
                                 Command="{Binding ShowDashboardCommand}"
+                                Visibility="{Binding CanViewDashboard, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 Foreground="{Binding DashboardNavForeground}"
                                 HorizontalContentAlignment="Left">
                             <StackPanel Margin="14,0,0,0"
@@ -172,6 +173,7 @@
                                 Background="{Binding EmpleadosNavBackground}"
                                 BorderBrush="Transparent"
                                 Command="{Binding ShowEmpleadosCommand}"
+                                Visibility="{Binding CanViewEmpleados, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 Foreground="{Binding EmpleadosNavForeground}"
                                 HorizontalContentAlignment="Left">
                             <StackPanel Margin="14,0,0,0"
@@ -194,6 +196,7 @@
                                 Background="{Binding RegistroNavBackground}"
                                 BorderBrush="Transparent"
                                 Command="{Binding ShowRegistroDiarioCommand}"
+                                Visibility="{Binding CanViewRegistro, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 Foreground="{Binding RegistroNavForeground}"
                                 HorizontalContentAlignment="Left">
                             <StackPanel Margin="14,0,0,0"
@@ -216,6 +219,7 @@
                                 Background="{Binding CuentasNavBackground}"
                                 BorderBrush="Transparent"
                                 Command="{Binding ShowCuentasPorCobrarCommand}"
+                                Visibility="{Binding CanViewCuentas, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 Foreground="{Binding CuentasNavForeground}"
                                 HorizontalContentAlignment="Left">
                             <StackPanel Margin="14,0,0,0"
@@ -238,6 +242,7 @@
                                 Background="{Binding ReportesNavBackground}"
                                 BorderBrush="Transparent"
                                 Command="{Binding ShowReportesCommand}"
+                                Visibility="{Binding CanViewReportes, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 Foreground="{Binding ReportesNavForeground}"
                                 HorizontalContentAlignment="Left">
                             <StackPanel Margin="14,0,0,0"
@@ -260,6 +265,7 @@
                                 Background="{Binding CierresNavBackground}"
                                 BorderBrush="Transparent"
                                 Command="{Binding ShowCierresCommand}"
+                                Visibility="{Binding CanViewCierres, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 Foreground="{Binding CierresNavForeground}"
                                 HorizontalContentAlignment="Left">
                             <StackPanel Margin="14,0,0,0"
@@ -282,6 +288,7 @@
                                 Background="{Binding UsuariosNavBackground}"
                                 BorderBrush="Transparent"
                                 Command="{Binding ShowUsuariosCommand}"
+                                Visibility="{Binding CanViewUsuarios, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 Foreground="{Binding UsuariosNavForeground}"
                                 HorizontalContentAlignment="Left">
                             <StackPanel Margin="14,0,0,0"
@@ -304,6 +311,7 @@
                                 Background="{Binding ConfiguracionNavBackground}"
                                 BorderBrush="Transparent"
                                 Command="{Binding ShowConfiguracionCommand}"
+                                Visibility="{Binding CanViewConfiguracion, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 Foreground="{Binding ConfiguracionNavForeground}"
                                 HorizontalContentAlignment="Left">
                             <StackPanel Margin="14,0,0,0"

@@ -1,4 +1,5 @@
 using Menu.DTOs;
+using Menu.Security;
 using Menu.Services;
 
 namespace Menu.Desktop.ViewModels;
@@ -6,12 +7,6 @@ namespace Menu.Desktop.ViewModels;
 public sealed class MainViewModel : ObservableObject
 {
     private readonly AuthStateService _authStateService;
-    private readonly PlaceholderPageViewModel _usuariosPage = new(
-        "Usuarios",
-        "Administracion de usuarios, roles y permisos.");
-    private readonly PlaceholderPageViewModel _configuracionPage = new(
-        "Configuracion",
-        "Parametros de menu, precios y comportamiento general.");
 
     private bool _isAuthenticated;
     private bool _isNavigationCollapsed;
@@ -27,6 +22,8 @@ public sealed class MainViewModel : ObservableObject
         CuentasPorCobrarViewModel cuentasPorCobrar,
         ReportesViewModel reportes,
         CierresViewModel cierres,
+        UsuariosViewModel usuarios,
+        ConfiguracionViewModel configuracion,
         AuthStateService authStateService)
     {
         _authStateService = authStateService;
@@ -37,16 +34,18 @@ public sealed class MainViewModel : ObservableObject
         CuentasPorCobrar = cuentasPorCobrar;
         Reportes = reportes;
         Cierres = cierres;
+        Usuarios = usuarios;
+        Configuracion = configuracion;
         CurrentPage = Dashboard;
 
-        ShowDashboardCommand = new RelayCommand(ShowDashboard);
-        ShowEmpleadosCommand = new RelayCommand(ShowEmpleados);
-        ShowRegistroDiarioCommand = new RelayCommand(ShowRegistroDiario);
-        ShowCuentasPorCobrarCommand = new RelayCommand(ShowCuentasPorCobrar);
-        ShowReportesCommand = new RelayCommand(ShowReportes);
-        ShowCierresCommand = new RelayCommand(ShowCierres);
-        ShowUsuariosCommand = new RelayCommand(() => ShowPlaceholder("Usuarios", _usuariosPage));
-        ShowConfiguracionCommand = new RelayCommand(() => ShowPlaceholder("Configuracion", _configuracionPage));
+        ShowDashboardCommand = new RelayCommand(ShowDashboard, () => CanViewDashboard);
+        ShowEmpleadosCommand = new RelayCommand(ShowEmpleados, () => CanViewEmpleados);
+        ShowRegistroDiarioCommand = new RelayCommand(ShowRegistroDiario, () => CanViewRegistro);
+        ShowCuentasPorCobrarCommand = new RelayCommand(ShowCuentasPorCobrar, () => CanViewCuentas);
+        ShowReportesCommand = new RelayCommand(ShowReportes, () => CanViewReportes);
+        ShowCierresCommand = new RelayCommand(ShowCierres, () => CanViewCierres);
+        ShowUsuariosCommand = new RelayCommand(ShowUsuarios, () => CanViewUsuarios);
+        ShowConfiguracionCommand = new RelayCommand(ShowConfiguracion, () => CanViewConfiguracion);
         ToggleNavigationCommand = new RelayCommand(ToggleNavigation);
         LogoutCommand = new RelayCommand(Logout, () => IsAuthenticated);
         Login.LoginSucceeded += OnLoginSucceeded;
@@ -119,6 +118,19 @@ public sealed class MainViewModel : ObservableObject
     public ReportesViewModel Reportes { get; }
 
     public CierresViewModel Cierres { get; }
+
+    public UsuariosViewModel Usuarios { get; }
+
+    public ConfiguracionViewModel Configuracion { get; }
+
+    public bool CanViewDashboard => _authStateService.TienePermiso(Permisos.DashboardVer);
+    public bool CanViewEmpleados => _authStateService.TienePermiso(Permisos.EmpleadosVer);
+    public bool CanViewRegistro => _authStateService.TienePermiso(Permisos.RegistroDiarioVer);
+    public bool CanViewCuentas => _authStateService.TienePermiso(Permisos.CuentasCobrarVer);
+    public bool CanViewReportes => _authStateService.TienePermiso(Permisos.ReportesVer);
+    public bool CanViewCierres => _authStateService.TienePermiso(Permisos.CierresVer);
+    public bool CanViewUsuarios => _authStateService.TienePermiso(Permisos.UsuariosVer);
+    public bool CanViewConfiguracion => _authStateService.TienePermiso(Permisos.ConfiguracionVer);
 
     public object? CurrentPage
     {
@@ -202,6 +214,7 @@ public sealed class MainViewModel : ObservableObject
         IsAuthenticated = true;
         CurrentView = "Dashboard";
         CurrentPage = Dashboard;
+        NotifyAccessStateChanged();
         await Dashboard.LoadAsync();
     }
 
@@ -247,10 +260,18 @@ public sealed class MainViewModel : ObservableObject
         await Cierres.LoadAsync();
     }
 
-    private void ShowPlaceholder(string viewKey, PlaceholderPageViewModel page)
+    private async void ShowUsuarios()
     {
-        CurrentView = viewKey;
-        CurrentPage = page;
+        CurrentView = "Usuarios";
+        CurrentPage = Usuarios;
+        await Usuarios.LoadAsync();
+    }
+
+    private async void ShowConfiguracion()
+    {
+        CurrentView = "Configuracion";
+        CurrentPage = Configuracion;
+        await Configuracion.LoadAsync();
     }
 
     private void Logout()
@@ -260,6 +281,7 @@ public sealed class MainViewModel : ObservableObject
         CurrentView = "Dashboard";
         CurrentPage = Dashboard;
         IsAuthenticated = false;
+        NotifyAccessStateChanged();
     }
 
     private void ToggleNavigation()
@@ -295,5 +317,25 @@ public sealed class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(CierresNavForeground));
         OnPropertyChanged(nameof(UsuariosNavForeground));
         OnPropertyChanged(nameof(ConfiguracionNavForeground));
+    }
+
+    private void NotifyAccessStateChanged()
+    {
+        OnPropertyChanged(nameof(CanViewDashboard));
+        OnPropertyChanged(nameof(CanViewEmpleados));
+        OnPropertyChanged(nameof(CanViewRegistro));
+        OnPropertyChanged(nameof(CanViewCuentas));
+        OnPropertyChanged(nameof(CanViewReportes));
+        OnPropertyChanged(nameof(CanViewCierres));
+        OnPropertyChanged(nameof(CanViewUsuarios));
+        OnPropertyChanged(nameof(CanViewConfiguracion));
+        ShowUsuariosCommand.RaiseCanExecuteChanged();
+        ShowConfiguracionCommand.RaiseCanExecuteChanged();
+        ShowDashboardCommand.RaiseCanExecuteChanged();
+        ShowEmpleadosCommand.RaiseCanExecuteChanged();
+        ShowRegistroDiarioCommand.RaiseCanExecuteChanged();
+        ShowCuentasPorCobrarCommand.RaiseCanExecuteChanged();
+        ShowReportesCommand.RaiseCanExecuteChanged();
+        ShowCierresCommand.RaiseCanExecuteChanged();
     }
 }

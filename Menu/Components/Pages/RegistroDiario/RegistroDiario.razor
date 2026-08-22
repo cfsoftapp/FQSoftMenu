@@ -195,7 +195,6 @@
             {
                 TipoPagoMenu.DescuentoPlanilla => "Descuento planilla",
                 TipoPagoMenu.PagoDirecto => $"Pago directo - {_formaPagoDirectoMenu}",
-                TipoPagoMenu.CreditoComedor => "Pendiente del comensal",
                 _ => "No aplica"
             };
         }
@@ -227,12 +226,6 @@
         _registraMenu &&
         _tipoPagoMenuSuspendido == TipoPagoMenu.PagoDirecto;
 
-    private bool MenuCreditoComedor =>
-        _empleado is not null &&
-        _empleado.Estado == EstadoEmpleado.Suspendido &&
-        _registraMenu &&
-        _tipoPagoMenuSuspendido == TipoPagoMenu.CreditoComedor;
-
     private decimal TotalPagaEmpresa =>
         (MenuEmpresa ? _precioMenu : 0m)
         + TodosLosAdicionales
@@ -249,7 +242,7 @@
         TodosLosAdicionales
             .Where(x => x.FormaCobro != FormaCobroAdicional.Empresa)
             .Sum(x => x.Precio) +
-        (MenuDescuentoPlanilla || MenuPagoDirecto || MenuCreditoComedor ? _precioMenu : 0m);
+        (MenuDescuentoPlanilla || MenuPagoDirecto ? _precioMenu : 0m);
 
     private decimal TotalPagadoMomento =>
         TodosLosAdicionales
@@ -262,8 +255,7 @@
     private decimal TotalPendienteCredito =>
         TodosLosAdicionales
             .Where(x => x.FormaCobro == FormaCobroAdicional.CreditoComedor)
-            .Sum(x => x.Precio)
-        + (MenuCreditoComedor ? _precioMenu : 0m);
+            .Sum(x => x.Precio);
 
     protected override async Task OnInitializedAsync()
     {

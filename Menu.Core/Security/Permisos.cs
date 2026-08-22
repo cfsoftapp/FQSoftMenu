@@ -17,6 +17,7 @@ public static class Permisos
     public const string ReportesVer = "REPORTES_VER";
 
     public const string CierresVer = "CIERRES_VER";
+    public const string CierresGestionar = "CIERRES_GESTIONAR";
 
     public const string UsuariosVer = "USUARIOS_VER";
     public const string UsuariosCrear = "USUARIOS_CREAR";
@@ -37,6 +38,7 @@ public static class Permisos
         CuentasCobrarPagar,
         ReportesVer,
         CierresVer,
+        CierresGestionar,
         UsuariosVer,
         UsuariosCrear,
         UsuariosEditar,

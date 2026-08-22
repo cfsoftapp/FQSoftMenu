@@ -632,7 +632,7 @@
                                                               Margin="10,0,0,0"
                                                               VerticalAlignment="Center"
                                                               DisplayMemberPath="Text"
-                                                              ItemsSource="{Binding DataContext.FormasCobroAdicional, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                              ItemsSource="{Binding DataContext.FormasCobroMenuExtra, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                               SelectedValue="{Binding FormaCobro, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                               SelectedValuePath="Value" />
 
@@ -765,7 +765,7 @@
                                                               Margin="10,0,0,0"
                                                               VerticalAlignment="Center"
                                                               DisplayMemberPath="Text"
-                                                              ItemsSource="{Binding DataContext.FormasCobroAdicional, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                              ItemsSource="{Binding DataContext.FormasCobroProducto, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                               SelectedValue="{Binding FormaCobro, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                               SelectedValuePath="Value" />
 

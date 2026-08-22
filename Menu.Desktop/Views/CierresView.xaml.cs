@@ -14,6 +14,7 @@ public partial class CierresView : UserControl
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        Loaded += (_, _) => EnsureViewModel();
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -26,24 +27,40 @@ public partial class CierresView : UserControl
             _viewModel.RequestCierreDialog += OpenDialog;
     }
 
-    private async void OpenDialog(CierreProveedorRowViewModel? cierre)
+    private CierresViewModel? EnsureViewModel()
     {
-        if (_viewModel is null)
+        if (_viewModel is not null)
+            return _viewModel;
+
+        _viewModel = DataContext as CierresViewModel;
+        if (_viewModel is not null)
+            _viewModel.RequestCierreDialog += OpenDialog;
+
+        return _viewModel;
+    }
+
+    private async void OpenDialog(CierreProveedorRowViewModel? cierre) =>
+        await OpenDialogAsync(cierre, readOnly: false);
+
+    private async Task OpenDialogAsync(CierreProveedorRowViewModel? cierre, bool readOnly)
+    {
+        var viewModel = EnsureViewModel();
+        if (viewModel is null)
             return;
 
         try
         {
-            var dialogViewModel = _viewModel.CreateDialogViewModel();
-            var dialog = new CierreProveedorDialog(dialogViewModel)
-            {
-                Owner = Window.GetWindow(this)
-            };
+            var dialogViewModel = viewModel.CreateDialogViewModel();
+            var dialog = new CierreProveedorDialog(dialogViewModel);
+            var owner = Window.GetWindow(this);
+            if (owner is not null && owner.IsLoaded)
+                dialog.Owner = owner;
 
             if (cierre is not null)
-                await dialogViewModel.LoadExistingAsync(cierre);
+                await dialogViewModel.LoadExistingAsync(cierre, readOnly);
 
             dialog.ShowDialog();
-            await _viewModel.LoadAsync();
+            await viewModel.LoadAsync();
         }
         catch (Exception ex)
         {
@@ -55,18 +72,28 @@ public partial class CierresView : UserControl
         }
     }
 
-    private void Abrir_Click(object sender, RoutedEventArgs e)
+    private async void Ver_Click(object sender, RoutedEventArgs e)
     {
-        if (_viewModel is not null &&
-            sender is Button { CommandParameter: CierreProveedorRowViewModel cierre })
-        {
-            _viewModel.Open(cierre);
-        }
+        if (EnsureViewModel() is null ||
+            sender is not Button { CommandParameter: CierreProveedorRowViewModel cierre })
+            return;
+
+        await OpenDialogAsync(cierre, readOnly: true);
+    }
+
+    private async void Editar_Click(object sender, RoutedEventArgs e)
+    {
+        if (EnsureViewModel() is not { CanManage: true } ||
+            sender is not Button { CommandParameter: CierreProveedorRowViewModel cierre })
+            return;
+
+        await OpenDialogAsync(cierre, readOnly: false);
     }
 
     private async void Eliminar_Click(object sender, RoutedEventArgs e)
     {
-        if (_viewModel is null ||
+        var viewModel = EnsureViewModel();
+        if (viewModel is not { CanManage: true } ||
             sender is not Button { CommandParameter: CierreProveedorRowViewModel cierre })
             return;
 
@@ -81,7 +108,7 @@ public partial class CierresView : UserControl
 
         try
         {
-            await _viewModel.DeleteAsync(cierre);
+            await viewModel.DeleteAsync(cierre);
         }
         catch (Exception ex)
         {
@@ -95,7 +122,8 @@ public partial class CierresView : UserControl
 
     private async void Excel_Click(object sender, RoutedEventArgs e)
     {
-        if (_viewModel is null ||
+        var viewModel = EnsureViewModel();
+        if (viewModel is null ||
             sender is not Button { CommandParameter: CierreProveedorRowViewModel cierre })
             return;
 
@@ -111,8 +139,13 @@ public partial class CierresView : UserControl
 
         try
         {
-            var bytes = await _viewModel.GenerateExcelAsync(cierre);
+            var bytes = await viewModel.GenerateExcelAsync(cierre);
             await File.WriteAllBytesAsync(dialog.FileName, bytes);
+            MessageBox.Show(
+                "El archivo Excel se genero correctamente.",
+                "Cierres",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
         }
         catch (Exception ex)
         {

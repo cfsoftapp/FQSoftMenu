@@ -10,6 +10,8 @@ public class CierreProveedorBorradorDto
 
     public int? CierreProveedorId { get; set; }
 
+    public string? Observacion { get; set; }
+
     public List<CierreProveedorItemDto> Items { get; set; } = new();
 
     public int TotalMenusActivos => Items.Count(x =>

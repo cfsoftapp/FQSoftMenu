@@ -93,6 +93,7 @@
                     Command="{Binding NuevoCierreCommand}"
                     Foreground="White"
                     FontWeight="SemiBold"
+                    Visibility="{Binding CanManage, Converter={StaticResource BooleanToVisibilityConverter}}"
                     Content="+  NUEVO CIERRE" />
         </Grid>
 
@@ -151,14 +152,14 @@
                         </Style>
                     </DataGrid.CellStyle>
                     <DataGrid.Columns>
-                        <DataGridTextColumn Width="310" Binding="{Binding Periodo}" Header="Periodo">
+                        <DataGridTextColumn Width="1.4*" Binding="{Binding Periodo}" Header="Periodo">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock" BasedOn="{StaticResource CenteredHistoryText}">
                                     <Setter Property="FontWeight" Value="SemiBold" />
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <DataGridTemplateColumn Width="130" Header="Estado">
+                        <DataGridTemplateColumn Width="0.8*" MinWidth="110" Header="Estado">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <Border MinWidth="72"
@@ -173,14 +174,14 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTextColumn Width="90" Binding="{Binding TotalItems}" ElementStyle="{StaticResource CenteredHistoryText}" Header="Items" />
-                        <DataGridTextColumn Width="130" Binding="{Binding TotalText}" ElementStyle="{StaticResource CenteredHistoryText}" Header="Monto" />
-                        <DataGridTextColumn Width="*" MinWidth="220" Binding="{Binding FechaRegistro}" ElementStyle="{StaticResource CenteredHistoryText}" Header="Generado" />
-                        <DataGridTemplateColumn Width="180" Header="Acciones">
+                        <DataGridTextColumn Width="0.55*" MinWidth="75" Binding="{Binding TotalItems}" ElementStyle="{StaticResource CenteredHistoryText}" Header="Items" />
+                        <DataGridTextColumn Width="0.8*" MinWidth="105" Binding="{Binding TotalText}" ElementStyle="{StaticResource CenteredHistoryText}" Header="Monto" />
+                        <DataGridTextColumn Width="1.15*" MinWidth="175" Binding="{Binding FechaRegistro}" ElementStyle="{StaticResource CenteredHistoryText}" Header="Generado" />
+                        <DataGridTemplateColumn Width="1.05*" MinWidth="170" Header="Acciones">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
-                                        <Button Click="Abrir_Click"
+                                        <Button Click="Ver_Click"
                                                 CommandParameter="{Binding}"
                                                 Style="{StaticResource ActionButtonStyle}"
                                                 ToolTip="Ver detalle">
@@ -190,7 +191,7 @@
                                                   StrokeThickness="1.8"
                                                   Stretch="Uniform" />
                                         </Button>
-                                        <Button Click="Abrir_Click"
+                                        <Button Click="Editar_Click"
                                                 CommandParameter="{Binding}"
                                                 ToolTip="Editar borrador">
                                             <Path Data="M3,16 L4,12 L14,2 L18,6 L8,16 Z M12,4 L16,8"
@@ -202,9 +203,13 @@
                                                 <Style TargetType="Button" BasedOn="{StaticResource ActionButtonStyle}">
                                                     <Setter Property="Visibility" Value="Collapsed" />
                                                     <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding EsBorrador}" Value="True">
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding EsBorrador}" Value="True" />
+                                                                <Condition Binding="{Binding DataContext.CanManage, RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="True" />
+                                                            </MultiDataTrigger.Conditions>
                                                             <Setter Property="Visibility" Value="Visible" />
-                                                        </DataTrigger>
+                                                        </MultiDataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
                                             </Button.Style>
@@ -221,9 +226,13 @@
                                                 <Style TargetType="Button" BasedOn="{StaticResource ActionButtonStyle}">
                                                     <Setter Property="Visibility" Value="Collapsed" />
                                                     <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding EsBorrador}" Value="True">
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding EsBorrador}" Value="True" />
+                                                                <Condition Binding="{Binding DataContext.CanManage, RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="True" />
+                                                            </MultiDataTrigger.Conditions>
                                                             <Setter Property="Visibility" Value="Visible" />
-                                                        </DataTrigger>
+                                                        </MultiDataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
                                             </Button.Style>

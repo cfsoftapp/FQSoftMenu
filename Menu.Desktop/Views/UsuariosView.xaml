@@ -1,0 +1,232 @@
+<UserControl x:Class="Menu.Desktop.Views.UsuariosView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:services="clr-namespace:Menu.Desktop.Services">
+    <UserControl.Resources>
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Padding" Value="14,0" />
+            <Setter Property="Background" Value="#594AE2" />
+            <Setter Property="BorderBrush" Value="#594AE2" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Foreground" Value="#594AE2" />
+        </Style>
+        <Style x:Key="ActionButton" TargetType="Button">
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Margin" Value="3,0" />
+            <Setter Property="Padding" Value="7" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Foreground" Value="#594AE2" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#EEEAFE" />
+                    <Setter Property="BorderBrush" Value="#D7D0FB" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="UserGridHeader" TargetType="DataGridColumnHeader">
+            <Setter Property="Height" Value="42" />
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="Background" Value="#F3F5F9" />
+            <Setter Property="BorderBrush" Value="#E1E5ED" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="Foreground" Value="#4F5664" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style x:Key="UserGridCell" TargetType="DataGridCell">
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        </Style>
+        <Style x:Key="UserGridRow" TargetType="DataGridRow">
+            <Setter Property="Height" Value="50" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#ECEFF4" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Style.Triggers>
+                <Trigger Property="AlternationIndex" Value="1">
+                    <Setter Property="Background" Value="#FAFBFD" />
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F4F2FF" />
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#EEEAFE" />
+                    <Setter Property="Foreground" Value="#2F285F" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="28">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <DockPanel Margin="0,0,0,14" LastChildFill="False">
+            <StackPanel DockPanel.Dock="Left">
+                <TextBlock FontSize="22" FontWeight="SemiBold" Text="Usuarios del sistema" />
+                <TextBlock Margin="0,3,0,0" Foreground="#777" Text="Administra accesos, roles y contraseñas." />
+            </StackPanel>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button Margin="0,0,8,0" Command="{Binding RefreshCommand}" Content="ACTUALIZAR" Style="{StaticResource SecondaryButton}" />
+                <Button Command="{Binding NewCommand}" Content="+ NUEVO USUARIO" Style="{StaticResource PrimaryButton}" />
+            </StackPanel>
+        </DockPanel>
+
+        <Border Grid.Row="1" Margin="0,0,0,14" Padding="16" Background="#F8F9FC" BorderBrush="#DFE3EC" BorderThickness="1" CornerRadius="5"
+                Visibility="{Binding ShowForm, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding FormTitle}" />
+                <Grid Grid.Row="1" Margin="0,12,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.1*" />
+                        <ColumnDefinition Width="1.6*" />
+                        <ColumnDefinition Width="1.2*" />
+                        <ColumnDefinition Width="1.2*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Margin="0,0,10,0">
+                        <TextBlock Margin="0,0,0,4" Text="Usuario" />
+                        <TextBox Height="34" Padding="8,5" Text="{Binding NombreUsuario, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Margin="0,0,10,0">
+                        <TextBlock Margin="0,0,0,4" Text="Nombre completo" />
+                        <TextBox Height="34" Padding="8,5" Text="{Binding NombreCompleto, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Margin="0,0,10,0">
+                        <TextBlock Margin="0,0,0,4" Text="Rol" />
+                        <ComboBox Height="34" ItemsSource="{Binding Roles}" DisplayMemberPath="Nombre" SelectedValuePath="Id" SelectedValue="{Binding RolSistemaId}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="3" Margin="0,0,10,0">
+                        <TextBlock Margin="0,0,0,4" Text="Clave inicial (solo nuevo)" />
+                        <PasswordBox Height="34" Padding="8,5" services:PasswordBoxBinding.BindPassword="True" services:PasswordBoxBinding.BoundPassword="{Binding Clave}" />
+                    </StackPanel>
+                    <CheckBox Grid.Column="4" Margin="6,23,0,0" VerticalAlignment="Center" Content="Activo" IsChecked="{Binding Activo}" />
+                </Grid>
+                <StackPanel Grid.Row="2" HorizontalAlignment="Right" Orientation="Horizontal">
+                    <Button Margin="0,0,8,0" Command="{Binding CancelCommand}" Content="CANCELAR" Style="{StaticResource SecondaryButton}" />
+                    <Button Command="{Binding SaveCommand}" Content="GUARDAR" Style="{StaticResource PrimaryButton}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1" Margin="0,0,0,14" Padding="16" Background="#FFF8E8" BorderBrush="#F0C86E" BorderThickness="1" CornerRadius="5"
+                Visibility="{Binding ShowPasswordForm, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Left" Width="360">
+                    <TextBlock FontSize="16" FontWeight="SemiBold" Text="Cambiar contraseña" />
+                    <TextBlock Margin="0,3,0,8" Foreground="#666" Text="{Binding PasswordUserName}" />
+                    <PasswordBox Height="34" Padding="8,5" services:PasswordBoxBinding.BindPassword="True" services:PasswordBoxBinding.BoundPassword="{Binding NuevaClave}" />
+                </StackPanel>
+                <StackPanel DockPanel.Dock="Right" Margin="18,22,0,0" VerticalAlignment="Center" Orientation="Horizontal">
+                    <Button Margin="0,0,8,0" Command="{Binding CancelPasswordCommand}" Content="CANCELAR" Style="{StaticResource SecondaryButton}" />
+                    <Button Command="{Binding SavePasswordCommand}" Content="ACTUALIZAR CLAVE" Style="{StaticResource PrimaryButton}" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <Border Grid.Row="2" Background="White" BorderBrush="#E1E4EC" BorderThickness="1" CornerRadius="6" SnapsToDevicePixels="True">
+            <DataGrid ItemsSource="{Binding Usuarios}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      CanUserResizeRows="False"
+                      IsReadOnly="True"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="None"
+                      AlternationCount="2"
+                      Background="White"
+                      BorderThickness="0"
+                      SelectionMode="Single"
+                      SelectionUnit="FullRow"
+                      ColumnHeaderStyle="{StaticResource UserGridHeader}"
+                      CellStyle="{StaticResource UserGridCell}"
+                      RowStyle="{StaticResource UserGridRow}">
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Width="1.1*" Header="USUARIO">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock FontWeight="SemiBold" Foreground="#303642" Text="{Binding NombreUsuario}" />
+                                    <TextBlock Margin="0,2,0,0" FontSize="11" Foreground="#8A909D" Text="Acceso al sistema" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Width="2*" Header="NOMBRE COMPLETO" Binding="{Binding NombreCompleto}" />
+                    <DataGridTextColumn Width="1.3*" Header="ROL" Binding="{Binding RolSistema.Nombre}" />
+                    <DataGridTemplateColumn Width="105" Header="ESTADO">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Border HorizontalAlignment="Left" Padding="9,4" CornerRadius="10">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#FDECEC" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Activo}" Value="True">
+                                                    <Setter Property="Background" Value="#E8F7EF" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock FontSize="11" FontWeight="SemiBold">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="Inactivo" />
+                                                <Setter Property="Foreground" Value="#B42318" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Activo}" Value="True">
+                                                        <Setter Property="Text" Value="Activo" />
+                                                        <Setter Property="Foreground" Value="#087F5B" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Width="145" Header="CREADO" Binding="{Binding FechaCreacion, StringFormat=dd/MM/yyyy HH:mm}" />
+                    <DataGridTemplateColumn Width="135" Header="ACCIONES">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center" Orientation="Horizontal">
+                                    <Button Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Style="{StaticResource ActionButton}" ToolTip="Editar usuario">
+                                        <Path Data="M3,13 L3,17 L7,17 L17,7 L13,3 Z M12,4 L16,8" Stroke="#594AE2" StrokeThickness="1.7" Stretch="Uniform" />
+                                    </Button>
+                                    <Button Command="{Binding DataContext.ChangePasswordCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Style="{StaticResource ActionButton}" ToolTip="Cambiar clave">
+                                        <Path Data="M7,10 A4,4 0 1 1 11,14 L17,14 L17,17 L14,17 L14,19 L11,19 L11,16 L9,16" Stroke="#594AE2" StrokeThickness="1.7" Stretch="Uniform" />
+                                    </Button>
+                                    <Button Command="{Binding DataContext.ToggleCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Style="{StaticResource ActionButton}" ToolTip="Activar o desactivar">
+                                        <Path Data="M10,2 L10,10 M5,5 A7,7 0 1 0 15,5" Stroke="#594AE2" StrokeThickness="1.8" StrokeStartLineCap="Round" Stretch="Uniform" />
+                                    </Button>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <TextBlock Grid.Row="3" Margin="2,10,0,0" Foreground="{Binding StatusColor}" Text="{Binding StatusMessage}" />
+    </Grid>
+</UserControl>

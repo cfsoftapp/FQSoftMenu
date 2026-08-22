@@ -36,8 +36,12 @@
             <views:CierresView />
         </DataTemplate>
 
-        <DataTemplate DataType="{x:Type viewModels:PlaceholderPageViewModel}">
-            <views:PlaceholderView />
+        <DataTemplate DataType="{x:Type viewModels:UsuariosViewModel}">
+            <views:UsuariosView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type viewModels:ConfiguracionViewModel}">
+            <views:ConfiguracionView />
         </DataTemplate>
     </Application.Resources>
 </Application>

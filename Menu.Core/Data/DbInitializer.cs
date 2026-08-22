@@ -9,7 +9,10 @@ namespace Menu.Data;
 
 public static class DbInitializer
 {
-    public static async Task InitializeAsync(IServiceProvider serviceProvider, bool seedDemoData)
+    public static async Task InitializeAsync(
+        IServiceProvider serviceProvider,
+        bool seedDemoData,
+        bool allowAdminReset = true)
     {
         using var scope = serviceProvider.CreateScope();
 
@@ -24,7 +27,7 @@ public static class DbInitializer
             await SeedEmpleadosDemoAsync(context);
 
         await SeedRolesPermisosAsync(context);
-        await SeedUsuarioAdminAsync(context, scope.ServiceProvider);
+        await SeedUsuarioAdminAsync(context, scope.ServiceProvider, allowAdminReset);
     }
 
     private static async Task SeedEmpresasClienteAsync(AppDbContext context)
@@ -224,6 +227,7 @@ public static class DbInitializer
         new() { Codigo = Permisos.ReportesVer, Nombre = "Ver reportes", Modulo = "Reportes" },
 
         new() { Codigo = Permisos.CierresVer, Nombre = "Ver cierres", Modulo = "Cierres" },
+        new() { Codigo = Permisos.CierresGestionar, Nombre = "Gestionar cierres", Modulo = "Cierres" },
 
         new() { Codigo = Permisos.UsuariosVer, Nombre = "Ver usuarios", Modulo = "Usuarios" },
         new() { Codigo = Permisos.UsuariosCrear, Nombre = "Crear usuarios", Modulo = "Usuarios" },
@@ -250,6 +254,7 @@ public static class DbInitializer
     {
         new() { Codigo = "ADMIN", Nombre = "Administrador", Activo = true, FechaCreacion = DateTime.Now },
         new() { Codigo = "ENCARGADO_COMEDOR", Nombre = "Encargado comedor", Activo = true, FechaCreacion = DateTime.Now },
+        new() { Codigo = "ADMIN_FACTURACION", Nombre = "Administracion / Facturacion", Activo = true, FechaCreacion = DateTime.Now },
         new() { Codigo = "CONSULTA", Nombre = "Consulta", Activo = true, FechaCreacion = DateTime.Now }
     };
 
@@ -276,6 +281,15 @@ public static class DbInitializer
             Permisos.CuentasCobrarPagar,
             Permisos.ReportesVer,
             Permisos.CierresVer);
+
+        await AsignarPermisosRolAsync(context, "ADMIN_FACTURACION",
+            Permisos.DashboardVer,
+            Permisos.EmpleadosVer,
+            Permisos.CuentasCobrarVer,
+            Permisos.CuentasCobrarPagar,
+            Permisos.ReportesVer,
+            Permisos.CierresVer,
+            Permisos.CierresGestionar);
 
         await AsignarPermisosRolAsync(context, "CONSULTA",
             Permisos.DashboardVer,
@@ -319,7 +333,8 @@ public static class DbInitializer
 
     private static async Task SeedUsuarioAdminAsync(
         AppDbContext context,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider,
+        bool allowAdminReset)
     {
         var rolAdmin = await context.RolesSistema
             .FirstOrDefaultAsync(x => x.Codigo == "ADMIN");
@@ -328,7 +343,7 @@ public static class DbInitializer
             return;
 
         var adminPassword = Environment.GetEnvironmentVariable("FQSOFT_ADMIN_PASSWORD");
-        var resetAdmin = string.Equals(
+        var resetAdmin = allowAdminReset && string.Equals(
             Environment.GetEnvironmentVariable("FQSOFT_RESET_ADMIN_PASSWORD"),
             "true",
             StringComparison.OrdinalIgnoreCase);

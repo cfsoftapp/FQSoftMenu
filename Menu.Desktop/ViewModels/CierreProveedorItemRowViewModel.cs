@@ -58,6 +58,7 @@ public sealed class CierreProveedorItemRowViewModel : ObservableObject
 
             Item.MotivoExclusion = value;
             OnPropertyChanged();
+            _changed();
         }
     }
 }

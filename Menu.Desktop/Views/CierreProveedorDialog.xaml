@@ -7,6 +7,7 @@
         MinWidth="900"
         MinHeight="680"
         Background="#F6F7FB"
+        Closing="Window_Closing"
         WindowStartupLocation="CenterOwner">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
@@ -93,40 +94,49 @@
                            FontWeight="SemiBold"
                            Text="{Binding DialogTitle}" />
             </StackPanel>
-            <Button Width="32" Height="30" HorizontalAlignment="Right" Click="Cerrar_Click" Content="×" FontSize="18" />
         </Grid>
 
         <Grid Grid.Row="1" Margin="0,14,0,12">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="230" />
+                <ColumnDefinition Width="230" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="140" />
             </Grid.ColumnDefinitions>
             <StackPanel Margin="0,0,7,0">
                 <TextBlock Margin="0,0,0,4" Text="Desde" />
-                <DatePicker Height="38" SelectedDate="{Binding FechaDesde}" />
+                <DatePicker Height="38"
+                            IsEnabled="{Binding CanChangePeriod}"
+                            SelectedDate="{Binding FechaDesde}" />
             </StackPanel>
             <StackPanel Grid.Column="1" Margin="7,0">
                 <TextBlock Margin="0,0,0,4" Text="Hasta" />
-                <DatePicker Height="38" SelectedDate="{Binding FechaHasta}" />
+                <DatePicker Height="38"
+                            IsEnabled="{Binding CanChangePeriod}"
+                            SelectedDate="{Binding FechaHasta}" />
             </StackPanel>
             <Button Grid.Column="2"
+                    Width="132"
                     Height="38"
                     Margin="7,20,0,0"
                     BorderBrush="#594AE2"
                     Foreground="#594AE2"
                     Click="Calcular_Click"
                     Content="CALCULAR"
-                    IsEnabled="{Binding CanCalculate}" />
+                    IsEnabled="{Binding CanCalculate}"
+                    Visibility="{Binding ShowCalculate, Converter={StaticResource BoolToVisibility}}" />
         </Grid>
 
-        <UniformGrid Grid.Row="2" Margin="0,0,0,12" Columns="4">
+        <UniformGrid Grid.Row="2"
+                     Margin="0,0,0,12"
+                     Columns="4"
+                     Visibility="{Binding TieneBorrador, Converter={StaticResource BoolToVisibility}}">
             <Border Margin="0,0,8,0" Padding="11" Background="White" BorderBrush="#E1E4EC" BorderThickness="1" CornerRadius="5">
                 <StackPanel>
                     <TextBlock Foreground="#FF4081" Text="Activos incluidos" />
                     <TextBlock Margin="0,5,0,0" FontSize="18" FontWeight="SemiBold" Text="{Binding TotalActivosText}" />
                     <TextBlock Margin="0,3,0,0" Foreground="#777777">
-                        <Run Text="{Binding TotalMenusActivos}" /><Run Text=" menu(s), " /><Run Text="{Binding TotalAdicionalesEmpresa}" /><Run Text=" adicional(es)" />
+                        <Run Text="{Binding TotalMenusActivos, Mode=OneWay}" /><Run Text=" menu(s), " /><Run Text="{Binding TotalAdicionalesEmpresa, Mode=OneWay}" /><Run Text=" adicional(es)" />
                     </TextBlock>
                 </StackPanel>
             </Border>
@@ -135,7 +145,7 @@
                     <TextBlock Foreground="#FF4081" Text="Planilla incluida" />
                     <TextBlock Margin="0,5,0,0" FontSize="18" FontWeight="SemiBold" Text="{Binding TotalPlanillaText}" />
                     <TextBlock Margin="0,3,0,0" Foreground="#777777">
-                        <Run Text="{Binding TotalMenusPlanilla}" /><Run Text=" menu(s)" />
+                        <Run Text="{Binding TotalMenusPlanilla, Mode=OneWay}" /><Run Text=" menu(s)" />
                     </TextBlock>
                 </StackPanel>
             </Border>
@@ -144,7 +154,7 @@
                     <TextBlock Foreground="#FF4081" Text="Revision" />
                     <TextBlock Margin="0,5,0,0" FontSize="18" FontWeight="SemiBold" Text="{Binding TotalRevisionText}" />
                     <TextBlock Margin="0,3,0,0" Foreground="#777777">
-                        <Run Text="{Binding TotalExcepciones}" /><Run Text=" excepcion(es)" />
+                        <Run Text="{Binding TotalExcepciones, Mode=OneWay}" /><Run Text=" excepcion(es)" />
                     </TextBlock>
                 </StackPanel>
             </Border>
@@ -153,8 +163,31 @@
             </Border>
         </UniformGrid>
 
-        <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
-            <StackPanel>
+        <Border Grid.Row="3"
+                Padding="18"
+                VerticalAlignment="Top"
+                Background="#EEF6FF"
+                BorderBrush="#90CAF9"
+                BorderThickness="1"
+                CornerRadius="5"
+                Visibility="{Binding ShowInitialPrompt, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Margin="0,0,10,0"
+                           VerticalAlignment="Center"
+                           Foreground="#1565C0"
+                           FontSize="18"
+                           Text="i" />
+                <TextBlock VerticalAlignment="Center"
+                           Foreground="#1565C0"
+                           Text="{Binding Mensaje}"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+
+        <ScrollViewer Grid.Row="3"
+                      VerticalScrollBarVisibility="Auto"
+                      Visibility="{Binding TieneBorrador, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel Visibility="{Binding TieneBorrador, Converter={StaticResource BoolToVisibility}}">
                 <Border Style="{StaticResource SectionBorder}">
                     <StackPanel>
                         <TextBlock Margin="0,0,0,4" FontSize="12" Foreground="#555555" Text="Buscar comensal" />
@@ -165,63 +198,157 @@
 
                 <Border Style="{StaticResource SectionBorder}">
                     <StackPanel>
-                        <TextBlock FontSize="16" FontWeight="SemiBold" Text="Empresa cliente (activos y autorizados)" />
-                        <TextBlock Margin="0,3,0,10" Foreground="#FF4081"
-                                   Text="Se incluyen automaticamente. Revisa menus, extras y productos autorizados." />
-                        <ItemsControl ItemsSource="{Binding GruposActivos}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Margin="0,0,0,6" BorderBrush="#E1E4EC" BorderThickness="1" CornerRadius="4">
-                                        <StackPanel>
-                                            <Grid Height="38" Background="#FAFBFF">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="42" /><ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="75" /><ColumnDefinition Width="115" /><ColumnDefinition Width="105" />
-                                                </Grid.ColumnDefinitions>
-                                                <Button Command="{Binding ToggleCommand}"
-                                                        Content="{Binding ExpandIcon}"
-                                                        Style="{StaticResource ExpandButtonStyle}" />
-                                                <TextBlock Grid.Column="1" VerticalAlignment="Center" FontWeight="SemiBold" Text="{Binding NombreCompleto}" />
-                                                <TextBlock Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding CantidadItems}" />
-                                                <TextBlock Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding TotalFacturarText}" />
-                                                <TextBlock Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding TotalRevisionText}" />
-                                            </Grid>
-                                            <DataGrid Margin="10,6,10,10"
-                                                      Style="{StaticResource ReviewGridStyle}"
-                                                      ItemsSource="{Binding Items}"
-                                                      Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVisibility}}">
-                                                <DataGrid.Columns>
-                                                    <DataGridTextColumn Width="75" Binding="{Binding Fecha}" ElementStyle="{StaticResource CenteredReviewText}" Header="Fecha" IsReadOnly="True" />
-                                                    <DataGridTextColumn Width="*" Binding="{Binding Concepto}" ElementStyle="{StaticResource CenteredReviewText}" Header="Concepto" IsReadOnly="True" />
-                                                    <DataGridTextColumn Width="90" Binding="{Binding ImporteText}" ElementStyle="{StaticResource CenteredReviewText}" Header="Importe" IsReadOnly="True" />
-                                                    <DataGridTemplateColumn Width="75" Header="Revision">
-                                                        <DataGridTemplateColumn.CellTemplate>
-                                                            <DataTemplate>
-                                                                <CheckBox HorizontalAlignment="Center"
-                                                                          VerticalAlignment="Center"
-                                                                          IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                                          IsChecked="{Binding Excluir, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                                            </DataTemplate>
-                                                        </DataGridTemplateColumn.CellTemplate>
-                                                    </DataGridTemplateColumn>
-                                                    <DataGridTemplateColumn Width="180" Header="Motivo">
-                                                        <DataGridTemplateColumn.CellTemplate>
-                                                            <DataTemplate>
-                                                                <TextBox Margin="4,2"
-                                                                         Padding="6,2"
-                                                                         BorderBrush="#D8DDEA"
-                                                                         IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                                         Text="{Binding Motivo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                                            </DataTemplate>
-                                                        </DataGridTemplateColumn.CellTemplate>
-                                                    </DataGridTemplateColumn>
-                                                </DataGrid.Columns>
-                                            </DataGrid>
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                        <Grid Margin="0,0,0,10">
+                            <StackPanel>
+                                <TextBlock FontSize="16" FontWeight="SemiBold" Text="Empresa cliente (activos y autorizados)" />
+                                <TextBlock Margin="0,3,0,0" Foreground="#FF4081"
+                                           Text="Se incluyen automaticamente. Revisa menus, extras y productos autorizados." />
+                            </StackPanel>
+                            <Button Height="32"
+                                    Padding="12,0"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    Command="{Binding ToggleActivosCommand}"
+                                    Cursor="Hand"
+                                    Foreground="#594AE2"
+                                    FontWeight="SemiBold"
+                                    Content="{Binding ToggleActivosText}" />
+                        </Grid>
+                        <StackPanel Visibility="{Binding MostrarActivos, Converter={StaticResource BoolToVisibility}}">
+                            <Border BorderBrush="#E1E4EC"
+                                    BorderThickness="1,1,1,0"
+                                    Background="#F7F8FC"
+                                    CornerRadius="4,4,0,0">
+                                <Grid Height="34">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="42" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="75" />
+                                        <ColumnDefinition Width="115" />
+                                        <ColumnDefinition Width="105" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="1"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               FontWeight="SemiBold"
+                                               Text="Comensal" />
+                                    <TextBlock Grid.Column="2"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               FontWeight="SemiBold"
+                                               Text="Items" />
+                                    <TextBlock Grid.Column="3"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               FontWeight="SemiBold"
+                                               Text="A facturar" />
+                                    <TextBlock Grid.Column="4"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               FontWeight="SemiBold"
+                                               Text="Revision" />
+                                </Grid>
+                            </Border>
+                            <ItemsControl ItemsSource="{Binding GruposActivos}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,0,0,6" BorderBrush="#E1E4EC" BorderThickness="1" CornerRadius="4">
+                                            <StackPanel>
+                                                <Grid Height="38" Background="#FAFBFF">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="42" /><ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="75" /><ColumnDefinition Width="115" /><ColumnDefinition Width="105" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Button Command="{Binding ToggleCommand}"
+                                                            Content="{Binding ExpandIcon}"
+                                                            Style="{StaticResource ExpandButtonStyle}" />
+                                                    <TextBlock Grid.Column="1" VerticalAlignment="Center" FontWeight="SemiBold" Text="{Binding NombreCompleto}" />
+                                                    <TextBlock Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding CantidadItems}" />
+                                                    <TextBlock Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding TotalFacturarText}" />
+                                                    <TextBlock Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding TotalRevisionText}" />
+                                                </Grid>
+                                                <DataGrid Margin="10,6,10,10"
+                                                          Style="{StaticResource ReviewGridStyle}"
+                                                          ItemsSource="{Binding Items}"
+                                                          Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVisibility}}">
+                                                    <DataGrid.Columns>
+                                                        <DataGridTextColumn Width="75" Binding="{Binding Fecha}" ElementStyle="{StaticResource CenteredReviewText}" Header="Fecha" IsReadOnly="True" />
+                                                        <DataGridTextColumn Width="*" Binding="{Binding Concepto}" ElementStyle="{StaticResource CenteredReviewText}" Header="Concepto" IsReadOnly="True" />
+                                                        <DataGridTextColumn Width="90" Binding="{Binding ImporteText}" ElementStyle="{StaticResource CenteredReviewText}" Header="Importe" IsReadOnly="True" />
+                                                        <DataGridTemplateColumn Width="75" Header="Revision">
+                                                            <DataGridTemplateColumn.CellTemplate>
+                                                                <DataTemplate>
+                                                                    <CheckBox HorizontalAlignment="Center"
+                                                                              VerticalAlignment="Center"
+                                                                              IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                              IsChecked="{Binding Excluir, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                                </DataTemplate>
+                                                            </DataGridTemplateColumn.CellTemplate>
+                                                        </DataGridTemplateColumn>
+                                                        <DataGridTemplateColumn Width="180" Header="Motivo">
+                                                            <DataGridTemplateColumn.CellTemplate>
+                                                                <DataTemplate>
+                                                                    <Grid>
+                                                                        <TextBlock HorizontalAlignment="Center"
+                                                                                   VerticalAlignment="Center"
+                                                                                   Foreground="#777777"
+                                                                                   Text="Incluido">
+                                                                            <TextBlock.Style>
+                                                                                <Style TargetType="TextBlock">
+                                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                                    <Style.Triggers>
+                                                                                        <DataTrigger Binding="{Binding Excluir}" Value="True">
+                                                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                                                        </DataTrigger>
+                                                                                    </Style.Triggers>
+                                                                                </Style>
+                                                                            </TextBlock.Style>
+                                                                        </TextBlock>
+                                                                        <TextBox Margin="4,2"
+                                                                                 Padding="6,2"
+                                                                                 BorderBrush="#D8DDEA"
+                                                                                 IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                                 Text="{Binding Motivo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                                                            <TextBox.Style>
+                                                                                <Style TargetType="TextBox">
+                                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                                    <Style.Triggers>
+                                                                                        <DataTrigger Binding="{Binding Excluir}" Value="True">
+                                                                                            <Setter Property="Visibility" Value="Visible" />
+                                                                                        </DataTrigger>
+                                                                                    </Style.Triggers>
+                                                                                </Style>
+                                                                            </TextBox.Style>
+                                                                        </TextBox>
+                                                                    </Grid>
+                                                                </DataTemplate>
+                                                            </DataGridTemplateColumn.CellTemplate>
+                                                        </DataGridTemplateColumn>
+                                                    </DataGrid.Columns>
+                                                </DataGrid>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <TextBlock Margin="12"
+                                       HorizontalAlignment="Center"
+                                       Foreground="#777777"
+                                       Text="No hay activos o adicionales autorizados para mostrar.">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasGruposActivos}" Value="False">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
                     </StackPanel>
                 </Border>
 
@@ -230,6 +357,46 @@
                         <TextBlock FontSize="16" FontWeight="SemiBold" Text="Descuento planilla (suspendidos)" />
                         <TextBlock Margin="0,3,0,10" Foreground="#FF4081"
                                    Text="Lo incluido pasa a facturacion y se recupera mediante planilla." />
+                        <Border BorderBrush="#E1E4EC"
+                                BorderThickness="1,1,1,0"
+                                Background="#F7F8FC"
+                                CornerRadius="4,4,0,0">
+                            <Grid Height="34">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="42" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="70" />
+                                    <ColumnDefinition Width="85" />
+                                    <ColumnDefinition Width="115" />
+                                    <ColumnDefinition Width="105" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="1"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           FontWeight="SemiBold"
+                                           Text="Comensal" />
+                                <TextBlock Grid.Column="2"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           FontWeight="SemiBold"
+                                           Text="Items" />
+                                <TextBlock Grid.Column="3"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           FontWeight="SemiBold"
+                                           Text="Excepciones" />
+                                <TextBlock Grid.Column="4"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           FontWeight="SemiBold"
+                                           Text="A facturar" />
+                                <TextBlock Grid.Column="5"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           FontWeight="SemiBold"
+                                           Text="Revision" />
+                            </Grid>
+                        </Border>
                         <ItemsControl ItemsSource="{Binding GruposPlanilla}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -271,11 +438,39 @@
                                                     <DataGridTemplateColumn Width="180" Header="Motivo">
                                                         <DataGridTemplateColumn.CellTemplate>
                                                             <DataTemplate>
-                                                                <TextBox Margin="4,2"
-                                                                         Padding="6,2"
-                                                                         BorderBrush="#D8DDEA"
-                                                                         IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                                         Text="{Binding Motivo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                                <Grid>
+                                                                    <TextBlock HorizontalAlignment="Center"
+                                                                               VerticalAlignment="Center"
+                                                                               Foreground="#777777"
+                                                                               Text="Incluido">
+                                                                        <TextBlock.Style>
+                                                                            <Style TargetType="TextBlock">
+                                                                                <Setter Property="Visibility" Value="Visible" />
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding Excluir}" Value="True">
+                                                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </TextBlock.Style>
+                                                                    </TextBlock>
+                                                                    <TextBox Margin="4,2"
+                                                                             Padding="6,2"
+                                                                             BorderBrush="#D8DDEA"
+                                                                             IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                             Text="{Binding Motivo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                                                        <TextBox.Style>
+                                                                            <Style TargetType="TextBox">
+                                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding Excluir}" Value="True">
+                                                                                        <Setter Property="Visibility" Value="Visible" />
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </TextBox.Style>
+                                                                    </TextBox>
+                                                                </Grid>
                                                             </DataTemplate>
                                                         </DataGridTemplateColumn.CellTemplate>
                                                     </DataGridTemplateColumn>
@@ -286,6 +481,21 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        <TextBlock Margin="12"
+                                   HorizontalAlignment="Center"
+                                   Foreground="#777777"
+                                   Text="No hay menus a planilla en este periodo.">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasGruposPlanilla}" Value="False">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </StackPanel>
                 </Border>
 
@@ -300,7 +510,7 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <StackPanel>
+            <StackPanel Visibility="{Binding TieneBorrador, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock Margin="0,0,0,4" Text="Notas" />
                 <TextBox Height="48"
                          Padding="10,6"
@@ -311,7 +521,10 @@
             <StackPanel Grid.Column="1" Margin="12,20,0,0" Orientation="Horizontal">
                 <Button Width="90" Height="38" Click="Cerrar_Click" Content="CERRAR" />
                 <Button Width="145" Height="38" Margin="8,0,0,0" BorderBrush="#594AE2" Foreground="#594AE2"
-                        Click="Guardar_Click" Content="GUARDAR BORRADOR" IsEnabled="{Binding CanEdit}" />
+                        Click="Guardar_Click"
+                        Content="GUARDAR BORRADOR"
+                        IsEnabled="{Binding CanEdit}"
+                        Visibility="{Binding ShowEditActions, Converter={StaticResource BoolToVisibility}}" />
                 <Button Width="95"
                         Height="38"
                         Margin="8,0,0,0"
@@ -319,9 +532,15 @@
                         Foreground="#00A86B"
                         Click="Excel_Click"
                         Content="EXCEL"
-                        IsEnabled="{Binding CanExport}" />
+                        IsEnabled="{Binding CanExport}"
+                        Visibility="{Binding ShowExport, Converter={StaticResource BoolToVisibility}}" />
                 <Button Width="120" Height="38" Margin="8,0,0,0" Background="#00C853" BorderBrush="#00C853"
-                        Click="Confirmar_Click" Foreground="White" FontWeight="SemiBold" Content="CONFIRMAR" IsEnabled="{Binding CanConfirm}" />
+                        Click="Confirmar_Click"
+                        Foreground="White"
+                        FontWeight="SemiBold"
+                        Content="CONFIRMAR"
+                        IsEnabled="{Binding CanConfirm}"
+                        Visibility="{Binding ShowEditActions, Converter={StaticResource BoolToVisibility}}" />
             </StackPanel>
         </Grid>
     </Grid>

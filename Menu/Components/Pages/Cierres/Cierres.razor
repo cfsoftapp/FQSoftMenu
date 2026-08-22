@@ -21,12 +21,15 @@
             <MudText Typo="Typo.h4">Cierres de facturación</MudText>
         </MudStack>
 
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   StartIcon="@Icons.Material.Filled.Add"
-                   OnClick="AbrirNuevoCierre">
-            Nuevo cierre
-        </MudButton>
+        @if (AuthState.TienePermiso(Permisos.CierresGestionar))
+        {
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="AbrirNuevoCierre">
+                Nuevo cierre
+            </MudButton>
+        }
     </MudStack>
 
     <MudGrid Spacing="3">
@@ -123,15 +126,16 @@
                                        Color="Color.Primary"
                                        Size="Size.Small"
                                        aria-label="Ver cierre"
-                                       OnClick="@(() => AbrirCierreProveedorAsync(context))" />
+                                       OnClick="@(() => AbrirCierreProveedorAsync(context, true))" />
 
-                        @if (context.Estado == EstadoCierreProveedor.Borrador)
+                        @if (context.Estado == EstadoCierreProveedor.Borrador &&
+                             AuthState.TienePermiso(Permisos.CierresGestionar))
                         {
                             <MudIconButton Icon="@Icons.Material.Filled.Edit"
                                            Color="Color.Warning"
                                            Size="Size.Small"
                                            aria-label="Editar borrador"
-                                           OnClick="@(() => AbrirCierreProveedorAsync(context))" />
+                                           OnClick="@(() => AbrirCierreProveedorAsync(context, false))" />
 
                             <MudIconButton Icon="@Icons.Material.Filled.Delete"
                                            Color="Color.Error"
@@ -167,7 +171,11 @@
                 <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                         <MudIcon Icon="@Icons.Material.Filled.RequestQuote" Color="Color.Primary" />
-                        <MudText Typo="Typo.h6">Nuevo cierre de facturación</MudText>
+                        <MudText Typo="Typo.h6">
+                            @(_cierreExistente
+                                ? _modoConsulta ? "Detalle del cierre de facturación" : "Revisar cierre de facturación"
+                                : "Nuevo cierre de facturación")
+                        </MudText>
                     </MudStack>
 
                     <MudIconButton Icon="@Icons.Material.Filled.Close"
@@ -182,7 +190,8 @@
                                        @bind-Date="_filtro.FechaDesde"
                                        DateFormat="dd/MM/yyyy"
                                        Variant="Variant.Outlined"
-                                       Margin="Margin.Dense" />
+                                       Margin="Margin.Dense"
+                                       Disabled="_cierreExistente" />
                     </MudItem>
 
                     <MudItem xs="12" sm="6">
@@ -190,18 +199,22 @@
                                        @bind-Date="_filtro.FechaHasta"
                                        DateFormat="dd/MM/yyyy"
                                        Variant="Variant.Outlined"
-                                       Margin="Margin.Dense" />
+                                       Margin="Margin.Dense"
+                                       Disabled="_cierreExistente" />
                     </MudItem>
 
-                    <MudItem xs="12">
-                        <MudButton Variant="Variant.Outlined"
-                                   Color="Color.Primary"
-                                   StartIcon="@Icons.Material.Filled.Calculate"
-                                   Disabled="_cargandoBorrador"
-                                   OnClick="GenerarBorradorProveedorAsync">
-                            Calcular
-                        </MudButton>
-                    </MudItem>
+                    @if (!_cierreExistente)
+                    {
+                        <MudItem xs="12">
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.Calculate"
+                                       Disabled="_cargandoBorrador"
+                                       OnClick="GenerarBorradorProveedorAsync">
+                                Calcular
+                            </MudButton>
+                        </MudItem>
+                    }
                 </MudGrid>
 
                 @if (_borradorProveedor is not null)
@@ -309,7 +322,7 @@
                                                                          Dense="true"
                                                                          Value="@item.ExcluirDeProveedor"
                                                                          ValueChanged="@((bool value) => CambiarExcepcionPlanilla(item, value))"
-                                                                         Disabled="_borradorProveedor.YaConfirmado"
+                                                                         Disabled="@(_borradorProveedor.YaConfirmado || _modoConsulta)"
                                                                          Color="Color.Warning" />
                                                             <MudText Typo="Typo.caption">Revision</MudText>
                                                             @if (item.ExcluirDeProveedor)
@@ -317,7 +330,8 @@
                                                                 <MudTextField @bind-Value="item.MotivoExclusion"
                                                                               Variant="Variant.Outlined"
                                                                               Margin="Margin.Dense"
-                                                                              Placeholder="Motivo" />
+                                                                              Placeholder="Motivo"
+                                                                              Disabled="_modoConsulta" />
                                                             }
                                                             else
                                                             {
@@ -377,7 +391,7 @@
                                                                      Dense="true"
                                                                      Value="@item.ExcluirDeProveedor"
                                                                      ValueChanged="@((bool value) => CambiarExcepcionPlanilla(item, value))"
-                                                                     Disabled="_borradorProveedor.YaConfirmado"
+                                                                     Disabled="@(_borradorProveedor.YaConfirmado || _modoConsulta)"
                                                                      Color="Color.Warning" />
                                                         <MudText Typo="Typo.caption">No enviar</MudText>
                                                         @if (item.ExcluirDeProveedor)
@@ -385,7 +399,8 @@
                                                             <MudTextField @bind-Value="item.MotivoExclusion"
                                                                           Variant="Variant.Outlined"
                                                                           Margin="Margin.Dense"
-                                                                          Placeholder="Motivo" />
+                                                                          Placeholder="Motivo"
+                                                                          Disabled="_modoConsulta" />
                                                         }
                                                         else
                                                         {
@@ -408,7 +423,8 @@
                                   Label="Notas"
                                   Variant="Variant.Outlined"
                                   Lines="2"
-                                  Placeholder="Ej: cierre semana 22 al 28 de mayo" />
+                                  Placeholder="Ej: cierre semana 22 al 28 de mayo"
+                                  Disabled="_modoConsulta" />
 
                     <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
                         <MudButton Variant="Variant.Text"
@@ -417,13 +433,16 @@
                             Cerrar
                         </MudButton>
 
-                        <MudButton Variant="Variant.Outlined"
-                                   Color="Color.Primary"
-                                   StartIcon="@Icons.Material.Filled.Save"
-                                   Disabled="@(_guardandoBorrador || _borradorProveedor.YaConfirmado)"
-                                   OnClick="GuardarYActualizarAsync">
-                            Guardar borrador
-                        </MudButton>
+                        @if (!_modoConsulta)
+                        {
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.Save"
+                                       Disabled="@(_guardandoBorrador || _borradorProveedor.YaConfirmado)"
+                                       OnClick="GuardarYActualizarAsync">
+                                Guardar borrador
+                            </MudButton>
+                        }
 
                         @if (_borradorProveedor.CierreProveedorId.HasValue)
                         {
@@ -436,13 +455,16 @@
                             </MudButton>
                         }
 
-                        <MudButton Variant="Variant.Filled"
-                                   Color="Color.Success"
-                                   StartIcon="@Icons.Material.Filled.CheckCircle"
-                                   Disabled="@(_confirmandoProveedor || _borradorProveedor.YaConfirmado || !_borradorGuardadoParaConfirmar || !_borradorProveedor.Items.Any())"
-                                   OnClick="ConfirmarYActualizarAsync">
-                            Confirmar
-                        </MudButton>
+                        @if (!_modoConsulta)
+                        {
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Success"
+                                       StartIcon="@Icons.Material.Filled.CheckCircle"
+                                       Disabled="@(_confirmandoProveedor || _borradorProveedor.YaConfirmado || !_borradorGuardadoParaConfirmar || !_borradorProveedor.Items.Any())"
+                                       OnClick="ConfirmarYActualizarAsync">
+                                Confirmar
+                            </MudButton>
+                        }
                     </MudStack>
                 }
             </MudStack>

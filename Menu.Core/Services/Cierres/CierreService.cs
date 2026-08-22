@@ -162,6 +162,7 @@ public class CierreService : ICierreService
     {
         return await _context.CierresProveedor
             .AsNoTracking()
+            .Where(x => x.Detalles.Any())
             .OrderByDescending(x => x.FechaDesde)
             .ThenByDescending(x => x.Id)
             .Select(x => new CierreProveedorListadoDto
@@ -179,6 +180,19 @@ public class CierreService : ICierreService
             .ToListAsync();
     }
 
+    public async Task<CierreProveedorBorradorDto> ObtenerCierreProveedorAsync(int cierreProveedorId)
+    {
+        var cierre = await _context.CierresProveedor
+            .AsNoTracking()
+            .Include(x => x.Detalles)
+            .FirstOrDefaultAsync(x => x.Id == cierreProveedorId);
+
+        if (cierre is null)
+            throw new InvalidOperationException("No se encontro el cierre de facturacion.");
+
+        return MapearBorrador(cierre);
+    }
+
     public async Task<CierreProveedorBorradorDto> GenerarBorradorProveedorAsync(CierreFiltroDto filtro)
     {
         var desde = (filtro.FechaDesde ?? DateTime.Today).Date;
@@ -190,7 +204,18 @@ public class CierreService : ICierreService
             .FirstOrDefaultAsync(x => x.FechaDesde == desde && x.FechaHasta == hasta);
 
         if (cierreExistente is not null)
-            return MapearBorrador(cierreExistente);
+        {
+            if (cierreExistente.Estado == EstadoCierreProveedor.Borrador &&
+                cierreExistente.Detalles.Count == 0)
+            {
+                _context.CierresProveedor.Remove(cierreExistente);
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                return MapearBorrador(cierreExistente);
+            }
+        }
 
         if (await ExisteCierreProveedorSolapadoAsync(desde, hasta))
             throw new InvalidOperationException("Ya existe un cierre de facturación con fechas que se cruzan con este rango.");
@@ -247,19 +272,22 @@ public class CierreService : ICierreService
 
         items.AddRange(adicionalesEmpresa);
 
-        var cierre = CrearCierreProveedor(
-            desde,
-            hasta,
-            items,
-            observacion: null,
-            usuarioId: 0,
-            usuarioNombre: "Borrador",
-            estado: EstadoCierreProveedor.Borrador);
+        if (items.Count == 0)
+        {
+            return new CierreProveedorBorradorDto
+            {
+                FechaDesde = desde,
+                FechaHasta = hasta,
+                Items = items
+            };
+        }
 
-        _context.CierresProveedor.Add(cierre);
-        await _context.SaveChangesAsync();
-
-        return MapearBorrador(cierre);
+        return new CierreProveedorBorradorDto
+        {
+            FechaDesde = desde,
+            FechaHasta = hasta,
+            Items = items
+        };
     }
 
     public async Task<ResultadoOperacionDto> GuardarBorradorProveedorAsync(ConfirmarCierreProveedorDto input)
@@ -273,17 +301,27 @@ public class CierreService : ICierreService
         if (!input.Items.Any())
             return ResultadoOperacionDto.Fail("No hay consumos para guardar en el borrador.");
 
-        var cierre = await _context.CierresProveedor
-            .Include(x => x.Detalles)
-            .FirstOrDefaultAsync(x => x.FechaDesde == desde && x.FechaHasta == hasta);
+        var cierre = input.CierreProveedorId.HasValue
+            ? await _context.CierresProveedor
+                .Include(x => x.Detalles)
+                .FirstOrDefaultAsync(x => x.Id == input.CierreProveedorId.Value)
+            : await _context.CierresProveedor
+                .Include(x => x.Detalles)
+                .FirstOrDefaultAsync(x => x.FechaDesde == desde && x.FechaHasta == hasta);
 
-        if (cierre is null)
-            return ResultadoOperacionDto.Fail("No existe borrador para este rango. Genere el borrador primero.");
+        if (input.CierreProveedorId.HasValue && cierre is null)
+            return ResultadoOperacionDto.Fail("El borrador ya no existe. Actualice el historial de cierres.");
 
-        if (cierre.Estado == EstadoCierreProveedor.Confirmado)
+        if (cierre is not null &&
+            (cierre.FechaDesde.Date != desde || cierre.FechaHasta.Date != hasta))
+        {
+            return ResultadoOperacionDto.Fail("El periodo del borrador no coincide con el cierre seleccionado.");
+        }
+
+        if (cierre?.Estado == EstadoCierreProveedor.Confirmado)
             return ResultadoOperacionDto.Fail("La liquidacion ya fue confirmada y no puede modificarse.");
 
-        if (await ExisteCierreProveedorSolapadoAsync(desde, hasta, cierre.Id))
+        if (await ExisteCierreProveedorSolapadoAsync(desde, hasta, cierre?.Id))
             return ResultadoOperacionDto.Fail("Ya existe otro cierre de facturación con fechas que se cruzan con este rango.");
 
         var validacion = await ValidarItemsBorradorAsync(input, desde, hasta);
@@ -291,15 +329,30 @@ public class CierreService : ICierreService
         if (!validacion.Success)
             return validacion;
 
-        ActualizarCierreProveedor(
-            cierre,
-            desde,
-            hasta,
-            input.Items,
-            input.Observacion,
-            input.UsuarioConfirmacionId,
-            input.UsuarioConfirmacionNombre,
-            EstadoCierreProveedor.Borrador);
+        if (cierre is null)
+        {
+            cierre = CrearCierreProveedor(
+                desde,
+                hasta,
+                input.Items,
+                input.Observacion,
+                input.UsuarioConfirmacionId,
+                input.UsuarioConfirmacionNombre,
+                EstadoCierreProveedor.Borrador);
+            _context.CierresProveedor.Add(cierre);
+        }
+        else
+        {
+            ActualizarCierreProveedor(
+                cierre,
+                desde,
+                hasta,
+                input.Items,
+                input.Observacion,
+                input.UsuarioConfirmacionId,
+                input.UsuarioConfirmacionNombre,
+                EstadoCierreProveedor.Borrador);
+        }
 
         await _context.SaveChangesAsync();
 
@@ -344,6 +397,7 @@ public class CierreService : ICierreService
             FechaHasta = cierre.FechaHasta,
             YaConfirmado = cierre.Estado == EstadoCierreProveedor.Confirmado,
             CierreProveedorId = cierre.Id,
+            Observacion = cierre.Observacion,
             Items = cierre.Detalles
                 .OrderBy(x => x.Fecha)
                 .ThenBy(x => x.EmpleadoNombre)
@@ -381,12 +435,19 @@ public class CierreService : ICierreService
         if (!input.Items.Any())
             return ResultadoOperacionDto.Fail("No hay consumos para facturar.");
 
-        var cierre = await _context.CierresProveedor
-            .Include(x => x.Detalles)
-            .FirstOrDefaultAsync(x => x.FechaDesde == desde && x.FechaHasta == hasta);
+        var cierre = input.CierreProveedorId.HasValue
+            ? await _context.CierresProveedor
+                .Include(x => x.Detalles)
+                .FirstOrDefaultAsync(x => x.Id == input.CierreProveedorId.Value)
+            : await _context.CierresProveedor
+                .Include(x => x.Detalles)
+                .FirstOrDefaultAsync(x => x.FechaDesde == desde && x.FechaHasta == hasta);
 
         if (cierre is null)
             return ResultadoOperacionDto.Fail("No existe borrador para confirmar. Genere y guarde el borrador primero.");
+
+        if (cierre.FechaDesde.Date != desde || cierre.FechaHasta.Date != hasta)
+            return ResultadoOperacionDto.Fail("El periodo del borrador no coincide con el cierre seleccionado.");
 
         if (cierre.Estado == EstadoCierreProveedor.Confirmado)
             return ResultadoOperacionDto.Fail("La liquidacion ya fue confirmada.");
@@ -419,6 +480,35 @@ public class CierreService : ICierreService
         DateTime desde,
         DateTime hasta)
     {
+        if (input.Items.Any(x =>
+                x.EmpleadoId <= 0 ||
+                string.IsNullOrWhiteSpace(x.Dni) ||
+                string.IsNullOrWhiteSpace(x.EmpleadoNombre) ||
+                x.Importe <= 0))
+        {
+            return ResultadoOperacionDto.Fail("El borrador contiene datos incompletos o importes no validos.");
+        }
+
+        var menusInput = input.Items
+            .Where(x => !x.EsAdicionalEmpresa)
+            .ToList();
+
+        if (menusInput.Any(x => x.ConsumoMenuId <= 0) ||
+            menusInput.Select(x => x.ConsumoMenuId).Distinct().Count() != menusInput.Count)
+        {
+            return ResultadoOperacionDto.Fail("El borrador contiene menus duplicados o sin identificador.");
+        }
+
+        var adicionalesInput = input.Items
+            .Where(x => x.EsAdicionalEmpresa)
+            .ToList();
+
+        if (adicionalesInput.Any(x => x.ConsumoAdicionalId is null or <= 0) ||
+            adicionalesInput.Select(x => x.ConsumoAdicionalId!.Value).Distinct().Count() != adicionalesInput.Count)
+        {
+            return ResultadoOperacionDto.Fail("El borrador contiene adicionales duplicados o sin identificador.");
+        }
+
         var consumoIds = input.Items
             .Where(x => !x.EsAdicionalEmpresa)
             .Select(x => x.ConsumoMenuId)
@@ -485,6 +575,7 @@ public class CierreService : ICierreService
             .AsNoTracking()
             .AnyAsync(x =>
                 (!excluirId.HasValue || x.Id != excluirId.Value) &&
+                x.Detalles.Any() &&
                 x.FechaDesde <= hasta &&
                 x.FechaHasta >= desde);
     }

@@ -53,7 +53,10 @@ builder.Services.AddMenuCoreServices();
 
 var app = builder.Build();
 
-await DbInitializer.InitializeAsync(app.Services, app.Environment.IsDevelopment());
+await DbInitializer.InitializeAsync(
+    app.Services,
+    seedDemoData: app.Environment.IsDevelopment(),
+    allowAdminReset: !app.Environment.IsDevelopment());
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

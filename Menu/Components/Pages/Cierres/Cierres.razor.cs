@@ -1,5 +1,6 @@
 using Menu.DTOs.Cierres;
 using Menu.Enums;
+using Menu.Security;
 using Menu.Services.Cierres;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -31,7 +32,8 @@ public partial class Cierres : ComponentBase
     private bool _guardandoBorrador;
     private bool _confirmandoProveedor;
     private bool _borradorGuardadoParaConfirmar;
-    private bool _abrirBorradorDesdeHistorial;
+    private bool _cierreExistente;
+    private bool _modoConsulta;
 
     private int TotalCierresProveedor => _historialProveedor.Count;
 
@@ -111,6 +113,9 @@ public partial class Cierres : ComponentBase
 
     private void AbrirNuevoCierre()
     {
+        if (!PuedeGestionarCierres())
+            return;
+
         _filtro.FechaDesde = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
         _filtro.FechaHasta = DateTime.Today;
         _borradorProveedor = null;
@@ -119,7 +124,8 @@ public partial class Cierres : ComponentBase
         _empleadoExpandidoId = null;
         _mostrarActivos = false;
         _borradorGuardadoParaConfirmar = false;
-        _abrirBorradorDesdeHistorial = false;
+        _cierreExistente = false;
+        _modoConsulta = false;
         _mostrarNuevoCierre = true;
     }
 
@@ -129,22 +135,48 @@ public partial class Cierres : ComponentBase
         _borradorProveedor = null;
         _empleadoExpandidoId = null;
         _borradorGuardadoParaConfirmar = false;
-        _abrirBorradorDesdeHistorial = false;
+        _cierreExistente = false;
+        _modoConsulta = false;
     }
 
-    private async Task AbrirCierreProveedorAsync(CierreProveedorListadoDto cierre)
+    private async Task AbrirCierreProveedorAsync(
+        CierreProveedorListadoDto cierre,
+        bool soloConsulta)
     {
-        _filtro.FechaDesde = cierre.FechaDesde;
-        _filtro.FechaHasta = cierre.FechaHasta;
-        _mostrarNuevoCierre = true;
-        _buscarEmpleadoCierre = string.Empty;
-        _empleadoExpandidoId = null;
-        _abrirBorradorDesdeHistorial = true;
-        await GenerarBorradorProveedorAsync();
+        if (!soloConsulta && !PuedeGestionarCierres())
+            return;
+
+        try
+        {
+            _cargandoBorrador = true;
+            _borradorProveedor = await CierreService.ObtenerCierreProveedorAsync(cierre.Id);
+            _filtro.FechaDesde = _borradorProveedor.FechaDesde;
+            _filtro.FechaHasta = _borradorProveedor.FechaHasta;
+            _observacionConfirmacion = _borradorProveedor.Observacion;
+            _buscarEmpleadoCierre = string.Empty;
+            _empleadoExpandidoId = null;
+            _mostrarActivos = false;
+            _borradorGuardadoParaConfirmar = !_borradorProveedor.YaConfirmado;
+            _cierreExistente = true;
+            _modoConsulta = soloConsulta || _borradorProveedor.YaConfirmado;
+            _mostrarNuevoCierre = true;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error al abrir cierre: {ex.Message}", Severity.Error);
+            _borradorProveedor = null;
+        }
+        finally
+        {
+            _cargandoBorrador = false;
+        }
     }
 
     private async Task ConfirmarEliminarBorradorAsync(CierreProveedorListadoDto cierre)
     {
+        if (!PuedeGestionarCierres())
+            return;
+
         if (cierre.Estado != EstadoCierreProveedor.Borrador)
         {
             Snackbar.Add("Solo se pueden eliminar cierres en borrador.", Severity.Warning);
@@ -158,21 +190,35 @@ public partial class Cierres : ComponentBase
         if (!confirmado)
             return;
 
-        var result = await CierreService.EliminarBorradorProveedorAsync(cierre.Id);
+        try
+        {
+            var result = await CierreService.EliminarBorradorProveedorAsync(cierre.Id);
 
-        if (result.Success)
-        {
-            Snackbar.Add(result.Message, Severity.Success);
-            await CargarPantallaAsync();
+            if (result.Success)
+            {
+                Snackbar.Add(result.Message, Severity.Success);
+
+                if (_borradorProveedor?.CierreProveedorId == cierre.Id)
+                    CerrarNuevoCierre();
+
+                await CargarPantallaAsync();
+            }
+            else
+            {
+                Snackbar.Add(result.Message, Severity.Warning);
+            }
         }
-        else
+        catch (Exception ex)
         {
-            Snackbar.Add(result.Message, Severity.Warning);
+            Snackbar.Add($"Error al eliminar el borrador: {ex.Message}", Severity.Error);
         }
     }
 
     private async Task GenerarBorradorProveedorAsync()
     {
+        if (!PuedeGestionarCierres())
+            return;
+
         if (_filtro.FechaDesde is null || _filtro.FechaHasta is null)
         {
             Snackbar.Add("Debe seleccionar fecha desde y fecha hasta.", Severity.Warning);
@@ -188,11 +234,12 @@ public partial class Cierres : ComponentBase
         try
         {
             _cargandoBorrador = true;
-            _observacionConfirmacion = string.Empty;
             _borradorProveedor = await CierreService.GenerarBorradorProveedorAsync(_filtro);
+            _observacionConfirmacion = _borradorProveedor.Observacion;
             _empleadoExpandidoId = null;
-            _borradorGuardadoParaConfirmar = _abrirBorradorDesdeHistorial && !_borradorProveedor.YaConfirmado;
-            _abrirBorradorDesdeHistorial = false;
+            _borradorGuardadoParaConfirmar =
+                _borradorProveedor.CierreProveedorId.HasValue &&
+                !_borradorProveedor.YaConfirmado;
 
             if (!_borradorProveedor.Items.Any())
             Snackbar.Add("No hay consumos de empresa cliente o planilla para facturar.", Severity.Info);
@@ -216,6 +263,9 @@ public partial class Cierres : ComponentBase
 
     private async Task GuardarBorradorProveedorAsync()
     {
+        if (!PuedeGestionarCierres())
+            return;
+
         if (_borradorProveedor is null)
         {
             Snackbar.Add("Primero genere el borrador de liquidacion.", Severity.Warning);
@@ -244,6 +294,9 @@ public partial class Cierres : ComponentBase
                 Snackbar.Add(result.Message, Severity.Success);
                 _borradorProveedor = await CierreService.GenerarBorradorProveedorAsync(_filtro);
                 _borradorGuardadoParaConfirmar = !_borradorProveedor.YaConfirmado;
+                _cierreExistente = _borradorProveedor.CierreProveedorId.HasValue;
+                _modoConsulta = _borradorProveedor.YaConfirmado;
+                _observacionConfirmacion = _borradorProveedor.Observacion;
             }
             else
             {
@@ -262,6 +315,9 @@ public partial class Cierres : ComponentBase
 
     private void CambiarExcepcionPlanilla(CierreProveedorItemDto item, bool value)
     {
+        if (_modoConsulta || _borradorProveedor?.YaConfirmado == true)
+            return;
+
         item.ExcluirDeProveedor = value;
 
         if (!value)
@@ -270,6 +326,9 @@ public partial class Cierres : ComponentBase
 
     private async Task ConfirmarLiquidacionProveedorAsync()
     {
+        if (!PuedeGestionarCierres())
+            return;
+
         if (_borradorProveedor is null)
         {
             Snackbar.Add("Primero genere el borrador de liquidacion.", Severity.Warning);
@@ -286,6 +345,13 @@ public partial class Cierres : ComponentBase
         if (!ValidarMotivosExcepciones())
             return;
 
+        var confirmado = await JsRuntime.InvokeAsync<bool>(
+            "confirm",
+            "¿Confirmar este cierre de facturación? Después de confirmar no podrá modificarse.");
+
+        if (!confirmado)
+            return;
+
         try
         {
             _confirmandoProveedor = true;
@@ -298,6 +364,9 @@ public partial class Cierres : ComponentBase
                 Snackbar.Add(result.Message, Severity.Success);
                 _borradorProveedor = await CierreService.GenerarBorradorProveedorAsync(_filtro);
                 _borradorGuardadoParaConfirmar = false;
+                _cierreExistente = _borradorProveedor.CierreProveedorId.HasValue;
+                _modoConsulta = true;
+                _observacionConfirmacion = _borradorProveedor.Observacion;
             }
             else
             {
@@ -330,10 +399,20 @@ public partial class Cierres : ComponentBase
         return false;
     }
 
+    private bool PuedeGestionarCierres()
+    {
+        if (AuthState.TienePermiso(Permisos.CierresGestionar))
+            return true;
+
+        Snackbar.Add("No tiene permiso para gestionar cierres de facturacion.", Severity.Warning);
+        return false;
+    }
+
     private ConfirmarCierreProveedorDto CrearInputProveedor()
     {
         return new ConfirmarCierreProveedorDto
         {
+            CierreProveedorId = _borradorProveedor!.CierreProveedorId,
             FechaDesde = _borradorProveedor!.FechaDesde,
             FechaHasta = _borradorProveedor.FechaHasta,
             Items = _borradorProveedor.Items,

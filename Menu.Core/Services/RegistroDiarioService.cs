@@ -86,6 +86,21 @@ public class RegistroDiarioService
         if (!input.RegistraMenu && input.Adicionales.Count == 0)
             return ResultadoOperacionDto.Fail("Debe registrar menú o al menos un consumo adicional.");
 
+        if (input.Adicionales.Any(x =>
+                x.TipoAdicional == TipoAdicional.MenuExtra &&
+                x.FormaCobro == FormaCobroAdicional.CreditoComedor))
+        {
+            return ResultadoOperacionDto.Fail(
+                "Los menús extra no pueden quedar como crédito del comensal. Seleccione pago directo o empresa cliente.");
+        }
+
+        if (input.Adicionales.Any(x => x.FormaCobro == FormaCobroAdicional.Empresa) &&
+            (empleado.EmpresaCliente is null || !empleado.EmpresaCliente.Activo))
+        {
+            return ResultadoOperacionDto.Fail(
+                "No se puede cargar el pedido a empresa cliente porque el comensal no tiene una empresa activa asociada.");
+        }
+
         ConsumoMenu? consumoMenu = null;
 
         await using var transaction = await _context.Database.BeginTransactionAsync();
@@ -124,6 +139,12 @@ public class RegistroDiarioService
                     if (tipoPagoMenu == TipoPagoMenu.Empresa)
                         return ResultadoOperacionDto.Fail("Un comensal suspendido no puede registrar menú con cargo a empresa cliente.");
 
+                    if (tipoPagoMenu == TipoPagoMenu.CreditoComedor)
+                    {
+                        return ResultadoOperacionDto.Fail(
+                            "El menú principal no puede quedar como crédito del comensal. Seleccione descuento por planilla o pago directo.");
+                    }
+
                     if (tipoPagoMenu == TipoPagoMenu.PagoDirecto)
                     {
                         if (input.FormaPagoDirectoMenu is null)
@@ -132,12 +153,6 @@ public class RegistroDiarioService
                         formaPagoDirecto = input.FormaPagoDirectoMenu.Value;
                         estadoCobroMenu = EstadoCobroAdicional.Pagado;
                         fechaPagoMenu = DateTime.Now;
-                    }
-
-                    if (tipoPagoMenu == TipoPagoMenu.CreditoComedor)
-                    {
-                        estadoCobroMenu = EstadoCobroAdicional.Pendiente;
-                        fechaPagoMenu = null;
                     }
 
                     if (tipoPagoMenu == TipoPagoMenu.DescuentoPlanilla)

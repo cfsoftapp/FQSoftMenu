@@ -2,6 +2,8 @@ namespace Menu.DTOs.Cierres;
 
 public class ConfirmarCierreProveedorDto
 {
+    public int? CierreProveedorId { get; set; }
+
     public DateTime FechaDesde { get; set; }
 
     public DateTime FechaHasta { get; set; }

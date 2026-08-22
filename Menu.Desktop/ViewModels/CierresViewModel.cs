@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Windows.Input;
 using Menu.Enums;
+using Menu.Security;
 using Menu.Services;
 using Menu.Services.Cierres;
 
@@ -13,6 +14,7 @@ public sealed class CierresViewModel : ObservableObject
     private readonly ICierreService _cierreService;
     private readonly AuthStateService _authState;
     private readonly AsyncRelayCommand _actualizarCommand;
+    private readonly RelayCommand _nuevoCierreCommand;
     private bool _isBusy;
     private string _estado = "Consulta y administra los cierres de facturacion.";
     private string _estadoBackground = "#EEF6FF";
@@ -24,7 +26,9 @@ public sealed class CierresViewModel : ObservableObject
         _cierreService = cierreService;
         _authState = authState;
         _actualizarCommand = new AsyncRelayCommand(LoadAsync, () => !IsBusy);
-        NuevoCierreCommand = new RelayCommand(() => RequestCierreDialog?.Invoke(null));
+        _nuevoCierreCommand = new RelayCommand(
+            () => RequestCierreDialog?.Invoke(null),
+            () => CanManage);
     }
 
     public event Action<CierreProveedorRowViewModel?>? RequestCierreDialog;
@@ -33,7 +37,9 @@ public sealed class CierresViewModel : ObservableObject
 
     public ICommand ActualizarCommand => _actualizarCommand;
 
-    public ICommand NuevoCierreCommand { get; }
+    public ICommand NuevoCierreCommand => _nuevoCierreCommand;
+
+    public bool CanManage => _authState.TienePermiso(Permisos.CierresGestionar);
 
     public int TotalCierres => Cierres.Count;
 
@@ -73,6 +79,9 @@ public sealed class CierresViewModel : ObservableObject
         IsBusy = true;
         try
         {
+            OnPropertyChanged(nameof(CanManage));
+            _nuevoCierreCommand.RaiseCanExecuteChanged();
+
             var cierres = await _cierreService.ObtenerCierresProveedorAsync();
             Cierres.Clear();
             foreach (var cierre in cierres)
@@ -103,6 +112,12 @@ public sealed class CierresViewModel : ObservableObject
 
     public async Task<bool> DeleteAsync(CierreProveedorRowViewModel cierre)
     {
+        if (!CanManage)
+        {
+            SetEstado("No tiene permiso para gestionar cierres de facturacion.", false);
+            return false;
+        }
+
         var result = await _cierreService.EliminarBorradorProveedorAsync(cierre.Id);
         SetEstado(result.Message, result.Success);
         if (result.Success)

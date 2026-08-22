@@ -11,6 +11,8 @@ public interface ICierreService
 
     Task<List<CierreProveedorListadoDto>> ObtenerCierresProveedorAsync();
 
+    Task<CierreProveedorBorradorDto> ObtenerCierreProveedorAsync(int cierreProveedorId);
+
     Task<CierreProveedorBorradorDto> GenerarBorradorProveedorAsync(CierreFiltroDto filtro);
 
     Task<ResultadoOperacionDto> GuardarBorradorProveedorAsync(ConfirmarCierreProveedorDto input);

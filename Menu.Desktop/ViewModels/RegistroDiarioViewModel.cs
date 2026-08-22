@@ -118,8 +118,7 @@ public sealed class RegistroDiarioViewModel : ObservableObject
         new[]
         {
             new OptionViewModel<TipoPagoMenu>(TipoPagoMenu.DescuentoPlanilla, "Descuento planilla"),
-            new OptionViewModel<TipoPagoMenu>(TipoPagoMenu.PagoDirecto, "Pago directo"),
-            new OptionViewModel<TipoPagoMenu>(TipoPagoMenu.CreditoComedor, "Pendiente del comensal")
+            new OptionViewModel<TipoPagoMenu>(TipoPagoMenu.PagoDirecto, "Pago directo")
         };
 
     public IReadOnlyList<OptionViewModel<FormaPago>> FormasPagoDirecto { get; } =
@@ -147,14 +146,23 @@ public sealed class RegistroDiarioViewModel : ObservableObject
             new OptionViewModel<CategoriaConsumoAdicional>(CategoriaConsumoAdicional.Otro, "Otro")
         };
 
-    public IReadOnlyList<OptionViewModel<FormaCobroAdicional>> FormasCobroAdicional { get; } =
+    public IReadOnlyList<OptionViewModel<FormaCobroAdicional>> FormasCobroMenuExtra { get; } =
         new[]
         {
             new OptionViewModel<FormaCobroAdicional>(FormaCobroAdicional.Efectivo, "Efectivo"),
             new OptionViewModel<FormaCobroAdicional>(FormaCobroAdicional.Yape, "Yape"),
             new OptionViewModel<FormaCobroAdicional>(FormaCobroAdicional.Plin, "Plin"),
-            new OptionViewModel<FormaCobroAdicional>(FormaCobroAdicional.CreditoComedor, "Pendiente del comensal"),
-            new OptionViewModel<FormaCobroAdicional>(FormaCobroAdicional.Empresa, "Empresa cliente")
+            new OptionViewModel<FormaCobroAdicional>(FormaCobroAdicional.Empresa, "Empresa cliente (pedido autorizado)")
+        };
+
+    public IReadOnlyList<OptionViewModel<FormaCobroAdicional>> FormasCobroProducto { get; } =
+        new[]
+        {
+            new OptionViewModel<FormaCobroAdicional>(FormaCobroAdicional.Efectivo, "Efectivo"),
+            new OptionViewModel<FormaCobroAdicional>(FormaCobroAdicional.Yape, "Yape"),
+            new OptionViewModel<FormaCobroAdicional>(FormaCobroAdicional.Plin, "Plin"),
+            new OptionViewModel<FormaCobroAdicional>(FormaCobroAdicional.CreditoComedor, "Credito del comensal (por cobrar)"),
+            new OptionViewModel<FormaCobroAdicional>(FormaCobroAdicional.Empresa, "Empresa cliente (pedido autorizado)")
         };
 
     public ICommand BuscarCommand => _buscarCommand;
@@ -315,7 +323,6 @@ public sealed class RegistroDiarioViewModel : ObservableObject
             {
                 TipoPagoMenu.DescuentoPlanilla => "Descuento planilla",
                 TipoPagoMenu.PagoDirecto => $"Pago directo - {FormaPagoDirectoMenu}",
-                TipoPagoMenu.CreditoComedor => "Pendiente del comensal",
                 _ => "No aplica"
             };
         }
@@ -437,11 +444,6 @@ public sealed class RegistroDiarioViewModel : ObservableObject
         RegistraMenu &&
         TipoPagoMenuSuspendido == TipoPagoMenu.PagoDirecto;
 
-    private bool MenuCreditoComedor =>
-        _empleadoSeleccionado?.Estado == EstadoEmpleado.Suspendido &&
-        RegistraMenu &&
-        TipoPagoMenuSuspendido == TipoPagoMenu.CreditoComedor;
-
     private decimal TotalPagaEmpresa =>
         (MenuPagaEmpresa ? TotalMenu : 0m) +
         Adicionales.Where(x => x.FormaCobro == FormaCobroAdicional.Empresa).Sum(x => x.Precio);
@@ -449,7 +451,7 @@ public sealed class RegistroDiarioViewModel : ObservableObject
     private decimal TotalDescuentoPlanilla => MenuDescuentoPlanilla ? TotalMenu : 0m;
 
     private decimal TotalCobraTrabajador =>
-        (MenuDescuentoPlanilla || MenuPagoDirecto || MenuCreditoComedor ? TotalMenu : 0m) +
+        (MenuDescuentoPlanilla || MenuPagoDirecto ? TotalMenu : 0m) +
         Adicionales.Where(x => x.FormaCobro != FormaCobroAdicional.Empresa).Sum(x => x.Precio);
 
     private decimal TotalPagado =>
@@ -459,7 +461,6 @@ public sealed class RegistroDiarioViewModel : ObservableObject
             .Sum(x => x.Precio);
 
     private decimal TotalPendienteCredito =>
-        (MenuCreditoComedor ? TotalMenu : 0m) +
         Adicionales.Where(x => x.FormaCobro == FormaCobroAdicional.CreditoComedor).Sum(x => x.Precio);
 
     private async Task BuscarAsync()
